@@ -1,0 +1,11 @@
+# Repos separados (têm seu próprio git): não versionar no infra_bora
+bora-fase-2-frontend/
+bora-fase-3-backend-java/
+
+# Segredos e lixo
+target/
+.env
+*.log
+node_modules/
+.DS_Store
+.claude/settings.local.json
