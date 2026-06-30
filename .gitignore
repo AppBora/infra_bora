@@ -5,6 +5,7 @@ bora-fase-3-backend-java/
 # Segredos e lixo
 target/
 .env
+deploy-lightsail.env
 *.log
 node_modules/
 .DS_Store

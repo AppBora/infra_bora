@@ -12,10 +12,12 @@ O código da aplicação vive em repositórios separados:
 ## Conteúdo deste repo
 
 - **`docker-compose.yml`** + **`.env.example`** — sobe API + PostgreSQL local para desenvolvimento.
+- **`bora-projeto-completo/scripts/deploy-lightsail.sh`** — deploy automatizado na AWS Lightsail (CLI).
 - **`bora-teste-remoto.sh`** — link de teste remoto via túneis Cloudflare.
 - **`bora-fase-1-arquitetura/`** — visão de produto, modelo de dados, planos SaaS, permissões, white-label, custos.
 - **`bora-projeto-completo/`** — docs consolidadas:
-  - `docs/DEPLOY_RENDER.md` — guia de deploy no Render (recomendado para o MVP).
+  - `docs/DEPLOY_AWS_LIGHTSAIL.md` — **guia oficial de deploy (AWS Lightsail enxuto)**.
+  - `docs/DEPLOY_RENDER.md` — alternativa de deploy (Render), mantida como referência.
   - `docs/INFRA_CLOUD_PLANO.md` — comparação de provedores (Render / Lightsail / AWS / VPS).
   - `docs/PRODUCAO_PRONTIDAO.md` — checklist de go-live e hardening.
   - `docs/DEPLOY.md`, `docs/PROVISIONAMENTO_CLIENTE.md`, `docs/TESTES.md` — operação.
@@ -23,9 +25,11 @@ O código da aplicação vive em repositórios separados:
 
 ## Deploy
 
-A recomendação atual é **Render** (API Docker + PostgreSQL gerenciado + frontend estático),
-custo ~R$ 70–140/mês. Passo a passo completo em
-[`bora-projeto-completo/docs/DEPLOY_RENDER.md`](bora-projeto-completo/docs/DEPLOY_RENDER.md).
+Caminho oficial: **AWS Lightsail enxuto** (Container Service + Managed PostgreSQL + Bucket/CDN),
+custo ~R$ 150–165/mês. Passo a passo em
+[`bora-projeto-completo/docs/DEPLOY_AWS_LIGHTSAIL.md`](bora-projeto-completo/docs/DEPLOY_AWS_LIGHTSAIL.md)
+e script em [`bora-projeto-completo/scripts/deploy-lightsail.sh`](bora-projeto-completo/scripts/deploy-lightsail.sh).
+Alternativa mais simples/barata (sem AWS): [`docs/DEPLOY_RENDER.md`](bora-projeto-completo/docs/DEPLOY_RENDER.md).
 
 ## Desenvolvimento local
 
