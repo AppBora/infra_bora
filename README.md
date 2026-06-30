@@ -16,6 +16,7 @@ O código da aplicação vive em repositórios separados:
 - **`bora-teste-remoto.sh`** — link de teste remoto via túneis Cloudflare.
 - **`bora-fase-1-arquitetura/`** — visão de produto, modelo de dados, planos SaaS, permissões, white-label, custos.
 - **`bora-projeto-completo/`** — docs consolidadas:
+  - `docs/SETUP_CONTA_AWS.md` — onboarding da conta AWS (MFA, budget, IAM, profile) antes do deploy.
   - `docs/DEPLOY_AWS_LIGHTSAIL.md` — **guia oficial de deploy (AWS Lightsail enxuto)**.
   - `docs/DEPLOY_RENDER.md` — alternativa de deploy (Render), mantida como referência.
   - `docs/INFRA_CLOUD_PLANO.md` — comparação de provedores (Render / Lightsail / AWS / VPS).
