@@ -111,6 +111,12 @@
   .comp .total.neg{color:#d92d20}
   .comp .total.pos{color:var(--verde)}
   .obs{max-width:880px;margin:16px auto 0;text-align:center;color:var(--cinza);font-size:13px}
+  /* plano unico horizontal */
+  .plano-unico{max-width:920px;margin:0 auto;display:grid;grid-template-columns:280px 1fr;gap:12px 48px;align-items:center;flex-direction:unset}
+  .plano-unico .pu-esq{display:flex;flex-direction:column;align-items:flex-start}
+  .plano-unico .pu-esq .btn{margin-top:18px}
+  .plano-unico ul{display:grid;grid-template-columns:1fr 1fr;gap:0 32px;margin:0;flex:unset}
+  @media(max-width:820px){.plano-unico{grid-template-columns:1fr}.plano-unico ul{grid-template-columns:1fr;margin-top:8px}}
   /* FAQ */
   .faq{max-width:760px;margin:0 auto}
   .faq details{background:#fff;border:1px solid var(--borda);border-radius:12px;padding:18px 22px;margin-bottom:12px}
@@ -226,20 +232,20 @@
     <h2>Um plano só. Tudo incluso.</h2>
     <p>Sem taxa por pedido. Sem surpresa. Cancele quando quiser.</p>
   </div>
-  <div class="planos" style="max-width:460px;margin-left:auto;margin-right:auto">
-    <div class="plano destaque">
-      <div class="fita">Tudo incluso</div>
+  <div class="plano destaque plano-unico">
+    <div class="fita">Tudo incluso</div>
+    <div class="pu-esq">
       <h3>Bora</h3>
       <div class="preco">R$ 299<small>/mês por loja</small></div>
       <p style="color:var(--cinza)">Todos os recursos, sem letra miúda.</p>
-      <ul>
-        <li><b>Pedidos ilimitados</b></li><li>Até 15 usuários por loja</li>
-        <li>Tela de cozinha (KDS) + entregas</li><li>Cardápio digital com QR Code</li>
-        <li>CRM, cashback e promoções</li><li>Estoque, CMV e relatórios (PDF/Excel)</li>
-        <li>White-label: sua marca em tudo</li><li>Pedidos de marketplaces no painel</li>
-      </ul>
       <a href="https://borahapp.com.br/cadastro.html" class="btn btn-p">Criar minha loja</a>
     </div>
+    <ul>
+      <li><b>Pedidos ilimitados</b></li><li>Até 15 usuários por loja</li>
+      <li>Tela de cozinha (KDS) + entregas</li><li>Cardápio digital com QR Code</li>
+      <li>CRM, cashback e promoções</li><li>Estoque, CMV e relatórios (PDF/Excel)</li>
+      <li>White-label: sua marca em tudo</li><li>Pedidos de marketplaces no painel</li>
+    </ul>
   </div>
 </div></section>
 
