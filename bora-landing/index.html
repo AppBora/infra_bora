@@ -3,8 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bora — Sistema de Delivery com a Sua Marca</title>
-<meta name="description" content="Gestão completa de delivery white-label: pedidos, cozinha, entregas, cardápio digital, CRM e relatórios. A partir de R$ 69/mês.">
+<title>Bora — Sistema de delivery com a sua marca, sem taxa por pedido</title>
+<meta name="description" content="Gestão completa de delivery white-label: pedidos, cozinha (KDS), entregas, cardápio digital com QR, CRM e relatórios. Plano único R$ 299/mês por loja, pedidos ilimitados, sem taxa por pedido.">
+<link rel="canonical" href="https://borahapp.com.br/">
+<link rel="icon" href="/assets/img/icone-bora.svg">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="pt_BR">
+<meta property="og:url" content="https://borahapp.com.br/">
+<meta property="og:site_name" content="Bora">
+<meta property="og:title" content="Bora — Sistema de delivery com a sua marca">
+<meta property="og:description" content="Pedidos ilimitados, sem taxa por pedido. Cozinha, entregas, cardápio QR, CRM e relatórios com a marca da sua loja. R$ 299/mês por loja.">
 <style>
   :root{
     --laranja:#ff5a1f; --laranja-esc:#e04408; --verde:#12b76a; --escuro:#141518;
@@ -91,6 +99,23 @@
   footer a{color:var(--cinza)}footer a:hover{color:var(--escuro)}
   /* whatsapp flutuante */
   .wpp{position:fixed;bottom:24px;right:24px;background:#25d366;color:#fff;width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px;box-shadow:0 8px 24px rgba(37,211,102,.5);z-index:60}
+  /* comparativo marketplace */
+  .compara{display:grid;grid-template-columns:1fr 1fr;gap:24px;max-width:880px;margin:0 auto}
+  @media(max-width:820px){.compara{grid-template-columns:1fr}}
+  .comp{background:#fff;border:1px solid var(--borda);border-radius:18px;padding:32px}
+  .comp.ruim{border-top:6px solid #d92d20}
+  .comp.bom{border-top:6px solid var(--verde);box-shadow:var(--sombra)}
+  .comp h3{font-size:20px;margin-bottom:14px}
+  .comp .linha{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px dashed var(--borda);font-size:15px;color:#39414b}
+  .comp .total{display:flex;justify-content:space-between;padding-top:14px;font-weight:800;font-size:18px}
+  .comp .total.neg{color:#d92d20}
+  .comp .total.pos{color:var(--verde)}
+  .obs{max-width:880px;margin:16px auto 0;text-align:center;color:var(--cinza);font-size:13px}
+  /* FAQ */
+  .faq{max-width:760px;margin:0 auto}
+  .faq details{background:#fff;border:1px solid var(--borda);border-radius:12px;padding:18px 22px;margin-bottom:12px}
+  .faq summary{font-weight:700;cursor:pointer;font-size:16px}
+  .faq details p{color:var(--cinza);margin-top:10px;font-size:15px}
 </style>
 </head>
 <body>
@@ -100,9 +125,14 @@
   <nav>
     <a href="#recursos">Recursos</a>
     <a href="#como">Como funciona</a>
-    <a href="#planos">Planos</a>
+    <a href="#economia">Economia</a>
+    <a href="#planos">Plano</a>
+    <a href="#faq">Dúvidas</a>
   </nav>
-  <a href="https://wa.me/5511971101563?text=Quero%20conhecer%20o%20Bora" class="btn btn-p">Falar no WhatsApp</a>
+  <div style="display:flex;gap:10px;align-items:center">
+    <a href="/login.html" class="btn btn-o" style="padding:11px 20px">Entrar</a>
+    <a href="https://wa.me/5511971101563?text=Quero%20conhecer%20o%20Bora" class="btn btn-p">Falar no WhatsApp</a>
+  </div>
 </div></header>
 
 <!-- HERO -->
@@ -163,8 +193,34 @@
   </div>
 </div></section>
 
+<!-- ECONOMIA vs MARKETPLACE -->
+<section id="economia"><div class="wrap">
+  <div class="center">
+    <div class="kicker">Faça a conta</div>
+    <h2>Mensalidade fixa, não porcentagem</h2>
+    <p>No marketplace, quanto mais você vende, mais você paga. No seu canal próprio com o Bora, o custo é o mesmo vendendo 100 ou 10.000 pedidos.</p>
+  </div>
+  <div class="compara">
+    <div class="comp ruim">
+      <h3>😬 Só no marketplace</h3>
+      <div class="linha"><span>1.000 pedidos/mês × ticket R$ 40</span><span>R$ 40.000</span></div>
+      <div class="linha"><span>Comissão média (~25%)</span><span>− R$ 10.000</span></div>
+      <div class="linha"><span>Seu cliente? É deles.</span><span>—</span></div>
+      <div class="total neg"><span>Custo no mês</span><span>R$ 10.000</span></div>
+    </div>
+    <div class="comp bom">
+      <h3>🚀 Canal próprio com o Bora</h3>
+      <div class="linha"><span>1.000 pedidos/mês × ticket R$ 40</span><span>R$ 40.000</span></div>
+      <div class="linha"><span>Mensalidade fixa</span><span>− R$ 299</span></div>
+      <div class="linha"><span>Cliente, dados e marca</span><span>Seus ✓</span></div>
+      <div class="total pos"><span>Custo no mês</span><span>R$ 299</span></div>
+    </div>
+  </div>
+  <p class="obs">Valores ilustrativos — comissões de marketplace variam por contrato e categoria. E você não precisa abandonar o marketplace: os pedidos de lá também caem no painel do Bora.</p>
+</div></section>
+
 <!-- PLANOS -->
-<section id="planos"><div class="wrap">
+<section id="planos" class="bg"><div class="wrap">
   <div class="center">
     <div class="kicker">Preço transparente</div>
     <h2>Um plano só. Tudo incluso.</h2>
@@ -187,8 +243,46 @@
   </div>
 </div></section>
 
+<!-- FAQ -->
+<section id="faq"><div class="wrap">
+  <div class="center">
+    <div class="kicker">Dúvidas frequentes</div>
+    <h2>Perguntas que todo dono de delivery faz</h2>
+  </div>
+  <div class="faq">
+    <details>
+      <summary>Tem taxa por pedido ou porcentagem sobre as vendas?</summary>
+      <p>Não. O plano é fixo: R$ 299/mês por loja, com <b>pedidos ilimitados</b>. Vendendo mais, você paga o mesmo.</p>
+    </details>
+    <details>
+      <summary>Tem fidelidade? Como cancelo?</summary>
+      <p>Sem fidelidade e sem multa. A assinatura é mensal e você cancela quando quiser — o acesso segue até o fim do período pago.</p>
+    </details>
+    <details>
+      <summary>Como recebo o dinheiro dos meus pedidos?</summary>
+      <p>Direto do seu cliente, como você já faz hoje: PIX, dinheiro ou cartão na entrega/balcão. O Bora organiza a operação e <b>não fica no meio do seu dinheiro</b>.</p>
+    </details>
+    <details>
+      <summary>Tenho mais de uma loja. Como funciona?</summary>
+      <p>Cada loja tem seu painel, seu cardápio e sua assinatura de R$ 299/mês. Até 15 usuários por loja (balcão, cozinha, entregadores, gerente).</p>
+    </details>
+    <details>
+      <summary>Preciso instalar alguma coisa? Funciona no celular?</summary>
+      <p>Nada de instalação: funciona no navegador do celular, tablet ou computador. A tela de cozinha (KDS) foi feita para ficar aberta numa TV ou tablet.</p>
+    </details>
+    <details>
+      <summary>Preciso abandonar o iFood?</summary>
+      <p>Não. Os pedidos dos marketplaces caem no mesmo painel do Bora. A ideia é você <b>crescer seu canal próprio</b> — onde não paga comissão — sem largar os outros.</p>
+    </details>
+    <details>
+      <summary>Meus clientes vão ver a marca do Bora?</summary>
+      <p>O sistema roda com <b>a sua marca</b>: seu logo, suas cores e o nome da sua loja no painel, no cardápio digital e nos relatórios.</p>
+    </details>
+  </div>
+</div></section>
+
 <!-- CTA FINAL -->
-<section><div class="wrap">
+<section class="bg"><div class="wrap">
   <div class="final">
     <h2>Bora colocar seu delivery no controle?</h2>
     <p>Fale com a gente e receba seu sistema com a sua marca ainda hoje.</p>
@@ -199,7 +293,8 @@
 <footer><div class="wrap">
   <div><span class="logo">Bora<span>.</span></span> &nbsp; © 2026 · Sistema de delivery white-label</div>
   <div>
-    <a href="#planos">Planos</a> &nbsp;·&nbsp;
+    <a href="/login.html">Entrar</a> &nbsp;·&nbsp;
+    <a href="#planos">Plano</a> &nbsp;·&nbsp;
     <a href="/termos.html">Termos de Uso</a> &nbsp;·&nbsp;
     <a href="/privacidade.html">Privacidade</a> &nbsp;·&nbsp;
     <a href="https://wa.me/5511971101563">Contato</a>
