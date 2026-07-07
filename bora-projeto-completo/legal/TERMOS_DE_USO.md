@@ -22,7 +22,7 @@ usuários (funcionários, entregadores).
 2.3. É proibido usar a plataforma para fins ilícitos ou que violem direitos de terceiros.
 
 ## 3. Planos, preços e pagamento
-3.1. O plano vigente é único — R$ 299/mês **por loja**, com pedidos ilimitados e até 15 usuários
+3.1. O plano vigente é único — R$ 199/mês **por loja**, com pedidos ilimitados e até 15 usuários
 por loja; recursos e preço estão descritos em https://borahapp.com.br.
 3.2. A assinatura é **mensal e recorrente**, cobrada automaticamente pelo meio de pagamento
 cadastrado (via processador **Asaas**), até o cancelamento.
