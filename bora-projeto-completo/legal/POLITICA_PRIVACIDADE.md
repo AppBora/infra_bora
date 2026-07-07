@@ -1,17 +1,17 @@
-# Política de Privacidade — Bora (LGPD)
+# Política de Privacidade — BoraHapp (LGPD)
 
 > **Rascunho para revisão jurídica.** Ponto de partida técnico; **revise com um advogado** antes de
 > publicar. Preencha os campos entre colchetes.
 
 **Última atualização:** [DATA]
 
-Esta Política explica como o **Bora** (operado por **[RAZÃO SOCIAL], CNPJ [CNPJ]**) trata dados
+Esta Política explica como o **BoraHapp** (operado por **[RAZÃO SOCIAL], CNPJ [CNPJ]**) trata dados
 pessoais, em conformidade com a **LGPD (Lei 13.709/2018)**.
 
 ## 1. Papéis (controlador x operador)
-- Em relação aos **dados do Lojista** (cadastro, cobrança, uso da plataforma): o Bora é **controlador**.
+- Em relação aos **dados do Lojista** (cadastro, cobrança, uso da plataforma): o BoraHapp é **controlador**.
 - Em relação aos **dados dos consumidores finais** (clientes que fazem pedidos): o **Lojista é o
-  controlador** e o Bora atua como **operador**, tratando os dados sob instrução do Lojista.
+  controlador** e o BoraHapp atua como **operador**, tratando os dados sob instrução do Lojista.
 
 ## 2. Dados que tratamos
 | Categoria | Exemplos | Origem |
@@ -42,7 +42,7 @@ eliminados ou anonimizados.
 ## 6. Direitos do titular (art. 18 da LGPD)
 O titular pode solicitar: confirmação de tratamento, acesso, correção, anonimização, portabilidade,
 eliminação e informações sobre compartilhamento. Consumidores finais devem procurar **o Lojista**
-(controlador). Solicitações relativas ao Bora: **[E-MAIL DPO/ENCARREGADO]**.
+(controlador). Solicitações relativas ao BoraHapp: **[E-MAIL DPO/ENCARREGADO]**.
 
 ## 7. Encarregado (DPO)
 Encarregado pelo tratamento de dados: **[NOME]** — contato: **[E-MAIL]**.

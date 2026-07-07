@@ -1,17 +1,17 @@
-# Termos de Uso — Bora
+# Termos de Uso — BoraHapp
 
 > **Rascunho para revisão jurídica.** Este documento é um ponto de partida técnico e **deve ser
 > revisado por um advogado** antes de entrar em produção. Preencha os campos entre colchetes.
 
 **Última atualização:** [DATA]
 
-Bem-vindo ao **Bora**, plataforma de gestão de delivery white-label operada por
-**[RAZÃO SOCIAL], CNPJ [CNPJ]**, com sede em [ENDEREÇO] ("Bora", "nós").
+Bem-vindo ao **BoraHapp**, plataforma de gestão de delivery white-label operada por
+**[RAZÃO SOCIAL], CNPJ [CNPJ]**, com sede em [ENDEREÇO] ("BoraHapp", "nós").
 
-Ao contratar ou usar o Bora, você ("Cliente", "Lojista") concorda com estes Termos.
+Ao contratar ou usar o BoraHapp, você ("Cliente", "Lojista") concorda com estes Termos.
 
 ## 1. Objeto
-O Bora é um software como serviço (SaaS) que oferece ao Lojista ferramentas para gestão de
+O BoraHapp é um software como serviço (SaaS) que oferece ao Lojista ferramentas para gestão de
 pedidos, cardápio digital, entregas, estoque, CRM, relatórios e integrações com marketplaces,
 disponibilizado com a marca do próprio Lojista (white-label).
 
@@ -52,17 +52,17 @@ cumprimento das obrigações fiscais e sanitárias são de responsabilidade excl
 próprias do Lojista junto a cada parceiro.
 
 ## 8. Propriedade intelectual
-O software, marca "Bora", código e documentação pertencem à [RAZÃO SOCIAL]. A personalização
+O software, marca "BoraHapp", código e documentação pertencem à [RAZÃO SOCIAL]. A personalização
 white-label concede ao Lojista o direito de uso da plataforma com sua marca, sem transferir a
 titularidade do software.
 
 ## 9. Dados e privacidade
 O tratamento de dados pessoais segue a **Política de Privacidade** ([URL]) e a LGPD (Lei
-13.709/2018). O Bora atua como **operador** dos dados dos consumidores finais tratados em nome
+13.709/2018). O BoraHapp atua como **operador** dos dados dos consumidores finais tratados em nome
 do Lojista (que é o **controlador**).
 
 ## 10. Limitação de responsabilidade
-Na máxima extensão permitida pela lei, a responsabilidade do Bora limita-se ao valor pago pelo
+Na máxima extensão permitida pela lei, a responsabilidade do BoraHapp limita-se ao valor pago pelo
 Lojista nos últimos 12 meses. Não respondemos por lucros cessantes ou danos indiretos.
 
 ## 11. Alterações destes Termos
