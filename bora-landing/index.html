@@ -226,6 +226,57 @@
     </div>
   </div>
   <p class="obs">Valores ilustrativos — comissões de marketplace variam por contrato e categoria. E você não precisa abandonar o marketplace: os pedidos de lá também caem no painel do BoraHapp.</p>
+
+  <!-- CALCULADORA -->
+  <div style="max-width:880px;margin:40px auto 0;background:#141518;color:#fff;border-radius:20px;padding:34px">
+    <h3 style="font-size:24px;margin:0 0 6px;text-align:center">🧮 Quanto o marketplace te custa por ano?</h3>
+    <p style="text-align:center;opacity:.75;margin:0 0 22px;font-size:14px">Arraste e descubra — o resultado costuma doer.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px" class="ia-grid">
+      <label style="font-size:13px;opacity:.9">Pedidos por mês no marketplace<br>
+        <input type="range" id="ccPed" min="50" max="3000" step="50" value="600" style="width:100%;margin-top:8px">
+        <b id="ccPedV" style="font-size:18px">600</b> pedidos
+      </label>
+      <label style="font-size:13px;opacity:.9">Ticket médio<br>
+        <input type="range" id="ccTk" min="15" max="120" step="5" value="40" style="width:100%;margin-top:8px">
+        <b id="ccTkV" style="font-size:18px">R$ 40</b>
+      </label>
+      <label style="font-size:13px;opacity:.9">Comissão do marketplace<br>
+        <input type="range" id="ccTx" min="12" max="30" step="1" value="25" style="width:100%;margin-top:8px">
+        <b id="ccTxV" style="font-size:18px">25%</b>
+      </label>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:26px;text-align:center" class="ia-grid">
+      <div style="background:rgba(217,45,32,.15);border:1px solid #d92d20;border-radius:14px;padding:18px">
+        <div style="font-size:13px;opacity:.8">Você entrega ao marketplace por ANO</div>
+        <div id="ccMkt" style="font-size:34px;font-weight:800;color:#ff8f87">R$ 72.000</div>
+      </div>
+      <div style="background:rgba(18,183,106,.15);border:1px solid #12b76a;border-radius:14px;padding:18px">
+        <div style="font-size:13px;opacity:.8">Com o BoraHapp no canal próprio, sobra no seu bolso</div>
+        <div id="ccEco" style="font-size:34px;font-weight:800;color:#86efac">R$ 69.612</div>
+      </div>
+    </div>
+    <div style="text-align:center;margin-top:22px">
+      <a id="ccCta" href="#" class="btn btn-p" style="background:#22c55e;color:#052e16">Quero recuperar esse dinheiro →</a>
+    </div>
+  </div>
+  <script>
+  (function(){
+    const f = v => 'R$ ' + Math.round(v).toLocaleString('pt-BR');
+    function calc(){
+      const p = +document.getElementById('ccPed').value, t = +document.getElementById('ccTk').value, x = +document.getElementById('ccTx').value;
+      document.getElementById('ccPedV').textContent = p.toLocaleString('pt-BR');
+      document.getElementById('ccTkV').textContent = 'R$ ' + t;
+      document.getElementById('ccTxV').textContent = x + '%';
+      const mkt = p * t * (x/100) * 12, bora = 199 * 12;
+      document.getElementById('ccMkt').textContent = f(mkt);
+      document.getElementById('ccEco').textContent = f(Math.max(0, mkt - bora));
+      document.getElementById('ccCta').href = 'https://wa.me/5511971101563?text=' + encodeURIComponent(
+        'Fiz a conta no site do BoraHapp: pago ~' + f(mkt) + '/ano de comissão (' + p + ' pedidos, ticket R$ ' + t + ', taxa ' + x + '%). Quero saber mais!');
+    }
+    ['ccPed','ccTk','ccTx'].forEach(id => document.getElementById(id).addEventListener('input', calc));
+    calc();
+  })();
+  </script>
 </div></section>
 
 <!-- PLANOS -->
