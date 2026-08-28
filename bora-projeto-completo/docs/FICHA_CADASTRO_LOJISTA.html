@@ -122,14 +122,15 @@ table.horario input[type=time]{padding:8px 10px;border:1px solid var(--line-stro
   font-size:12.5px;line-height:1.6;border-radius:12px;padding:16px;background:var(--surface);
   border:1px solid var(--line);color:var(--ink)}
 .acoes{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:12px}
-button.principal{background:var(--accent);color:#fff;border:0;border-radius:10px;
+button.principal,a.principal{background:var(--accent);color:#fff;border:0;border-radius:10px;
   padding:13px 24px;font:inherit;font-weight:600;font-size:15px;cursor:pointer}
-:root[data-theme="dark"] button.principal{color:#141119}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) button.principal{color:#141119}}
-button.principal:hover{filter:brightness(1.08)}
+:root[data-theme="dark"] button.principal,:root[data-theme="dark"] a.principal{color:#141119}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) button.principal,:root:not([data-theme="light"]) a.principal{color:#141119}}
+button.principal:hover,a.principal:hover{filter:brightness(1.08)}
 button.secundaria{background:transparent;color:var(--ink-2);border:1px solid var(--line-strong);
   border-radius:10px;padding:13px 20px;font:inherit;font-size:14.5px;cursor:pointer}
-button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+button:focus-visible,a.botao-link:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+a.botao-link{display:inline-block;text-decoration:none;text-align:center}
 .status{font-size:14px;color:var(--ok);font-weight:600}
 
 footer{border-top:1px solid var(--line);padding:22px 0 40px;color:var(--muted);font-size:13px;text-align:center}
@@ -288,15 +289,18 @@ footer{border-top:1px solid var(--line);padding:22px 0 40px;color:var(--muted);f
   </section>
 
   <section class="final">
-    <h2>Pronto — gere o resumo</h2>
-    <p>Clique no botão, copie o texto e mande de volta junto com a logo e a foto do cardápio.</p>
+    <h2>Pronto — agora é só devolver</h2>
+    <p>Escolha como prefere devolver. Não esqueça de enviar junto <b>a logo</b> e <b>a foto do cardápio</b>.</p>
+    <p class="destaque" style="margin-bottom:18px"><b>Salvar ficha preenchida</b> gera um arquivo com todas as suas respostas organizadas. É só anexar e mandar — quem receber abre e lê tudo pronto, sem precisar digitar de novo.</p>
     <div class="acoes" style="margin-bottom:14px">
       <button class="principal" type="button" id="btnGerar">Gerar resumo</button>
       <button class="secundaria" type="button" id="btnLimpar">Limpar tudo</button>
     </div>
     <textarea id="resumo" spellcheck="false" placeholder="O resumo aparece aqui depois que você clicar em gerar."></textarea>
     <div class="acoes">
-      <button class="principal" type="button" id="btnCopiar">Copiar resumo</button>
+      <a class="principal botao-link" id="btnZap" href="#" target="_blank" rel="noopener">Enviar pelo WhatsApp</a>
+      <button class="secundaria" type="button" id="btnBaixar">Salvar ficha preenchida</button>
+      <button class="secundaria" type="button" id="btnCopiar">Copiar resumo</button>
       <span class="status" id="aviso" role="status"></span>
     </div>
   </section>
@@ -440,19 +444,41 @@ footer{border-top:1px solid var(--line);padding:22px 0 40px;color:var(--muted);f
     pintarProgresso();
   }
 
-  function restaurar() {
-    var d;
-    try { d = JSON.parse(localStorage.getItem(CHAVE) || 'null'); } catch (e) { d = null; }
-    if (!d) return false;
+  function dadosSalvos() {
+    // Rascunho do proprio navegador, para nao perder o preenchimento se a pagina fechar.
+    try { return JSON.parse(localStorage.getItem(CHAVE) || 'null'); } catch (e) { return null; }
+  }
+
+  /** Cria as linhas dinamicas. So pode rodar uma vez, senao duplica. */
+  function criarEstrutura(d) {
+    (d.bairros || []).forEach(function (v) { novaLinha('bairro', v); });
+    (d.itens || []).forEach(function (v) { novaLinha('item', v); });
+    (d.equipe || []).forEach(function (v) { novaLinha('pessoa', v); });
+    (d.motoboys || []).forEach(function (v) { novaLinha('moto', v); });
+  }
+
+  /**
+   * Escreve os valores nos campos. Precisa poder rodar mais de uma vez: o navegador restaura
+   * o estado dos formularios DEPOIS que o script roda e apaga o que preenchemos, entao
+   * reaplicamos no evento load.
+   */
+  function aplicarValores(d) {
     SIMPLES.forEach(function (id) { if (d[id]) document.getElementById(id).value = d[id]; });
     MARCAS.forEach(function (id) { if (typeof d[id] === 'boolean') document.getElementById(id).checked = d[id]; });
     if (d.pagamentos) {
       document.querySelectorAll('.pgto').forEach(function (c) { c.checked = d.pagamentos.indexOf(c.value) >= 0; });
     }
-    (d.bairros || []).forEach(function (v) { novaLinha('bairro', v); });
-    (d.itens || []).forEach(function (v) { novaLinha('item', v); });
-    (d.equipe || []).forEach(function (v) { novaLinha('pessoa', v); });
-    (d.motoboys || []).forEach(function (v) { novaLinha('moto', v); });
+    [['bairros', 'bairros'], ['itens', 'itens'], ['equipe', 'equipe'], ['motoboys', 'motoboys']]
+      .forEach(function (par) {
+        var guardados = d[par[0]] || [];
+        document.querySelectorAll('#' + par[1] + ' .linha').forEach(function (linha, idx) {
+          var v = guardados[idx];
+          if (!v) return;
+          linha.querySelectorAll('[data-chave]').forEach(function (el) {
+            if (v[el.dataset.chave] != null) el.value = v[el.dataset.chave];
+          });
+        });
+      });
     (d.horarios || []).forEach(function (h, i) {
       var tr = corpoHorarios.querySelector('tr[data-dia="' + i + '"]');
       if (!tr) return;
@@ -461,7 +487,6 @@ footer{border-top:1px solid var(--line);padding:22px 0 40px;color:var(--muted);f
       tr.querySelector('[data-fecha]').value = h.fecha || '23:00';
       tr.classList.toggle('dia-fechado', !h.aberto);
     });
-    return true;
   }
 
   // ---------- progresso ----------
@@ -571,6 +596,188 @@ footer{border-top:1px solid var(--line);padding:22px 0 40px;color:var(--muted);f
     aviso('Resumo gerado — agora é só copiar.');
   });
 
+  // Número de destino: o padrão é o suporte do BoraHapp, mas quem enviar a ficha pode
+  // trocar pelo próprio acrescentando ?zap=55XXXXXXXXXXX no fim do endereço.
+  var ZAP_PADRAO = '5511971101563';
+  function destino() {
+    try {
+      var p = new URLSearchParams(location.search).get('zap');
+      if (p) return p.replace(/\D/g, '');
+    } catch (e) {}
+    return ZAP_PADRAO;
+  }
+
+  document.getElementById('btnZap').addEventListener('click', function (ev) {
+    var ta = document.getElementById('resumo');
+    if (!ta.value.trim()) ta.value = gerar();
+    ev.currentTarget.href = 'https://wa.me/' + destino() + '?text=' + encodeURIComponent(ta.value);
+    aviso('Abrindo o WhatsApp com a ficha preenchida.');
+  });
+
+  /**
+   * Monta uma cópia desta própria página com as respostas embutidas. Quem receber o arquivo
+   * abre e vê a ficha já preenchida — dá para conferir e até corrigir antes de cadastrar.
+   */
+  /**
+   * Monta um documento proprio com as respostas — em vez de reserializar esta pagina, que
+   * depende de detalhes do navegador. O arquivo abre legivel para quem receber e leva os
+   * dados brutos em JSON no fim, para o cadastro ser feito sem redigitar nada.
+   */
+  function fichaPreenchida() {
+    var d = coletar();
+    var esc = function (s) {
+      return String(s == null ? '' : s)
+        .split('&').join('&amp;').split('<').join('&lt;')
+        .split('>').join('&gt;').split('"').join('&quot;');
+    };
+    var linha = function (rot, val) {
+      if (!val) return '';
+      return '<tr><th>' + esc(rot) + '</th><td>' + esc(val) + '</td></tr>';
+    };
+    var secao = function (titulo, corpo) {
+      if (!corpo) return '';
+      return '<h2>' + esc(titulo) + '</h2>' + corpo;
+    };
+
+    var loja = '<table>' + linha('Nome da loja', d.nomeLoja) + linha('CNPJ/CPF', d.documento)
+      + linha('Razao social', d.razaoSocial) + linha('Responsavel', d.responsavel)
+      + linha('E-mail (login e cobranca)', d.email) + linha('WhatsApp', d.whatsapp) + '</table>';
+
+    var marca = '<table>' + linha('Cor', d.cor) + linha('Nome de exibicao', d.nomeExibicao)
+      + '<tr><th>Logo</th><td>enviada separadamente</td></tr></table>';
+
+    var entrega;
+    if (d.soRetirada) {
+      entrega = '<p><b>Somente retirada no balcao</b> - nao faz entrega.</p>';
+    } else if (d.bairros.length) {
+      entrega = '<table><tr><th>Bairro</th><th>Taxa</th><th>Tempo</th></tr>'
+        + d.bairros.map(function (b) {
+            return '<tr><td>' + esc(b.bairro) + '</td><td>R$ ' + esc(b.taxa) + '</td><td>' + esc(b.tempo) + ' min</td></tr>';
+          }).join('') + '</table>';
+    } else {
+      entrega = '<p class="falta">Nao informado</p>';
+    }
+
+    var horario = '<table>' + d.horarios.map(function (h) {
+      return '<tr><th>' + esc(h.dia) + '</th><td>' + (h.aberto ? esc(h.abre) + ' as ' + esc(h.fecha) : 'fechado') + '</td></tr>';
+    }).join('') + '</table>';
+
+    var cardapio = '';
+    if (d.mandaFoto) cardapio += '<p><b>Foto do cardapio enviada separadamente.</b></p>';
+    if (d.itens.length) {
+      cardapio += '<table><tr><th>Produto</th><th>Categoria</th><th>Preco</th></tr>'
+        + d.itens.map(function (i) {
+            return '<tr><td>' + esc(i.nome) + '</td><td>' + esc(i.categoria) + '</td><td>R$ ' + esc(i.preco) + '</td></tr>';
+          }).join('') + '</table>';
+    }
+    if (d.complementos) cardapio += '<p><b>Opcoes e adicionais:</b> ' + esc(d.complementos) + '</p>';
+    if (!cardapio) cardapio = '<p class="falta">Nao informado</p>';
+
+    var pagamento = '<table>' + linha('Aceita', d.pagamentos.join(', '))
+      + '<tr><th>Leva troco</th><td>' + (d.troco ? 'sim' : 'nao') + '</td></tr></table>';
+
+    var equipe = d.equipe.length
+      ? '<table><tr><th>Nome</th><th>E-mail</th><th>Funcao</th></tr>' + d.equipe.map(function (p) {
+          return '<tr><td>' + esc(p.nome) + '</td><td>' + esc(p.email) + '</td><td>' + esc(p.papel) + '</td></tr>';
+        }).join('') + '</table>' : '';
+
+    var motos = d.motoboys.length
+      ? '<table><tr><th>Nome</th><th>Telefone</th><th>Veiculo</th></tr>' + d.motoboys.map(function (m) {
+          return '<tr><td>' + esc(m.nome) + '</td><td>' + esc(m.telefone) + '</td><td>' + esc(m.veiculo) + '</td></tr>';
+        }).join('') + '</table>' : '';
+
+    var apps = '';
+    if (d.temIfood) apps += '<li>Vende no iFood</li>';
+    if (d.tem99) apps += '<li>Vende no 99Food</li>';
+    if (apps) apps = '<ul>' + apps + '</ul>';
+    if (d.obsApps) apps += '<p>' + esc(d.obsApps) + '</p>';
+
+    var faltando = ESSENCIAIS.filter(function (id) { return !d[id]; });
+    var alerta = faltando.length
+      ? '<p class="alerta">Ainda faltam ' + faltando.length + ' campo(s) essencial(is) no bloco 1.</p>' : '';
+
+    var estilo = 'body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;max-width:760px;margin:0 auto;'
+      + 'padding:32px 20px;color:#1c1726;line-height:1.6;background:#fff}'
+      + 'h1{font-size:1.7rem;margin:0 0 4px}'
+      + 'h2{font-size:1.02rem;margin:26px 0 8px;color:#6d28d9;text-transform:uppercase;letter-spacing:.06em}'
+      + 'table{border-collapse:collapse;width:100%;margin-bottom:8px}'
+      + 'th,td{text-align:left;padding:7px 10px;border-bottom:1px solid #e4e0ec;vertical-align:top;font-size:15px}'
+      + 'th{width:34%;font-weight:600;color:#4a4260}'
+      + '.sub{color:#726a85;margin:0 0 8px}.falta{color:#9a5b00}'
+      + '.alerta{background:#fceff2;border-left:3px solid #b0123c;padding:10px 14px;border-radius:0 8px 8px 0}'
+      + 'details{margin-top:34px;color:#726a85;font-size:13px}'
+      + 'pre{white-space:pre-wrap;word-break:break-all;background:#f3f1f8;padding:12px;border-radius:8px;font-size:11px}';
+
+    var corpo = '<h1>' + esc(d.nomeLoja || 'Ficha de abertura de loja') + '</h1>'
+      + '<p class="sub">Ficha preenchida pelo lojista - BoraHapp</p>'
+      + alerta
+      + secao('1. Loja', loja)
+      + secao('2. Marca', marca)
+      + secao('3. Entrega', entrega)
+      + secao('4. Horario', horario)
+      + secao('5. Cardapio', cardapio)
+      + secao('6. Pagamento', pagamento)
+      + secao('7. Equipe', equipe)
+      + secao('8. Entregadores', motos)
+      + secao('9. Aplicativos', apps)
+      + secao('10. Observacoes', d.observacoes ? '<p>' + esc(d.observacoes) + '</p>' : '')
+      + '<details><summary>Dados para o cadastro (nao precisa ler)</summary><pre>'
+      + esc(JSON.stringify(d, null, 1)) + '</pre></details>';
+
+    return '<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">'
+      + '<meta name="viewport" content="width=device-width,initial-scale=1">'
+      + '<title>Ficha - ' + esc(d.nomeLoja || 'loja') + '</title><style>' + estilo + '</style></head><body>'
+      + corpo + '</body></html>';
+  }
+
+  // Quando a ficha e aberta pelo link do BoraHapp, quem grava o arquivo e o proprio
+  // visualizador (o navegador nao deixa a pagina baixar sozinha). No arquivo local,
+  // o caminho normal do navegador funciona. Tentamos o primeiro e caimos no segundo.
+  var salvarHospedado = null;
+  if (window.claude && typeof window.claude.use === 'function') {
+    try {
+      window.claude.use('downloads').then(function (api) { salvarHospedado = api; })
+        .catch(function () { salvarHospedado = null; });
+    } catch (e) { salvarHospedado = null; }
+  }
+
+  function baixarPeloNavegador(conteudo, nome) {
+    var url = URL.createObjectURL(new Blob([conteudo], { type: 'text/html;charset=utf-8' }));
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = nome;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 3000);
+  }
+
+  document.getElementById('btnBaixar').addEventListener('click', function () {
+    var loja = (document.getElementById('nomeLoja').value.trim() || 'loja')
+      .replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').toLowerCase();
+    var nome = 'ficha-' + loja + '.html';
+    var conteudo = fichaPreenchida();
+
+    if (salvarHospedado) {
+      salvarHospedado.save({ filename: nome, data: conteudo }).then(
+        function () { aviso('Ficha salva — agora e so anexar e enviar o arquivo.'); },
+        function (e) {
+          var codigo = e && e.code;
+          if (codigo === 'declined') { aviso('Tudo bem — voce pode usar o WhatsApp ou copiar o resumo.'); return; }
+          if (codigo === 'rate_limited') { aviso('Aguarde um instante e tente de novo.'); return; }
+          aviso('Nao consegui salvar aqui. Use o WhatsApp ou copie o resumo.');
+        });
+      return;
+    }
+
+    try {
+      baixarPeloNavegador(conteudo, nome);
+      aviso('Ficha salva — agora e so anexar e enviar o arquivo.');
+    } catch (e) {
+      aviso('Nao consegui salvar aqui. Use o WhatsApp ou copie o resumo.');
+    }
+  });
+
   document.getElementById('btnCopiar').addEventListener('click', function () {
     var ta = document.getElementById('resumo');
     if (!ta.value.trim()) ta.value = gerar();
@@ -603,11 +810,21 @@ footer{border-top:1px solid var(--line);padding:22px 0 40px;color:var(--muted);f
   function pintarEntrega() { areaEntrega.style.display = soRetirada.checked ? 'none' : ''; }
   soRetirada.addEventListener('change', pintarEntrega);
 
-  // Começa com uma linha em branco nas listas principais, para não parecer vazio.
-  if (!restaurar()) {
+  var salvos = dadosSalvos();
+  if (salvos) {
+    criarEstrutura(salvos);
+    aplicarValores(salvos);
+  } else {
+    // Começa com duas linhas em branco, para a lista de bairros não parecer vazia.
     novaLinha('bairro');
     novaLinha('bairro');
   }
+  // O navegador reaplica o estado do formulário depois deste script; reescrevemos por cima.
+  window.addEventListener('load', function () {
+    if (salvos) aplicarValores(salvos);
+    pintarEntrega();
+    pintarProgresso();
+  });
   pintarEntrega();
   pintarProgresso();
 })();
