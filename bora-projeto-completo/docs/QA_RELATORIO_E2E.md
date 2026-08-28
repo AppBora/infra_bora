@@ -81,3 +81,68 @@ O script exercita: health, login, onboarding/prontidão, defaults semeados, os 5
 1. Padronizar a borda da janela de tempo (`>=`) entre balancete e análise.
 2. Reduzir N+1 nas agregações de rede (`findAllById`).
 3. Testes automatizados de regressão (JUnit + MockMvc com Testcontainers) para os fluxos acima — próximo passo natural de QA.
+
+---
+
+# Rodada 2 — 2026-08-28 (teste dinâmico real)
+
+O lote acima ficou 7 semanas sem commit nem deploy (os `.git/index.lock` de 10/07 14:57 e 14:58 mostram que a
+sessão anterior morreu no meio de um `git add`). Esta rodada subiu a stack de verdade e substituiu a auditoria
+estática por execução.
+
+## O que foi executado
+- `docker compose up --build` — o lote **compila** e o app **sobe**: Flyway migrou v25→v26 e o
+  `ddl-auto: validate` aceitou o mapeamento de `Loja` contra a V26.
+- `scripts/smoke-test.sh` — **19/19 PASS**.
+- Testes dirigidos aos 3 defeitos corrigidos (abaixo).
+
+## Defeitos encontrados nesta rodada e corrigidos
+
+**1. [BLOQUEADOR — dinheiro] Token do webhook da subconta era descartado.**
+`AsaasSubcontaService.criarWebhookPix` gerava um `authToken`, mandava para o Asaas e não persistia em lugar
+nenhum; `PublicController.pixWebhook` só sabia validar contra `IntegracaoCanal.webhookToken` (fluxo legado).
+Consequência: **todo webhook de pagamento PIX de loja com subconta seria rejeitado com 401** e nenhum pedido
+pago seria confirmado automaticamente. Corrigido: coluna `loja.asaas_webhook_token` (na própria V26, que nunca
+foi aplicada), token persistido, e o webhook agora autentica pelos dois caminhos (subconta ou integração
+legada), com o `ultimaSync` do canal legado atualizado só quando ele existe.
+*Verificado:* token correto → 200; token errado → 401; sem token → 401.
+
+**2. [ALTO — segurança] `GET /api/recebimento` sem checagem de papel.**
+A resposta traz o `onboardingUrl`, o link de KYC bancário da subconta — que decide para onde vai o dinheiro do
+PIX. Qualquer papel logado da loja (inclusive OPERADOR) conseguia lê-lo. Corrigido com
+`ctx.requirePapel("ADMINISTRADOR_LOJA")` no `status()`.
+*Verificado:* operador → 403; admin → 200.
+
+**3. [BLOQUEADOR — UX] Menu "Rede & Análise" liberado para GERENTE, backend só aceita ADMINISTRADOR_LOJA.**
+O gerente via o item no menu e caía numa tela com as 4 abas em erro. Decisão aplicada: manter a tela
+**restrita ao admin** (é o que o backend já fazia com o balancete em produção) e alinhar o menu.
+*Pendente de decisão do dono:* `PERMISSOES.md` diz que o GERENTE "acompanha indicadores" — se a intenção for
+essa, o ajuste é liberar `GERENTE` em `AnaliseRedeService.janela()` e `RedeService.balancete()` e devolver o
+papel ao menu.
+
+## Outros ajustes da rodada
+- Passo "Receba por PIX" do onboarding ignorava a subconta: loja que ativava continuava marcada como pendente.
+- `RecebimentoController` transformava `cpfCnpj` ausente na string literal `"null"` (`String.valueOf(null)`).
+- Índice `(loja_id, data_hora)` em `log_status` — as consultas novas de horário/tempos não eram cobertas pelo
+  índice existente `(loja_id, pedido_id)`.
+- Mapa de calor de horário fixava 8h–23h e escondia silenciosamente pedidos de madrugada.
+- Link "Rede" cravado à mão em 10 HTMLs que o `renderNav()` sobrescreve (duplicava manutenção e piscava sem
+  checagem de papel); `ativarRecebimento()` morto no `api.js`; cache-busting do `api.js` alinhado.
+- `prototipo-rede.html` (mockup sem autenticação e com números fictícios) saiu da pasta servida para
+  `docs/mockups/`.
+- O próprio `smoke-test.sh` estava errado: checava `/api/health`, que é protegido por JWT — trocado por
+  `/actuator/health`. Ganhou também a checagem do webhook PIX.
+
+## Recomendações que NÃO foram aplicadas (fora do escopo deste lote)
+1. **`asaas_api_key` em texto plano no banco** — credencial de pagamento viva de cada lojista. Vale
+   criptografia em nível de aplicação (AttributeConverter) antes de ter lojistas de verdade usando subconta.
+2. **`/public/signup` sem rate limit** — distingue "e-mail já cadastrado com senha errada" de "e-mail novo",
+   o que permite enumerar admins e testar senhas em massa. Precisa de lockout/rate limit por e-mail+IP.
+3. **CORS cai para `*` com credenciais** se `BORA_CORS_ORIGINS` não estiver setada (`WebConfig`). Em produção
+   está setada, mas o padrão deveria falhar fechado.
+4. **`server.error.include-message: always`** devolve ao cliente o texto de erro cru vindo da API do Asaas.
+5. **Sem rate limit** em `POST /public/loja/{id}/pedido` (grava no banco e chama o Asaas a cada request).
+6. **Status público do pedido usa id sequencial** — dá para varrer status de pedidos de terceiros da mesma
+   loja (a resposta não expõe dados pessoais). Usar o `codigo` como identificador público resolveria.
+7. **Comparação de token de webhook não é constant-time** (`String.equals`).
+8. Testes automatizados de regressão (JUnit + MockMvc/Testcontainers) continuam sendo o próximo passo natural.
