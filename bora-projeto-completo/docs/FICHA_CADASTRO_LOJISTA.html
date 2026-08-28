@@ -1,0 +1,614 @@
+<title>Ficha de Abertura da Loja</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@0,400;0,500;0,600&display=swap">
+
+<style>
+:root{
+  --ground:#FAF9FC; --surface:#FFFFFF; --surface-2:#F3F1F8;
+  --line:#E4E0EC; --line-strong:#CFC8DE;
+  --ink:#1C1726; --ink-2:#4A4260; --muted:#726A85;
+  --accent:#6D28D9; --accent-soft:#F1EBFE;
+  --ok:#0F766E; --ok-soft:#DCF2EF;
+  --shadow:0 1px 2px rgba(28,23,38,.05), 0 8px 24px -16px rgba(28,23,38,.22);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#141119; --surface:#1C1824; --surface-2:#241F2E;
+    --line:#312A3E; --line-strong:#463C58;
+    --ink:#F2EFF7; --ink-2:#C7BFD6; --muted:#9A91AC;
+    --accent:#B294F8; --accent-soft:#2A2140;
+    --ok:#5EC8B8; --ok-soft:#16302E;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.7);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#141119; --surface:#1C1824; --surface-2:#241F2E;
+  --line:#312A3E; --line-strong:#463C58;
+  --ink:#F2EFF7; --ink-2:#C7BFD6; --muted:#9A91AC;
+  --accent:#B294F8; --accent-soft:#2A2140;
+  --ok:#5EC8B8; --ok-soft:#16302E;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.7);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--ground);color:var(--ink);
+  font-family:'IBM Plex Sans',system-ui,-apple-system,Segoe UI,sans-serif;
+  font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:720px;margin:0 auto;padding:0 18px}
+
+header.top{background:var(--surface);border-bottom:1px solid var(--line)}
+header.top .wrap{padding:36px 18px 26px;display:flex;flex-direction:column;gap:12px}
+.eyebrow{font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:11.5px;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+h1{font-family:'Bricolage Grotesque','IBM Plex Sans',sans-serif;font-weight:800;
+  font-size:clamp(1.8rem,6vw,2.6rem);line-height:1.06;letter-spacing:-.02em;margin:0;text-wrap:balance}
+.lede{color:var(--ink-2);margin:0;font-size:1.02rem}
+
+.progresso{position:sticky;top:0;z-index:30;background:var(--surface);border-bottom:1px solid var(--line)}
+.progresso .wrap{display:flex;align-items:center;gap:14px;padding:10px 18px}
+.barra{flex:1;height:7px;border-radius:99px;background:var(--surface-2);overflow:hidden}
+.barra span{display:block;height:100%;width:0;background:var(--accent);transition:width .3s ease}
+.progresso .n{font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:12.5px;
+  color:var(--ink-2);white-space:nowrap;font-variant-numeric:tabular-nums}
+
+main{padding:26px 0 70px}
+section.bloco{background:var(--surface);border:1px solid var(--line);border-radius:14px;
+  box-shadow:var(--shadow);margin-bottom:16px;overflow:hidden}
+.cab{display:flex;align-items:center;gap:12px;padding:16px 20px;background:var(--surface-2);
+  border-bottom:1px solid var(--line);flex-wrap:wrap}
+.cab .num{font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:12px;font-weight:600;color:var(--accent)}
+.cab h2{font-family:'Bricolage Grotesque','IBM Plex Sans',sans-serif;font-weight:600;
+  font-size:1.1rem;margin:0;flex:1}
+.opc{font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:10.5px;font-weight:600;
+  letter-spacing:.08em;text-transform:uppercase;padding:2px 8px;border-radius:99px;
+  background:var(--surface);color:var(--muted);border:1px solid var(--line-strong)}
+.corpo{padding:18px 20px}
+.ajuda{color:var(--muted);font-size:14px;margin:0 0 16px}
+
+label.campo{display:block;margin-bottom:14px}
+label.campo > span{display:block;font-weight:600;font-size:14.5px;margin-bottom:5px}
+label.campo small{display:block;color:var(--muted);font-weight:400;font-size:13px;margin-top:1px}
+input[type=text],input[type=email],input[type=tel],input[type=number],textarea,select{
+  width:100%;padding:11px 13px;border:1px solid var(--line-strong);border-radius:9px;
+  font:inherit;font-size:16px;background:var(--surface);color:var(--ink);
+}
+input:focus-visible,textarea:focus-visible,select:focus-visible{
+  outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent)}
+textarea{min-height:90px;resize:vertical}
+
+.dupla{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:520px){.dupla{grid-template-columns:1fr}}
+
+.linhas{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+.linha{display:grid;gap:8px;align-items:center}
+.linha.bairro{grid-template-columns:2fr 1fr 1fr auto}
+.linha.pessoa{grid-template-columns:1.4fr 1.6fr 1fr auto}
+.linha.moto{grid-template-columns:1.4fr 1.2fr 1fr auto}
+.linha.item{grid-template-columns:2fr 1.2fr 1fr auto}
+@media(max-width:600px){.linha.bairro,.linha.pessoa,.linha.moto,.linha.item{grid-template-columns:1fr 1fr}}
+.linha input,.linha select{padding:9px 11px;font-size:15px}
+button.rm{background:transparent;border:1px solid var(--line-strong);color:var(--muted);
+  border-radius:8px;width:38px;height:38px;cursor:pointer;font-size:17px;line-height:1}
+button.rm:hover{color:#c0173e;border-color:#c0173e}
+button.add{background:var(--accent-soft);color:var(--accent);border:1px dashed var(--accent);
+  border-radius:9px;padding:9px 16px;font:inherit;font-weight:600;font-size:14px;cursor:pointer}
+button.add:hover{filter:brightness(.97)}
+
+.chk{display:flex;align-items:flex-start;gap:10px;padding:8px 0;cursor:pointer}
+.chk input{width:20px;height:20px;margin-top:2px;accent-color:var(--accent);flex:0 0 auto;cursor:pointer}
+.chk span{font-size:15px}
+.grade-chk{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:0 16px}
+
+table.horario{width:100%;border-collapse:collapse;font-size:15px}
+table.horario td{padding:7px 4px;border-bottom:1px solid var(--line)}
+table.horario td:first-child{font-weight:600;width:34%}
+table.horario tr:last-child td{border-bottom:0}
+table.horario input[type=time]{padding:8px 10px;border:1px solid var(--line-strong);
+  border-radius:8px;font:inherit;font-size:15px;background:var(--surface);color:var(--ink);width:100%}
+.dia-fechado input[type=time]{opacity:.35;pointer-events:none}
+
+.destaque{background:var(--accent-soft);border-left:3px solid var(--accent);
+  padding:13px 16px;border-radius:0 9px 9px 0;font-size:14.5px;color:var(--ink-2);margin:0 0 16px}
+.destaque b{color:var(--ink)}
+
+.final{margin-top:34px}
+.final h2{font-family:'Bricolage Grotesque','IBM Plex Sans',sans-serif;font-weight:800;
+  font-size:1.5rem;margin:0 0 6px;letter-spacing:-.015em}
+.final p{color:var(--muted);margin:0 0 16px}
+#resumo{width:100%;min-height:300px;font-family:'IBM Plex Mono',ui-monospace,monospace;
+  font-size:12.5px;line-height:1.6;border-radius:12px;padding:16px;background:var(--surface);
+  border:1px solid var(--line);color:var(--ink)}
+.acoes{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:12px}
+button.principal{background:var(--accent);color:#fff;border:0;border-radius:10px;
+  padding:13px 24px;font:inherit;font-weight:600;font-size:15px;cursor:pointer}
+:root[data-theme="dark"] button.principal{color:#141119}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) button.principal{color:#141119}}
+button.principal:hover{filter:brightness(1.08)}
+button.secundaria{background:transparent;color:var(--ink-2);border:1px solid var(--line-strong);
+  border-radius:10px;padding:13px 20px;font:inherit;font-size:14.5px;cursor:pointer}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.status{font-size:14px;color:var(--ok);font-weight:600}
+
+footer{border-top:1px solid var(--line);padding:22px 0 40px;color:var(--muted);font-size:13px;text-align:center}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<header class="top">
+  <div class="wrap">
+    <div class="eyebrow">Onboarding assistido · BoraHapp</div>
+    <h1>Ficha de abertura da sua loja</h1>
+    <p class="lede">Preencha o que souber agora — o que ficar em branco a gente resolve junto depois. No fim, clique em <b>gerar resumo</b> e mande o texto de volta. O que você digitar fica salvo neste navegador.</p>
+  </div>
+</header>
+
+<div class="progresso">
+  <div class="wrap">
+    <div class="barra"><span id="barra"></span></div>
+    <div class="n" id="contador">0% preenchido</div>
+  </div>
+</div>
+
+<main class="wrap">
+
+  <!-- 1 -->
+  <section class="bloco">
+    <div class="cab"><span class="num">1</span><h2>Sobre a loja</h2></div>
+    <div class="corpo">
+      <label class="campo"><span>Nome da loja<small>Como seu cliente conhece o lugar</small></span>
+        <input type="text" id="nomeLoja" placeholder="Ex.: Pizzaria do João"></label>
+      <div class="dupla">
+        <label class="campo"><span>CNPJ<small>Ou o seu CPF, se não tiver CNPJ</small></span>
+          <input type="text" id="documento" placeholder="00.000.000/0000-00"></label>
+        <label class="campo"><span>Razão social<small>Só se tiver CNPJ</small></span>
+          <input type="text" id="razaoSocial" placeholder="Nome da empresa"></label>
+      </div>
+      <label class="campo"><span>Seu nome completo</span>
+        <input type="text" id="responsavel" placeholder="Quem responde pela loja"></label>
+      <div class="dupla">
+        <label class="campo"><span>Seu e-mail<small>Será seu login e receberá a cobrança</small></span>
+          <input type="email" id="email" placeholder="voce@email.com"></label>
+        <label class="campo"><span>Seu WhatsApp</span>
+          <input type="tel" id="whatsapp" placeholder="(11) 99999-9999"></label>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2 -->
+  <section class="bloco">
+    <div class="cab"><span class="num">2</span><h2>Sua marca</h2></div>
+    <div class="corpo">
+      <p class="destaque"><b>A logo você manda separado</b>, junto com este resumo — pode ser o arquivo ou uma foto boa da fachada. É ela que vai aparecer no seu cardápio e no painel.</p>
+      <div class="dupla">
+        <label class="campo"><span>Cor da sua marca<small>Se não souber, deixe em branco</small></span>
+          <input type="text" id="cor" placeholder="Ex.: vermelho escuro, ou #781E1E"></label>
+        <label class="campo"><span>Nome curto para exibir<small>Só se for diferente do nome completo</small></span>
+          <input type="text" id="nomeExibicao" placeholder="Ex.: Bella Napoli"></label>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 -->
+  <section class="bloco">
+    <div class="cab"><span class="num">3</span><h2>Entrega</h2></div>
+    <div class="corpo">
+      <p class="ajuda">Liste os bairros que você atende, com quanto cobra e quanto tempo leva em cada um.</p>
+      <label class="chk"><input type="checkbox" id="soRetirada">
+        <span>Não faço entrega — só retirada no balcão</span></label>
+      <div id="areaEntrega">
+        <div class="linhas" id="bairros"></div>
+        <button class="add" type="button" data-add="bairro">+ adicionar bairro</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 -->
+  <section class="bloco">
+    <div class="cab"><span class="num">4</span><h2>Horário de funcionamento</h2></div>
+    <div class="corpo">
+      <p class="ajuda">Desmarque os dias em que a loja não abre.</p>
+      <table class="horario"><tbody id="horarios"></tbody></table>
+    </div>
+  </section>
+
+  <!-- 5 -->
+  <section class="bloco">
+    <div class="cab"><span class="num">5</span><h2>Cardápio</h2></div>
+    <div class="corpo">
+      <p class="destaque"><b>O jeito mais rápido é a foto.</b> Mande junto uma foto do seu cardápio — ou o print do seu iFood — e nós cadastramos os produtos a partir dela. Você só confere depois.</p>
+      <label class="chk"><input type="checkbox" id="mandaFoto" checked>
+        <span>Vou mandar a foto do cardápio junto com este resumo</span></label>
+      <p class="ajuda" style="margin-top:14px">Se preferir digitar alguns itens, use a lista abaixo. Não precisa colocar tudo.</p>
+      <div class="linhas" id="itens"></div>
+      <button class="add" type="button" data-add="item">+ adicionar produto</button>
+      <label class="campo" style="margin-top:18px"><span>Produtos com opções<small>Tamanho, borda, adicionais… diga quais são e quanto cada uma custa a mais</small></span>
+        <textarea id="complementos" placeholder="Ex.: Pizza — Tamanho: Média +0, Grande +12, Família +24. Borda: sem borda +0, catupiry +8."></textarea></label>
+    </div>
+  </section>
+
+  <!-- 6 -->
+  <section class="bloco">
+    <div class="cab"><span class="num">6</span><h2>Formas de pagamento</h2></div>
+    <div class="corpo">
+      <p class="ajuda">Deixe marcado o que você aceita.</p>
+      <div class="grade-chk">
+        <label class="chk"><input type="checkbox" class="pgto" value="Dinheiro" checked><span>Dinheiro</span></label>
+        <label class="chk"><input type="checkbox" class="pgto" value="PIX" checked><span>PIX</span></label>
+        <label class="chk"><input type="checkbox" class="pgto" value="Cartão de crédito" checked><span>Cartão de crédito</span></label>
+        <label class="chk"><input type="checkbox" class="pgto" value="Cartão de débito" checked><span>Cartão de débito</span></label>
+        <label class="chk"><input type="checkbox" class="pgto" value="Vale-refeição"><span>Vale-refeição</span></label>
+        <label class="chk"><input type="checkbox" id="troco" checked><span>Levo troco na entrega</span></label>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7 -->
+  <section class="bloco">
+    <div class="cab"><span class="num">7</span><h2>Sua equipe</h2><span class="opc">opcional</span></div>
+    <div class="corpo">
+      <p class="ajuda">Quem mais vai usar o sistema. Se você opera sozinho, pode pular.</p>
+      <div class="linhas" id="equipe"></div>
+      <button class="add" type="button" data-add="pessoa">+ adicionar pessoa</button>
+    </div>
+  </section>
+
+  <!-- 8 -->
+  <section class="bloco">
+    <div class="cab"><span class="num">8</span><h2>Entregadores</h2><span class="opc">opcional</span></div>
+    <div class="corpo">
+      <p class="ajuda">Só se você tem entrega própria. É o que permite fazer o acerto com os motoboys.</p>
+      <div class="linhas" id="motoboys"></div>
+      <button class="add" type="button" data-add="moto">+ adicionar entregador</button>
+    </div>
+  </section>
+
+  <!-- 9 -->
+  <section class="bloco">
+    <div class="cab"><span class="num">9</span><h2>Aplicativos de delivery</h2><span class="opc">opcional</span></div>
+    <div class="corpo">
+      <p class="ajuda">Se você já vende em algum aplicativo e quer receber esses pedidos aqui também.</p>
+      <div class="grade-chk">
+        <label class="chk"><input type="checkbox" id="temIfood"><span>Vendo no iFood</span></label>
+        <label class="chk"><input type="checkbox" id="tem99"><span>Vendo no 99Food</span></label>
+      </div>
+      <label class="campo" style="margin-top:12px"><span>Observações sobre os aplicativos<small>Ex.: há quanto tempo vende, quantos pedidos por dia</small></span>
+        <textarea id="obsApps" placeholder="Opcional"></textarea></label>
+    </div>
+  </section>
+
+  <!-- 10 -->
+  <section class="bloco">
+    <div class="cab"><span class="num">10</span><h2>Mais alguma coisa?</h2><span class="opc">opcional</span></div>
+    <div class="corpo">
+      <label class="campo"><span>Conte o que for importante<small>Alguma regra da sua operação, um pedido especial, uma dúvida</small></span>
+        <textarea id="observacoes" placeholder="Escreva à vontade"></textarea></label>
+    </div>
+  </section>
+
+  <section class="final">
+    <h2>Pronto — gere o resumo</h2>
+    <p>Clique no botão, copie o texto e mande de volta junto com a logo e a foto do cardápio.</p>
+    <div class="acoes" style="margin-bottom:14px">
+      <button class="principal" type="button" id="btnGerar">Gerar resumo</button>
+      <button class="secundaria" type="button" id="btnLimpar">Limpar tudo</button>
+    </div>
+    <textarea id="resumo" spellcheck="false" placeholder="O resumo aparece aqui depois que você clicar em gerar."></textarea>
+    <div class="acoes">
+      <button class="principal" type="button" id="btnCopiar">Copiar resumo</button>
+      <span class="status" id="aviso" role="status"></span>
+    </div>
+  </section>
+</main>
+
+<footer>BoraHapp · seus dados ficam salvos só neste navegador até você enviar</footer>
+
+<script>
+(function () {
+  var CHAVE = 'borahapp-ficha-lojista';
+
+  var DIAS = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+  var PAPEIS = ['Operador', 'Gerente', 'Administrador'];
+  var VEICULOS = ['Moto', 'Bike', 'Carro', 'A pé'];
+
+  // ---------- linhas dinâmicas ----------
+  var MODELOS = {
+    bairro: { alvo: 'bairros', campos: [
+      { ph: 'Bairro', chave: 'bairro' },
+      { ph: 'Taxa R$', chave: 'taxa' },
+      { ph: 'Minutos', chave: 'tempo' }] },
+    item: { alvo: 'itens', campos: [
+      { ph: 'Produto', chave: 'nome' },
+      { ph: 'Categoria', chave: 'categoria' },
+      { ph: 'Preço R$', chave: 'preco' }] },
+    pessoa: { alvo: 'equipe', campos: [
+      { ph: 'Nome', chave: 'nome' },
+      { ph: 'E-mail', chave: 'email' },
+      { opcoes: PAPEIS, chave: 'papel' }] },
+    moto: { alvo: 'motoboys', campos: [
+      { ph: 'Nome', chave: 'nome' },
+      { ph: 'Telefone', chave: 'telefone' },
+      { opcoes: VEICULOS, chave: 'veiculo' }] }
+  };
+  var CLASSE = { bairro: 'bairro', item: 'item', pessoa: 'pessoa', moto: 'moto' };
+
+  function novaLinha(tipo, valores) {
+    var m = MODELOS[tipo];
+    var div = document.createElement('div');
+    div.className = 'linha ' + CLASSE[tipo];
+    div.dataset.tipo = tipo;
+    m.campos.forEach(function (c) {
+      var el;
+      if (c.opcoes) {
+        el = document.createElement('select');
+        c.opcoes.forEach(function (o) {
+          var op = document.createElement('option');
+          op.value = o; op.textContent = o; el.appendChild(op);
+        });
+      } else {
+        el = document.createElement('input');
+        el.type = 'text';
+        el.placeholder = c.ph;
+      }
+      el.dataset.chave = c.chave;
+      if (valores && valores[c.chave] != null) el.value = valores[c.chave];
+      el.addEventListener('input', salvar);
+      el.addEventListener('change', salvar);
+      div.appendChild(el);
+    });
+    var rm = document.createElement('button');
+    rm.type = 'button'; rm.className = 'rm'; rm.textContent = '×';
+    rm.setAttribute('aria-label', 'remover linha');
+    rm.addEventListener('click', function () { div.remove(); salvar(); });
+    div.appendChild(rm);
+    document.getElementById(m.alvo).appendChild(div);
+    return div;
+  }
+
+  document.querySelectorAll('button.add').forEach(function (b) {
+    b.addEventListener('click', function () { novaLinha(b.dataset.add); salvar(); });
+  });
+
+  function lerLinhas(alvo) {
+    var out = [];
+    document.querySelectorAll('#' + alvo + ' .linha').forEach(function (l) {
+      var o = {}, vazio = true;
+      l.querySelectorAll('[data-chave]').forEach(function (el) {
+        o[el.dataset.chave] = el.value.trim();
+        if (el.tagName === 'INPUT' && el.value.trim()) vazio = false;
+      });
+      if (!vazio) out.push(o);
+    });
+    return out;
+  }
+
+  // ---------- horários ----------
+  var corpoHorarios = document.getElementById('horarios');
+  DIAS.forEach(function (dia, idx) {
+    var tr = document.createElement('tr');
+    tr.dataset.dia = idx;
+    var fimDeSemana = idx === 0 || idx === 6;
+    tr.innerHTML =
+      '<td><label class="chk" style="padding:0"><input type="checkbox" data-aberto ' +
+      (fimDeSemana ? '' : 'checked') + '><span>' + dia + '</span></label></td>' +
+      '<td><input type="time" data-abre value="18:00"></td>' +
+      '<td><input type="time" data-fecha value="23:00"></td>';
+    corpoHorarios.appendChild(tr);
+    var chk = tr.querySelector('[data-aberto]');
+    function pintar() { tr.classList.toggle('dia-fechado', !chk.checked); }
+    chk.addEventListener('change', function () { pintar(); salvar(); });
+    tr.querySelectorAll('input[type=time]').forEach(function (i) { i.addEventListener('change', salvar); });
+    pintar();
+  });
+
+  function lerHorarios() {
+    var out = [];
+    corpoHorarios.querySelectorAll('tr').forEach(function (tr) {
+      var i = Number(tr.dataset.dia);
+      out.push({
+        dia: DIAS[i],
+        aberto: tr.querySelector('[data-aberto]').checked,
+        abre: tr.querySelector('[data-abre]').value,
+        fecha: tr.querySelector('[data-fecha]').value
+      });
+    });
+    return out;
+  }
+
+  // ---------- estado ----------
+  var SIMPLES = ['nomeLoja', 'documento', 'razaoSocial', 'responsavel', 'email', 'whatsapp',
+    'cor', 'nomeExibicao', 'complementos', 'obsApps', 'observacoes'];
+  var MARCAS = ['soRetirada', 'mandaFoto', 'troco', 'temIfood', 'tem99'];
+
+  function coletar() {
+    var d = {};
+    SIMPLES.forEach(function (id) { d[id] = document.getElementById(id).value.trim(); });
+    MARCAS.forEach(function (id) { d[id] = document.getElementById(id).checked; });
+    d.pagamentos = [];
+    document.querySelectorAll('.pgto:checked').forEach(function (c) { d.pagamentos.push(c.value); });
+    d.bairros = lerLinhas('bairros');
+    d.itens = lerLinhas('itens');
+    d.equipe = lerLinhas('equipe');
+    d.motoboys = lerLinhas('motoboys');
+    d.horarios = lerHorarios();
+    return d;
+  }
+
+  function salvar() {
+    try { localStorage.setItem(CHAVE, JSON.stringify(coletar())); } catch (e) {}
+    pintarProgresso();
+  }
+
+  function restaurar() {
+    var d;
+    try { d = JSON.parse(localStorage.getItem(CHAVE) || 'null'); } catch (e) { d = null; }
+    if (!d) return false;
+    SIMPLES.forEach(function (id) { if (d[id]) document.getElementById(id).value = d[id]; });
+    MARCAS.forEach(function (id) { if (typeof d[id] === 'boolean') document.getElementById(id).checked = d[id]; });
+    if (d.pagamentos) {
+      document.querySelectorAll('.pgto').forEach(function (c) { c.checked = d.pagamentos.indexOf(c.value) >= 0; });
+    }
+    (d.bairros || []).forEach(function (v) { novaLinha('bairro', v); });
+    (d.itens || []).forEach(function (v) { novaLinha('item', v); });
+    (d.equipe || []).forEach(function (v) { novaLinha('pessoa', v); });
+    (d.motoboys || []).forEach(function (v) { novaLinha('moto', v); });
+    (d.horarios || []).forEach(function (h, i) {
+      var tr = corpoHorarios.querySelector('tr[data-dia="' + i + '"]');
+      if (!tr) return;
+      tr.querySelector('[data-aberto]').checked = !!h.aberto;
+      tr.querySelector('[data-abre]').value = h.abre || '18:00';
+      tr.querySelector('[data-fecha]').value = h.fecha || '23:00';
+      tr.classList.toggle('dia-fechado', !h.aberto);
+    });
+    return true;
+  }
+
+  // ---------- progresso ----------
+  var ESSENCIAIS = ['nomeLoja', 'documento', 'responsavel', 'email', 'whatsapp'];
+  function pintarProgresso() {
+    var d = coletar();
+    var feitos = 0, total = ESSENCIAIS.length + 3;
+    ESSENCIAIS.forEach(function (id) { if (d[id]) feitos++; });
+    if (d.soRetirada || d.bairros.length) feitos++;
+    if (d.mandaFoto || d.itens.length) feitos++;
+    if (d.horarios.some(function (h) { return h.aberto; })) feitos++;
+    var pct = Math.round(feitos * 100 / total);
+    document.getElementById('barra').style.width = pct + '%';
+    document.getElementById('contador').textContent = pct + '% preenchido';
+  }
+
+  // ---------- resumo ----------
+  function linhaSeTiver(rot, valor) { return valor ? rot + ': ' + valor + '\n' : ''; }
+
+  function gerar() {
+    var d = coletar();
+    var t = 'FICHA DE ABERTURA DE LOJA — BoraHapp\n';
+    t += '=====================================\n\n';
+
+    t += '1) LOJA\n';
+    t += linhaSeTiver('Nome', d.nomeLoja);
+    t += linhaSeTiver('CNPJ/CPF', d.documento);
+    t += linhaSeTiver('Razao social', d.razaoSocial);
+    t += linhaSeTiver('Responsavel', d.responsavel);
+    t += linhaSeTiver('E-mail (login e cobranca)', d.email);
+    t += linhaSeTiver('WhatsApp', d.whatsapp);
+
+    t += '\n2) MARCA\n';
+    t += linhaSeTiver('Cor', d.cor);
+    t += linhaSeTiver('Nome de exibicao', d.nomeExibicao);
+    t += 'Logo: enviada junto com este resumo\n';
+
+    t += '\n3) ENTREGA\n';
+    if (d.soRetirada) {
+      t += 'Somente retirada no balcao — nao faz entrega\n';
+    } else if (d.bairros.length) {
+      d.bairros.forEach(function (b) {
+        t += '- ' + (b.bairro || '?') + ' | R$ ' + (b.taxa || '?') + ' | ' + (b.tempo || '?') + ' min\n';
+      });
+    } else {
+      t += '(nao informado)\n';
+    }
+
+    t += '\n4) HORARIO\n';
+    d.horarios.forEach(function (h) {
+      t += '- ' + h.dia + ': ' + (h.aberto ? h.abre + ' as ' + h.fecha : 'fechado') + '\n';
+    });
+
+    t += '\n5) CARDAPIO\n';
+    if (d.mandaFoto) t += 'Foto do cardapio enviada junto com este resumo\n';
+    if (d.itens.length) {
+      d.itens.forEach(function (i) {
+        t += '- ' + (i.nome || '?') + ' | ' + (i.categoria || 'sem categoria') + ' | R$ ' + (i.preco || '?') + '\n';
+      });
+    }
+    if (!d.mandaFoto && !d.itens.length) t += '(nao informado)\n';
+    if (d.complementos) t += 'Opcoes/adicionais: ' + d.complementos + '\n';
+
+    t += '\n6) PAGAMENTO\n';
+    t += 'Aceita: ' + (d.pagamentos.length ? d.pagamentos.join(', ') : '(nao informado)') + '\n';
+    t += 'Leva troco na entrega: ' + (d.troco ? 'sim' : 'nao') + '\n';
+
+    if (d.equipe.length) {
+      t += '\n7) EQUIPE\n';
+      d.equipe.forEach(function (p) {
+        t += '- ' + (p.nome || '?') + ' | ' + (p.email || 'sem e-mail') + ' | ' + (p.papel || 'Operador') + '\n';
+      });
+    }
+
+    if (d.motoboys.length) {
+      t += '\n8) ENTREGADORES\n';
+      d.motoboys.forEach(function (m) {
+        t += '- ' + (m.nome || '?') + ' | ' + (m.telefone || 'sem telefone') + ' | ' + (m.veiculo || 'Moto') + '\n';
+      });
+    }
+
+    if (d.temIfood || d.tem99 || d.obsApps) {
+      t += '\n9) APLICATIVOS\n';
+      if (d.temIfood) t += '- Vende no iFood\n';
+      if (d.tem99) t += '- Vende no 99Food\n';
+      t += linhaSeTiver('Observacoes', d.obsApps);
+    }
+
+    if (d.observacoes) t += '\n10) OBSERVACOES\n' + d.observacoes + '\n';
+
+    var faltando = ESSENCIAIS.filter(function (id) { return !d[id]; });
+    if (faltando.length) {
+      t += '\n-------------------------------------\n';
+      t += 'AINDA FALTA PREENCHER: ' + faltando.length + ' campo(s) essencial(is) do bloco 1.\n';
+    }
+    return t;
+  }
+
+  function aviso(txt) {
+    var el = document.getElementById('aviso');
+    el.textContent = txt;
+    setTimeout(function () { el.textContent = ''; }, 4000);
+  }
+
+  document.getElementById('btnGerar').addEventListener('click', function () {
+    document.getElementById('resumo').value = gerar();
+    aviso('Resumo gerado — agora é só copiar.');
+  });
+
+  document.getElementById('btnCopiar').addEventListener('click', function () {
+    var ta = document.getElementById('resumo');
+    if (!ta.value.trim()) ta.value = gerar();
+    ta.focus(); ta.select();
+    var ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+    if (ok) { aviso('Copiado.'); return; }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(ta.value).then(
+        function () { aviso('Copiado.'); },
+        function () { aviso('Texto selecionado — use Ctrl+C.'); });
+    } else {
+      aviso('Texto selecionado — use Ctrl+C.');
+    }
+  });
+
+  document.getElementById('btnLimpar').addEventListener('click', function () {
+    if (!confirm('Isso apaga tudo que você preencheu. Continuar?')) return;
+    try { localStorage.removeItem(CHAVE); } catch (e) {}
+    location.reload();
+  });
+
+  document.querySelectorAll('input, textarea, select').forEach(function (el) {
+    el.addEventListener('input', salvar);
+    el.addEventListener('change', salvar);
+  });
+
+  var areaEntrega = document.getElementById('areaEntrega');
+  var soRetirada = document.getElementById('soRetirada');
+  function pintarEntrega() { areaEntrega.style.display = soRetirada.checked ? 'none' : ''; }
+  soRetirada.addEventListener('change', pintarEntrega);
+
+  // Começa com uma linha em branco nas listas principais, para não parecer vazio.
+  if (!restaurar()) {
+    novaLinha('bairro');
+    novaLinha('bairro');
+  }
+  pintarEntrega();
+  pintarProgresso();
+})();
+</script>
