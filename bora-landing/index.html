@@ -1,392 +1,343 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>BoraHapp — Sistema de delivery com a sua marca, sem taxa por pedido</title>
-<meta name="description" content="Gestão completa de delivery white-label: pedidos, cozinha (KDS), entregas, cardápio digital com QR, CRM e relatórios. Plano único R$ 199/mês por loja, pedidos ilimitados, sem taxa por pedido.">
+<meta name="description" content="Organize pedidos, cozinha e entregas do seu delivery com o painel e o cardápio da sua marca. R$ 199/mês por loja, pedidos ilimitados, sem comissão sobre as vendas.">
 <link rel="canonical" href="https://borahapp.com.br/">
 <link rel="icon" href="/assets/img/icone-bora.svg">
 <meta property="og:type" content="website">
-<meta property="og:locale" content="pt_BR">
 <meta property="og:url" content="https://borahapp.com.br/">
 <meta property="og:site_name" content="BoraHapp">
-<meta property="og:title" content="BoraHapp — Sistema de delivery com a sua marca">
-<meta property="og:description" content="Pedidos ilimitados, sem taxa por pedido. Cozinha, entregas, cardápio QR, CRM e relatórios com a marca da sua loja. R$ 199/mês por loja.">
-<style>
-  :root{
-    --laranja:#ff5a1f; --laranja-esc:#e04408; --verde:#12b76a; --escuro:#141518;
-    --cinza:#5b6470; --claro:#f6f7f9; --branco:#fff; --borda:#e6e8ec;
-    --raio:14px; --sombra:0 10px 30px rgba(20,21,24,.08);
-  }
-  *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',system-ui,-apple-system,sans-serif}
-  body{color:var(--escuro);line-height:1.6;background:var(--branco)}
-  a{text-decoration:none;color:inherit}
-  .wrap{max-width:1140px;margin:0 auto;padding:0 20px}
-  .btn{display:inline-block;padding:14px 26px;border-radius:999px;font-weight:700;transition:.2s;cursor:pointer;border:none;font-size:16px}
-  .btn-p{background:var(--laranja);color:#fff}
-  .btn-p:hover{background:var(--laranja-esc);transform:translateY(-2px)}
-  .btn-o{background:transparent;color:var(--escuro);border:2px solid var(--borda)}
-  .btn-o:hover{border-color:var(--laranja);color:var(--laranja)}
-  /* header */
-  header{position:sticky;top:0;background:rgba(255,255,255,.9);backdrop-filter:blur(8px);border-bottom:1px solid var(--borda);z-index:50}
-  header .wrap{display:flex;align-items:center;justify-content:space-between;height:70px}
-  .logo{font-size:26px;font-weight:800;color:var(--laranja);letter-spacing:-1px}
-  .logo span{color:var(--escuro)}
-  nav a{margin:0 14px;color:var(--cinza);font-weight:600}
-  nav a:hover{color:var(--escuro)}
-  @media(max-width:820px){nav{display:none}}
-  /* hero */
-  .hero{background:linear-gradient(160deg,#fff 0%,#fff5f0 60%,#ffece2 100%);padding:80px 0}
-  .hero-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center}
-  .hero h1{font-size:52px;line-height:1.1;letter-spacing:-1.5px;margin-bottom:20px}
-  .hero h1 em{color:var(--laranja);font-style:normal}
-  .hero p{font-size:20px;color:var(--cinza);margin-bottom:30px;max-width:520px}
-  .hero .cta{display:flex;gap:14px;flex-wrap:wrap}
-  .selo{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--borda);padding:8px 16px;border-radius:999px;font-weight:600;font-size:14px;color:var(--cinza);margin-bottom:24px}
-  .selo b{color:var(--verde)}
-  .mock{background:var(--escuro);border-radius:20px;padding:14px;box-shadow:var(--sombra)}
-  .mock-bar{display:flex;gap:6px;margin-bottom:12px}
-  .mock-bar i{width:11px;height:11px;border-radius:50%;background:#3a3d44}
-  .mock-screen{background:var(--claro);border-radius:10px;padding:18px;min-height:280px}
-  .kpi{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
-  .kpi div{background:#fff;border-radius:10px;padding:12px;border:1px solid var(--borda)}
-  .kpi small{color:var(--cinza);font-size:12px}
-  .kpi b{display:block;font-size:22px;color:var(--escuro)}
-  .col{background:#fff;border-radius:10px;padding:10px;border:1px solid var(--borda);margin-bottom:8px;display:flex;justify-content:space-between;font-size:13px}
-  .tag{background:#fff0e9;color:var(--laranja);padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700}
-  @media(max-width:820px){.hero-grid{grid-template-columns:1fr}.hero h1{font-size:38px}}
-  /* sections */
-  section{padding:72px 0}
-  .center{text-align:center;max-width:640px;margin:0 auto 48px}
-  .center h2{font-size:38px;letter-spacing:-1px;margin-bottom:14px}
-  .center p{font-size:18px;color:var(--cinza)}
-  .kicker{color:var(--laranja);font-weight:800;text-transform:uppercase;letter-spacing:1px;font-size:14px;margin-bottom:10px}
-  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
-  @media(max-width:820px){.grid{grid-template-columns:1fr}}
-  .card{background:#fff;border:1px solid var(--borda);border-radius:var(--raio);padding:28px;transition:.2s}
-  .card:hover{box-shadow:var(--sombra);transform:translateY(-4px)}
-  .ico{width:52px;height:52px;border-radius:12px;background:#fff0e9;display:flex;align-items:center;justify-content:center;font-size:26px;margin-bottom:16px}
-  .card h3{font-size:20px;margin-bottom:8px}
-  .card p{color:var(--cinza);font-size:15px}
-  .bg{background:var(--claro)}
-  /* passos */
-  .passos{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;counter-reset:p}
-  .passo{background:#fff;border-radius:var(--raio);padding:28px;border:1px solid var(--borda);position:relative}
-  .passo::before{counter-increment:p;content:counter(p);position:absolute;top:-18px;left:24px;width:40px;height:40px;background:var(--laranja);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:20px}
-  @media(max-width:820px){.passos{grid-template-columns:1fr;gap:36px}}
-  /* precos */
-  .planos{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;align-items:stretch}
-  @media(max-width:820px){.planos{grid-template-columns:1fr}}
-  .plano{background:#fff;border:1px solid var(--borda);border-radius:18px;padding:32px;display:flex;flex-direction:column}
-  .plano.destaque{border:2px solid var(--laranja);box-shadow:var(--sombra);position:relative}
-  .fita{position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:var(--laranja);color:#fff;padding:4px 16px;border-radius:999px;font-size:13px;font-weight:700}
-  .plano h3{font-size:22px}
-  .preco{font-size:44px;font-weight:800;margin:12px 0 4px;letter-spacing:-1px}
-  .preco small{font-size:16px;color:var(--cinza);font-weight:600}
-  .plano ul{list-style:none;margin:20px 0;flex:1}
-  .plano li{padding:8px 0;border-bottom:1px dashed var(--borda);font-size:15px;color:#39414b}
-  .plano li::before{content:"✓";color:var(--verde);font-weight:800;margin-right:8px}
-  /* cta final */
-  .final{background:linear-gradient(135deg,var(--laranja),var(--laranja-esc));color:#fff;border-radius:24px;padding:56px;text-align:center}
-  .final h2{font-size:36px;margin-bottom:12px;letter-spacing:-1px}
-  .final p{font-size:18px;opacity:.95;margin-bottom:28px}
-  .final .btn-p{background:#fff;color:var(--laranja)}
-  .final .btn-p:hover{background:#fff}
-  /* footer */
-  footer{padding:48px 0;border-top:1px solid var(--borda);color:var(--cinza);font-size:14px}
-  footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:16px}
-  footer a{color:var(--cinza)}footer a:hover{color:var(--escuro)}
-  /* whatsapp flutuante */
-  .wpp{position:fixed;bottom:24px;right:24px;background:#25d366;color:#fff;width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px;box-shadow:0 8px 24px rgba(37,211,102,.5);z-index:60}
-  /* comparativo marketplace */
-  .compara{display:grid;grid-template-columns:1fr 1fr;gap:24px;max-width:880px;margin:0 auto}
-  @media(max-width:820px){.compara{grid-template-columns:1fr}}
-  .comp{background:#fff;border:1px solid var(--borda);border-radius:18px;padding:32px}
-  .comp.ruim{border-top:6px solid #d92d20}
-  .comp.bom{border-top:6px solid var(--verde);box-shadow:var(--sombra)}
-  .comp h3{font-size:20px;margin-bottom:14px}
-  .comp .linha{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px dashed var(--borda);font-size:15px;color:#39414b}
-  .comp .total{display:flex;justify-content:space-between;padding-top:14px;font-weight:800;font-size:18px}
-  .comp .total.neg{color:#d92d20}
-  .comp .total.pos{color:var(--verde)}
-  .obs{max-width:880px;margin:16px auto 0;text-align:center;color:var(--cinza);font-size:13px}
-  /* plano unico horizontal */
-  .plano-unico{max-width:920px;margin:0 auto;display:grid;grid-template-columns:280px 1fr;gap:12px 48px;align-items:center;flex-direction:unset}
-  .plano-unico .pu-esq{display:flex;flex-direction:column;align-items:flex-start}
-  .plano-unico .pu-esq .btn{margin-top:18px}
-  .plano-unico ul{display:grid;grid-template-columns:1fr 1fr;gap:0 32px;margin:0;flex:unset}
-  @media(max-width:820px){.plano-unico{grid-template-columns:1fr}.plano-unico ul{grid-template-columns:1fr;margin-top:8px}}
-  /* FAQ */
-  .faq{max-width:760px;margin:0 auto}
-  .faq details{background:#fff;border:1px solid var(--borda);border-radius:12px;padding:18px 22px;margin-bottom:12px}
-  .faq summary{font-weight:700;cursor:pointer;font-size:16px}
-  .faq details p{color:var(--cinza);margin-top:10px;font-size:15px}
-</style>
+<meta property="og:title" content="Seu delivery, no seu controle">
+<meta property="og:description" content="Sua marca, seu cliente e seu dinheiro — por uma mensalidade fixa que não sobe quando você vende mais. R$ 199/mês por loja.">
+<meta property="og:image" content="https://borahapp.com.br/assets/img/og-borahapp.png">
+<meta name="theme-color" content="#D9502B">
+<link rel="stylesheet" href="/assets/site.css?v=20260828">
 </head>
 <body>
-<!-- WhatsApp de contato configurado: 5511971101563 -->
-<header><div class="wrap">
-  <div class="logo">BoraHapp<span>.</span></div>
-  <nav>
-    <a href="#recursos">Recursos</a>
-    <a href="#como">Como funciona</a>
-    <a href="#economia">Economia</a>
-    <a href="#planos">Plano</a>
-    <a href="#faq">Dúvidas</a>
-  </nav>
-  <div style="display:flex;gap:10px;align-items:center">
-    <a href="/login.html" class="btn btn-o" style="padding:11px 20px">Entrar</a>
-    <a href="https://wa.me/5511971101563?text=Quero%20conhecer%20o%20Bora" class="btn btn-p">Falar no WhatsApp</a>
-  </div>
-</div></header>
 
-<!-- HERO -->
-<div class="hero"><div class="wrap"><div class="hero-grid">
-  <div>
-    <div class="selo">🚀 <b>No ar em minutos</b> · sem taxa por pedido</div>
-    <h1>O sistema de delivery <em>com a sua marca</em>, do jeito que você precisa.</h1>
-    <p>Pedidos, cozinha, entregas, cardápio com <b>PIX online</b>, robô de WhatsApp, CRM e relatórios num só lugar — com o logo e as cores da <b>sua loja</b>. Plano único de R$ 199/mês por loja, com pedidos ilimitados.</p>
-    <div class="cta">
-      <a href="https://borahapp.com.br/cadastro.html" class="btn btn-p">Começar agora</a>
-      <a href="#planos" class="btn btn-o">Ver planos</a>
+<header class="topo">
+  <div class="wrap">
+    <a class="marca" href="/">Bora<span>Happ</span></a>
+    <nav class="menu">
+      <a href="/" aria-current="page">Início</a>
+      <a href="/funcionalidades.html">Funcionalidades</a>
+      <a href="/precos.html">Preços</a>
+      <a href="/sobre.html">Sobre</a>
+      <a href="/contato.html">Contato</a>
+    </nav>
+    <div class="topo-acoes">
+      <a class="btn btn-linha btn-pequeno" href="/login.html">Entrar</a>
+      <a class="btn btn-principal btn-pequeno" href="https://wa.me/5511971101563?text=Quero%20conhecer%20o%20BoraHapp" target="_blank" rel="noopener">Falar no WhatsApp</a>
     </div>
   </div>
-  <div class="mock">
-    <div class="mock-bar"><i></i><i></i><i></i></div>
-    <div class="mock-screen">
-      <div class="kpi">
-        <div><small>Pedidos hoje</small><b>48</b></div>
-        <div><small>Faturamento</small><b>R$ 2.190</b></div>
-      </div>
-      <div class="col"><span>#1042 · Combo Burger</span><span class="tag">Em preparo</span></div>
-      <div class="col"><span>#1043 · Pizza G</span><span class="tag">Saiu p/ entrega</span></div>
-      <div class="col"><span>#1044 · Açaí 500ml</span><span class="tag">Recebido</span></div>
-    </div>
-  </div>
-</div></div></div>
+</header>
 
-<!-- RECURSOS -->
-<section id="recursos"><div class="wrap">
-  <div class="center">
-    <div class="kicker">Tudo em um só sistema</div>
-    <h2>Da cozinha à entrega, sem planilha</h2>
-    <p>Todas as ferramentas para o seu delivery rodar redondo — simples de usar no balcão e no celular.</p>
-  </div>
-  <div class="grid">
-    <div class="card"><div class="ico">🧾</div><h3>Pedidos em tempo real</h3><p>Painel estilo kanban da cozinha à entrega, com alerta de atraso e som de pedido novo.</p></div>
-    <div class="card"><div class="ico">🍳</div><h3>Tela de cozinha (KDS)</h3><p>Fila por antiguidade, cronômetro e toque para avançar o status. Feito pra tela grande.</p></div>
-    <div class="card"><div class="ico">🛵</div><h3>Entregas e roteirização</h3><p>Agrupe por bairro, despache em lote e atribua entregadores em segundos.</p></div>
-    <div class="card"><div class="ico">📱</div><h3>Cardápio com pedido online</h3><p>O cliente escaneia o QR Code, monta o pedido sozinho e ele cai direto na sua cozinha.</p></div>
-    <div class="card"><div class="ico">💠</div><h3>PIX na hora, direto pra você</h3><p>O cliente paga por PIX no próprio cardápio e o dinheiro cai <b>na sua conta</b> — sem intermediário.</p></div>
-    <div class="card"><div class="ico">🤖</div><h3>Robô de WhatsApp</h3><p>Atendimento automático no WhatsApp oficial: envia o cardápio, informa horários e chama você quando o cliente quer gente de verdade.</p></div>
-    <div class="card"><div class="ico">🏪</div><h3>Rede multi-lojas</h3><p>Tem mais de uma unidade? Troque de loja com um clique e acompanhe o balancete consolidado da rede.</p></div>
-    <div class="card"><div class="ico">💚</div><h3>CRM e cashback</h3><p>Fidelize com cashback, reative clientes sumidos e segmente sua base.</p></div>
-    <div class="card"><div class="ico">📦</div><h3>Estoque e CMV</h3><p>Ficha técnica, baixa automática na venda, custo e margem por produto.</p></div>
-    <div class="card"><div class="ico">📊</div><h3>Relatórios gerenciais</h3><p>Faturamento, ticket médio, vendas por canal e por produto. Exporte em PDF/Excel.</p></div>
-    <div class="card"><div class="ico">🔗</div><h3>Marketplaces</h3><p>Receba pedidos do iFood, Rappi e outros direto no seu painel.</p></div>
-    <div class="card"><div class="ico">🎨</div><h3>Com a sua marca</h3><p>Logo, cores e nome da sua loja em todo o sistema. White-label de verdade.</p></div>
-  </div>
-</div></section>
-
-<!-- COMO FUNCIONA -->
-<section id="como" class="bg"><div class="wrap">
-  <div class="center">
-    <div class="kicker">Simples assim</div>
-    <h2>Comece em 3 passos</h2>
-  </div>
-  <div class="passos">
-    <div class="passo"><h3>1. Cadastre sua loja</h3><p>Nome, logo e cores. Em minutos seu painel está no ar com a sua marca.</p></div>
-    <div class="passo"><h3>2. Monte o cardápio</h3><p>Adicione produtos, preços e horários. Publique seu cardápio digital com QR Code.</p></div>
-    <div class="passo"><h3>3. Comece a vender</h3><p>Receba pedidos, organize a cozinha e as entregas, e acompanhe tudo pelos relatórios.</p></div>
-  </div>
-</div></section>
-
-<!-- ECONOMIA vs MARKETPLACE -->
-<section id="economia"><div class="wrap">
-  <div class="center">
-    <div class="kicker">Faça a conta</div>
-    <h2>Mensalidade fixa, não porcentagem</h2>
-    <p>No marketplace, quanto mais você vende, mais você paga. No seu canal próprio com o BoraHapp, o custo é o mesmo vendendo 100 ou 10.000 pedidos.</p>
-  </div>
-  <div class="compara">
-    <div class="comp ruim">
-      <h3>😬 Só no marketplace</h3>
-      <div class="linha"><span>1.000 pedidos/mês × ticket R$ 40</span><span>R$ 40.000</span></div>
-      <div class="linha"><span>Comissão média (~25%)</span><span>− R$ 10.000</span></div>
-      <div class="linha"><span>Seu cliente? É deles.</span><span>—</span></div>
-      <div class="total neg"><span>Custo no mês</span><span>R$ 10.000</span></div>
-    </div>
-    <div class="comp bom">
-      <h3>🚀 Canal próprio com o BoraHapp</h3>
-      <div class="linha"><span>1.000 pedidos/mês × ticket R$ 40</span><span>R$ 40.000</span></div>
-      <div class="linha"><span>Mensalidade fixa</span><span>− R$ 199</span></div>
-      <div class="linha"><span>Cliente, dados e marca</span><span>Seus ✓</span></div>
-      <div class="total pos"><span>Custo no mês</span><span>R$ 199</span></div>
-    </div>
-  </div>
-  <p class="obs">Valores ilustrativos — comissões de marketplace variam por contrato e categoria. E você não precisa abandonar o marketplace: os pedidos de lá também caem no painel do BoraHapp.</p>
-
-  <!-- CALCULADORA -->
-  <div style="max-width:880px;margin:40px auto 0;background:#141518;color:#fff;border-radius:20px;padding:34px">
-    <h3 style="font-size:24px;margin:0 0 6px;text-align:center">🧮 Quanto o marketplace te custa por ano?</h3>
-    <p style="text-align:center;opacity:.75;margin:0 0 22px;font-size:14px">Arraste e descubra — o resultado costuma doer.</p>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px" class="ia-grid">
-      <label style="font-size:13px;opacity:.9">Pedidos por mês no marketplace<br>
-        <input type="range" id="ccPed" min="50" max="3000" step="50" value="600" style="width:100%;margin-top:8px">
-        <b id="ccPedV" style="font-size:18px">600</b> pedidos
-      </label>
-      <label style="font-size:13px;opacity:.9">Ticket médio<br>
-        <input type="range" id="ccTk" min="15" max="120" step="5" value="40" style="width:100%;margin-top:8px">
-        <b id="ccTkV" style="font-size:18px">R$ 40</b>
-      </label>
-      <label style="font-size:13px;opacity:.9">Comissão do marketplace<br>
-        <input type="range" id="ccTx" min="12" max="30" step="1" value="25" style="width:100%;margin-top:8px">
-        <b id="ccTxV" style="font-size:18px">25%</b>
-      </label>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:26px;text-align:center" class="ia-grid">
-      <div style="background:rgba(217,45,32,.15);border:1px solid #d92d20;border-radius:14px;padding:18px">
-        <div style="font-size:13px;opacity:.8">Você entrega ao marketplace por ANO</div>
-        <div id="ccMkt" style="font-size:34px;font-weight:800;color:#ff8f87">R$ 72.000</div>
-      </div>
-      <div style="background:rgba(18,183,106,.15);border:1px solid #12b76a;border-radius:14px;padding:18px">
-        <div style="font-size:13px;opacity:.8">Com o BoraHapp no canal próprio, sobra no seu bolso</div>
-        <div id="ccEco" style="font-size:34px;font-weight:800;color:#86efac">R$ 69.612</div>
-      </div>
-    </div>
-    <div style="text-align:center;margin-top:22px">
-      <a id="ccCta" href="#" class="btn btn-p" style="background:#22c55e;color:#052e16">Quero recuperar esse dinheiro →</a>
-    </div>
-  </div>
-  <script>
-  (function(){
-    const f = v => 'R$ ' + Math.round(v).toLocaleString('pt-BR');
-    function calc(){
-      const p = +document.getElementById('ccPed').value, t = +document.getElementById('ccTk').value, x = +document.getElementById('ccTx').value;
-      document.getElementById('ccPedV').textContent = p.toLocaleString('pt-BR');
-      document.getElementById('ccTkV').textContent = 'R$ ' + t;
-      document.getElementById('ccTxV').textContent = x + '%';
-      const mkt = p * t * (x/100) * 12, bora = 199 * 12;
-      document.getElementById('ccMkt').textContent = f(mkt);
-      document.getElementById('ccEco').textContent = f(Math.max(0, mkt - bora));
-      document.getElementById('ccCta').href = 'https://wa.me/5511971101563?text=' + encodeURIComponent(
-        'Fiz a conta no site do BoraHapp: pago ~' + f(mkt) + '/ano de comissão (' + p + ' pedidos, ticket R$ ' + t + ', taxa ' + x + '%). Quero saber mais!');
-    }
-    ['ccPed','ccTk','ccTx'].forEach(id => document.getElementById(id).addEventListener('input', calc));
-    calc();
-  })();
-  </script>
-</div></section>
-
-<!-- PLANOS -->
-<section id="planos" class="bg"><div class="wrap">
-  <div class="center">
-    <div class="kicker">Preço transparente</div>
-    <h2>Um plano só. Tudo incluso.</h2>
-    <p>Sem taxa por pedido. Sem surpresa. Cancele quando quiser.</p>
-  </div>
-  <div class="plano destaque plano-unico">
-    <div class="fita">Tudo incluso · sem taxa por pedido</div>
-    <div class="pu-esq">
-      <h3>BoraHapp</h3>
-      <div class="preco"><small style="text-decoration:line-through;color:#94a3b8;font-size:17px">R$ 249</small> R$ 199<small>/mês por loja</small></div>
-      <p style="color:var(--cinza)">Todos os recursos, sem letra miúda.<br><b style="color:var(--verde)">✔ Garantia de 30 dias</b> — não gostou, devolvemos.</p>
-      <a href="https://borahapp.com.br/cadastro.html" class="btn btn-p">Criar minha loja</a>
-    </div>
-    <ul>
-      <li><b>Pedidos ilimitados</b></li><li>Até 15 usuários por loja</li>
-      <li><b>Pedido online com PIX</b> no cardápio</li><li>Robô de WhatsApp (API oficial)</li>
-      <li>Tela de cozinha (KDS) + entregas</li><li>Rede multi-lojas com balancete</li>
-      <li>CRM, cashback e promoções</li><li>Estoque, CMV e relatórios (PDF/Excel)</li>
-      <li>White-label: sua marca em tudo</li><li>Pedidos de marketplaces no painel</li>
-    </ul>
-  </div>
-  <div style="max-width:920px;margin:22px auto 0;background:linear-gradient(135deg,#052e16,#14532d);color:#fff;border-radius:18px;padding:22px 32px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px">
+<!-- ===================== HERO ===================== -->
+<section class="hero">
+  <div class="wrap hero-grid">
     <div>
-      <div style="font-weight:800;font-size:19px">🔥 Oferta de fundador: <span style="color:#86efac">R$ 149/mês PARA SEMPRE</span></div>
-      <div style="opacity:.92;font-size:14px;margin-top:4px">Exclusivo para as <b>10 primeiras lojas</b> — preço travado enquanto você for assinante. <b>Restam 10 vagas.</b></div>
+      <span class="selo">✓ <b>7 dias grátis</b> antes da primeira cobrança</span>
+      <h1>Seu delivery, no <em>seu</em> controle.</h1>
+      <p class="lead">Sua marca, seu cliente e seu dinheiro — por uma mensalidade fixa que não sobe quando você vende mais.</p>
+      <p class="apoio">O BoraHapp organiza pedidos, cozinha e entregas em tempo real, com um cardápio digital e um painel que têm a cara da sua loja. Não a nossa.</p>
+      <div class="acoes">
+        <a class="btn btn-principal" href="https://wa.me/5511971101563?text=Quero%20conhecer%20o%20BoraHapp" target="_blank" rel="noopener">Falar no WhatsApp</a>
+        <a class="btn btn-linha" href="/funcionalidades.html">Ver o que já funciona</a>
+      </div>
+      <p class="hero-nota">R$ 199/mês por loja · pedidos ilimitados · sem fidelidade · garantia de 30 dias</p>
     </div>
-    <a href="https://wa.me/5511971101563?text=Quero%20a%20oferta%20de%20fundador%20do%20BoraHapp%20(R%24149%20vital%C3%ADcio)" class="btn" style="background:#22c55e;color:#052e16;font-weight:800">Garantir minha vaga</a>
-  </div>
-  <div style="max-width:920px;margin:22px auto 0;background:linear-gradient(135deg,#f5f3ff,#ede9fe);border:2px solid #7c3aed;border-radius:18px;padding:26px 32px">
-    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
-      <h3 style="font-size:21px;margin:0">🧠 Módulo IA <span style="background:#7c3aed;color:#fff;padding:3px 12px;border-radius:999px;font-size:12px;vertical-align:middle">add-on opcional</span></h3>
-      <div style="font-size:26px;font-weight:800">+R$ 99<small style="font-size:14px;color:var(--cinza);font-weight:600">/mês por loja</small></div>
+
+    <div class="palco" aria-hidden="true">
+      <div class="palco-topo">
+        <span class="ponto"></span>
+        <b>Pedidos de hoje</b>
+        <span>ao vivo</span>
+      </div>
+      <div class="pedido">
+        <div class="pedido-cab"><b>#128</b> <span class="etiqueta">novo</span> <span class="canal">Cardápio QR</span></div>
+        <p>2× Pizza Calabresa G · 1× Guaraná 2L</p>
+      </div>
+      <div class="pedido">
+        <div class="pedido-cab"><b>#127</b> <span class="etiqueta">na cozinha</span> <span class="canal">WhatsApp</span></div>
+        <p>1× Açaí 500ml com granola e leite ninho</p>
+      </div>
+      <div class="pedido pronto">
+        <div class="pedido-cab"><b>#126</b> <span class="etiqueta ok">saiu para entrega</span> <span class="canal">Balcão</span></div>
+        <p>3× Marmita executiva · Jardim América</p>
+      </div>
     </div>
-    <p style="color:#4c1d95;margin:10px 0 14px;font-weight:600">Um gerente trabalhando pra você por menos de R$ 3,30 por dia:</p>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px" class="ia-grid">
-      <div><b>🤖 Gerente Virtual</b><br><span style="color:var(--cinza);font-size:14px">Resumo diário no seu WhatsApp: faturamento, comparativo e alertas — às 8h, todo dia.</span></div>
-      <div><b>💚 Recuperador de clientes</b><br><span style="color:var(--cinza);font-size:14px">Chama de volta quem sumiu há 21+ dias, sozinho — e mostra quantos reais recuperou.</span></div>
-      <div><b>📸 Migração por foto</b><br><span style="color:var(--cinza);font-size:14px">Fotografe seu cardápio atual e a IA cadastra tudo em minutos. Trocar de sistema nunca foi tão fácil.</span></div>
+  </div>
+</section>
+
+<!-- ===================== O PROBLEMA ===================== -->
+<section class="clara">
+  <div class="wrap">
+    <div class="cabeca">
+      <p class="kicker">Se isso parece familiar…</p>
+      <h2>Pedido no papel, print perdido no WhatsApp, motoboy sem saber pra onde ir.</h2>
     </div>
-    <a href="https://wa.me/5511971101563?text=Quero%20o%20M%C3%B3dulo%20IA%20no%20BoraHapp" class="btn btn-p" style="margin-top:18px">Quero o Módulo IA</a>
+    <ul class="dores">
+      <li>Você recebe pedido pelo WhatsApp, pelo balcão e pelo aplicativo — e tudo vira uma bagunça de abas e memória.</li>
+      <li>Quando o entregador pergunta “qual endereço mesmo?”, o pedido já esfriou.</li>
+      <li>No fim do mês você não sabe direito quanto vendeu, quanto foi de comissão, nem quem comprou mais.</li>
+    </ul>
+    <p class="apoio" style="margin-top:22px"><b>O BoraHapp junta tudo isso numa tela só</b> — em tempo real, com a sua marca.</p>
   </div>
-  <style>@media(max-width:820px){.ia-grid{grid-template-columns:1fr !important}}</style>
-</div></section>
+</section>
 
-<!-- FAQ -->
-<section id="faq"><div class="wrap">
-  <div class="center">
-    <div class="kicker">Dúvidas frequentes</div>
-    <h2>Perguntas que todo dono de delivery faz</h2>
-  </div>
-  <div class="faq">
-    <details>
-      <summary>Tem taxa por pedido ou porcentagem sobre as vendas?</summary>
-      <p>Não. O plano é fixo: R$ 199/mês por loja, com <b>pedidos ilimitados</b>. Vendendo mais, você paga o mesmo.</p>
-    </details>
-    <details>
-      <summary>Tem fidelidade? Como cancelo?</summary>
-      <p>Sem fidelidade e sem multa. A assinatura é mensal e você cancela quando quiser — o acesso segue até o fim do período pago. E no primeiro mês vale a <b>garantia de 30 dias</b>: não gostou, devolvemos o valor.</p>
-    </details>
-    <details>
-      <summary>Como recebo o dinheiro dos meus pedidos?</summary>
-      <p>Direto do seu cliente: <b>PIX online no próprio cardápio</b> (cai na sua conta na hora, com confirmação automática do pedido), ou dinheiro/cartão na entrega e balcão. O BoraHapp organiza a operação e <b>não fica no meio do seu dinheiro</b>.</p>
-    </details>
-    <details>
-      <summary>Tenho mais de uma loja. Como funciona?</summary>
-      <p>Cada loja tem seu painel, seu cardápio e sua assinatura de R$ 199/mês. Até 15 usuários por loja (balcão, cozinha, entregadores, gerente).</p>
-    </details>
-    <details>
-      <summary>Preciso instalar alguma coisa? Funciona no celular?</summary>
-      <p>Nada de instalação: funciona no navegador do celular, tablet ou computador. A tela de cozinha (KDS) foi feita para ficar aberta numa TV ou tablet.</p>
-    </details>
-    <details>
-      <summary>Preciso abandonar o iFood?</summary>
-      <p>Não. Os pedidos dos marketplaces caem no mesmo painel do BoraHapp. A ideia é você <b>crescer seu canal próprio</b> — onde não paga comissão — sem largar os outros.</p>
-    </details>
-    <details>
-      <summary>O que é o Módulo IA?</summary>
-      <p>Um add-on opcional de <b>+R$ 99/mês</b> que coloca uma inteligência artificial trabalhando no seu negócio: um <b>Gerente Virtual</b> que manda o resumo do dia no seu WhatsApp, um <b>Recuperador</b> que traz de volta clientes sumidos (e mostra o valor recuperado em reais), e a <b>migração por foto</b> — fotografou o cardápio, produtos cadastrados. Contrata quando quiser, cancela quando quiser.</p>
-    </details>
-    <details>
-      <summary>Meus clientes vão ver a marca do BoraHapp?</summary>
-      <p>O sistema roda com <b>a sua marca</b>: seu logo, suas cores e o nome da sua loja no painel, no cardápio digital e nos relatórios.</p>
-    </details>
-  </div>
-</div></section>
+<!-- ===================== FAÇA A CONTA ===================== -->
+<section class="escura" id="economia">
+  <div class="wrap">
+    <div class="cabeca">
+      <p class="kicker">Faça a conta</p>
+      <h2>Mensalidade fixa, não porcentagem</h2>
+      <p class="apoio">No aplicativo de entrega, quanto mais você vende, mais você paga. No seu canal próprio, o custo é o mesmo vendendo 100 ou 10 mil pedidos.</p>
+    </div>
 
-<!-- CTA FINAL -->
-<section class="bg"><div class="wrap">
-  <div class="final">
-    <h2>BoraHapp colocar seu delivery no controle?</h2>
-    <p>Fale com a gente e receba seu sistema com a sua marca ainda hoje.</p>
-    <a href="https://wa.me/5511971101563?text=Quero%20come%C3%A7ar%20com%20o%20Bora" class="btn btn-p">Falar no WhatsApp agora</a>
-  </div>
-</div></section>
+    <div class="calc">
+      <div>
+        <div class="controle">
+          <label for="ccPed">Pedidos por mês <b id="ccPedV">1.000</b></label>
+          <input type="range" id="ccPed" min="100" max="5000" step="50" value="1000">
+        </div>
+        <div class="controle">
+          <label for="ccTk">Ticket médio <b id="ccTkV">R$ 40</b></label>
+          <input type="range" id="ccTk" min="15" max="150" step="5" value="40">
+        </div>
+        <div class="controle">
+          <label for="ccTx">Comissão do aplicativo <b id="ccTxV">25%</b></label>
+          <input type="range" id="ccTx" min="10" max="30" step="1" value="25">
+        </div>
+        <p class="mini" style="color:#A99C92">Comissões variam por contrato e categoria — ajuste para a sua realidade.</p>
+      </div>
 
-<footer><div class="wrap">
-  <div><span class="logo">BoraHapp<span>.</span></span> &nbsp; © 2026 · Sistema de delivery white-label</div>
-  <div>
-    <a href="/login.html">Entrar</a> &nbsp;·&nbsp;
-    <a href="#planos">Plano</a> &nbsp;·&nbsp;
-    <a href="/termos.html">Termos de Uso</a> &nbsp;·&nbsp;
-    <a href="/privacidade.html">Privacidade</a> &nbsp;·&nbsp;
-    <a href="https://wa.me/5511971101563">Contato</a>
-  </div>
-</div></footer>
+      <div class="resultado">
+        <div class="rot">Você paga de comissão por ano</div>
+        <div class="grande perda" id="ccMkt">R$ 120.000</div>
+        <div class="rot">Sobraria no seu bolso com o BoraHapp</div>
+        <div class="grande ganho" id="ccEco">R$ 117.612</div>
+        <a class="btn btn-claro" id="ccCta" href="https://wa.me/5511971101563" target="_blank" rel="noopener">Quero parar de pagar isso</a>
+      </div>
+    </div>
 
-<a href="https://wa.me/5511971101563?text=Quero%20conhecer%20o%20Bora" class="wpp" title="Fale no WhatsApp">🟢</a>
+    <p class="mini" style="margin-top:26px;color:#A99C92;max-width:70ch">
+      Você não precisa abandonar o aplicativo hoje: dá para continuar recebendo pedidos por lá enquanto constrói seu canal próprio.
+      <a href="/funcionalidades.html#construindo" style="color:#F0A88C">A integração automática com iFood e 99Food está em construção →</a>
+    </p>
+  </div>
+</section>
+
+<!-- ===================== COMO FUNCIONA ===================== -->
+<section>
+  <div class="wrap">
+    <div class="cabeca">
+      <p class="kicker">Simples assim</p>
+      <h2>Do papel pro painel em 3 passos</h2>
+    </div>
+    <div class="passos">
+      <div class="passo">
+        <h3>Cadastre sua loja</h3>
+        <p>Nome, logo e cores da sua marca. Em minutos o painel está de pé — já com formas de pagamento e horários preenchidos.</p>
+      </div>
+      <div class="passo">
+        <h3>Monte o cardápio</h3>
+        <p>Produtos, preços e opções (tamanho, borda, adicionais). Publique o cardápio digital com QR Code.</p>
+      </div>
+      <div class="passo">
+        <h3>Comece a vender</h3>
+        <p>Receba pedidos, organize a cozinha e as entregas, e acompanhe tudo pelos relatórios.</p>
+      </div>
+    </div>
+    <div class="acoes">
+      <a class="btn btn-principal" href="https://wa.me/5511971101563?text=Quero%20come%C3%A7ar%20no%20BoraHapp" target="_blank" rel="noopener">Quero começar</a>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== RECURSOS ===================== -->
+<section class="clara">
+  <div class="wrap">
+    <div class="cabeca">
+      <p class="kicker">Tudo o que já funciona hoje</p>
+      <h2>Da cozinha à entrega, sem planilha</h2>
+      <p class="apoio">Ferramentas para usar no balcão, na cozinha e no celular — sem curso e sem manual.</p>
+    </div>
+    <div class="grade">
+      <div class="cartao">
+        <h3>Pedidos em tempo real</h3>
+        <p>Todo pedido novo aparece na hora, com aviso sonoro, e você acompanha o status até a entrega.</p>
+      </div>
+      <div class="cartao">
+        <h3>Tela de cozinha</h3>
+        <p>Fila por ordem de chegada, cronômetro em cada pedido e um toque para avançar. Feito para ficar aberta numa TV ou tablet.</p>
+      </div>
+      <div class="cartao">
+        <h3>Entregas organizadas</h3>
+        <p>Agrupe pedidos por bairro, despache em lote e defina o entregador em segundos. No fim da semana, o acerto com o motoboy sai pronto.</p>
+      </div>
+      <div class="cartao">
+        <h3>Cardápio digital com QR</h3>
+        <p>O cliente escaneia, monta o pedido sozinho e ele cai direto na cozinha — sem ninguém digitar nada.</p>
+      </div>
+      <div class="cartao">
+        <h3>Sua marca em tudo</h3>
+        <p>Logo, cores e nome da sua loja no painel e no cardápio. Quem aparece para o seu cliente é você.</p>
+      </div>
+      <div class="cartao">
+        <h3>Relatórios que fazem sentido</h3>
+        <p>Faturamento, ticket médio, custo e margem por produto, vendas por canal. Exporte em planilha quando precisar.</p>
+      </div>
+    </div>
+    <div class="acoes">
+      <a class="btn btn-linha" href="/funcionalidades.html">Ver todos os recursos →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== CONFIANÇA ===================== -->
+<section>
+  <div class="wrap">
+    <div class="cabeca">
+      <p class="kicker verde">Quem está por trás</p>
+      <h2>Uma empresa registrada, não um projeto de garagem</h2>
+      <p class="apoio">Ainda não temos dezenas de depoimentos para mostrar — e preferimos não inventar. O que dá para conferir agora é isto:</p>
+    </div>
+    <div class="confianca">
+      <div>
+        <b>CNPJ que você pode consultar</b>
+        <span>ADF Sistemas e Tecnologias LTDA · 68.761.778/0001-57</span>
+      </div>
+      <div>
+        <b>Endereço e cidade</b>
+        <span>Sorocaba/SP, com atendimento em todo o Brasil</span>
+      </div>
+      <div>
+        <b>Gente de verdade no suporte</b>
+        <span>WhatsApp (11) 97110-1563, de segunda a sábado, das 9h às 22h</span>
+      </div>
+      <div>
+        <b>Saída sem multa</b>
+        <span>Sem fidelidade, com garantia de 30 dias e exportação dos seus dados</span>
+      </div>
+    </div>
+    <div class="acoes">
+      <a class="btn btn-linha" href="/sobre.html">Conhecer a empresa →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== PREÇO ===================== -->
+<section class="clara">
+  <div class="wrap">
+    <div class="cabeca">
+      <p class="kicker">Preço transparente</p>
+      <h2>Um plano só. R$ 199/mês por loja.</h2>
+    </div>
+    <div class="plano">
+      <div>
+        <div class="preco">R$ 199<span> /mês por loja</span></div>
+        <p class="apoio" style="margin-top:14px">Sem taxa por pedido e sem comissão sobre as suas vendas. Os primeiros 7 dias são grátis — a cobrança só começa depois.</p>
+        <div class="acoes">
+          <a class="btn btn-principal" href="https://wa.me/5511971101563?text=Quero%20assinar%20o%20BoraHapp" target="_blank" rel="noopener">Falar no WhatsApp</a>
+          <a class="btn btn-linha" href="/precos.html">Ver o plano completo</a>
+        </div>
+      </div>
+      <ul class="checks">
+        <li>Pedidos ilimitados</li>
+        <li>Até 15 usuários por loja</li>
+        <li>Painel, cozinha, entregas e caixa</li>
+        <li>Cardápio digital com QR Code</li>
+        <li>Rede multi-lojas com balancete</li>
+        <li>CRM, cashback e promoções</li>
+        <li>Estoque, CMV e relatórios</li>
+        <li>Sua marca em tudo</li>
+        <li>Sem fidelidade — cancele quando quiser</li>
+        <li>Garantia de 30 dias</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== CTA FINAL ===================== -->
+<section>
+  <div class="wrap estreito" style="text-align:center">
+    <h2>Bora colocar seu delivery no controle?</h2>
+    <p class="apoio" style="margin:14px auto 0">Fale com a gente e comece a organizar pedidos, cozinha e entrega ainda hoje — com a marca da sua loja.</p>
+    <div class="acoes" style="justify-content:center">
+      <a class="btn btn-principal" href="https://wa.me/5511971101563?text=Quero%20conhecer%20o%20BoraHapp" target="_blank" rel="noopener">Falar no WhatsApp agora</a>
+    </div>
+  </div>
+</section>
+
+<footer class="rodape">
+  <div class="wrap">
+    <div class="rodape-grid">
+      <div>
+        <h4>BoraHapp</h4>
+        <p>Sistema de delivery com a sua marca, por uma mensalidade que não sobe quando você vende mais.</p>
+        <p style="margin:0">ADF Sistemas e Tecnologias LTDA<br>CNPJ 68.761.778/0001-57 · Sorocaba/SP</p>
+      </div>
+      <div>
+        <h4>Navegar</h4>
+        <ul>
+          <li><a href="/funcionalidades.html">Funcionalidades</a></li>
+          <li><a href="/precos.html">Preços</a></li>
+          <li><a href="/sobre.html">Sobre</a></li>
+          <li><a href="/contato.html">Contato</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Acesso e legal</h4>
+        <ul>
+          <li><a href="/login.html">Entrar no painel</a></li>
+          <li><a href="/termos.html">Termos de Uso</a></li>
+          <li><a href="/privacidade.html">Política de Privacidade</a></li>
+          <li><a href="https://wa.me/5511971101563" target="_blank" rel="noopener">WhatsApp (11) 97110-1563</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="rodape-fim">
+      <span>© 2026 BoraHapp · ADF Sistemas e Tecnologias LTDA</span>
+      <span>Suporte: seg a sáb, 9h às 22h</span>
+    </div>
+  </div>
+</footer>
+
+<div class="barra-zap">
+  <a class="btn btn-principal" href="https://wa.me/5511971101563?text=Quero%20conhecer%20o%20BoraHapp" target="_blank" rel="noopener">Falar no WhatsApp agora</a>
+</div>
+
+<script>
+(function () {
+  var real = function (v) { return 'R$ ' + Math.round(v).toLocaleString('pt-BR'); };
+  var ped = document.getElementById('ccPed'),
+      tk  = document.getElementById('ccTk'),
+      tx  = document.getElementById('ccTx');
+  if (!ped) return;
+
+  function calcular() {
+    var p = +ped.value, t = +tk.value, x = +tx.value;
+    document.getElementById('ccPedV').textContent = p.toLocaleString('pt-BR');
+    document.getElementById('ccTkV').textContent = 'R$ ' + t;
+    document.getElementById('ccTxV').textContent = x + '%';
+
+    var comissaoAno = p * t * (x / 100) * 12;
+    var mensalidadeAno = 199 * 12;
+    document.getElementById('ccMkt').textContent = real(comissaoAno);
+    document.getElementById('ccEco').textContent = real(Math.max(0, comissaoAno - mensalidadeAno));
+
+    // O lead chega no WhatsApp com a conta dele já feita.
+    document.getElementById('ccCta').href = 'https://wa.me/5511971101563?text=' + encodeURIComponent(
+      'Fiz a conta no site do BoraHapp: pago cerca de ' + real(comissaoAno) + ' por ano de comissão ' +
+      '(' + p + ' pedidos/mês, ticket R$ ' + t + ', taxa de ' + x + '%). Quero saber mais.');
+  }
+
+  [ped, tk, tx].forEach(function (el) { el.addEventListener('input', calcular); });
+  calcular();
+})();
+</script>
 </body>
 </html>
