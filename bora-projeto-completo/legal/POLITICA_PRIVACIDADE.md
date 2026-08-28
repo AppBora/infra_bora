@@ -3,9 +3,9 @@
 > **Rascunho para revisão jurídica.** Ponto de partida técnico; **revise com um advogado** antes de
 > publicar. Preencha os campos entre colchetes.
 
-**Última atualização:** [DATA]
+**Última atualização:** 28 de agosto de 2026
 
-Esta Política explica como o **BoraHapp** (operado por **[RAZÃO SOCIAL], CNPJ [CNPJ]**) trata dados
+Esta Política explica como o **BoraHapp** (operado por **ADF SISTEMAS E TECNOLOGIAS LTDA, CNPJ 68.761.778/0001-57**) trata dados
 pessoais, em conformidade com a **LGPD (Lei 13.709/2018)**.
 
 ## 1. Papéis (controlador x operador)
@@ -42,10 +42,10 @@ eliminados ou anonimizados.
 ## 6. Direitos do titular (art. 18 da LGPD)
 O titular pode solicitar: confirmação de tratamento, acesso, correção, anonimização, portabilidade,
 eliminação e informações sobre compartilhamento. Consumidores finais devem procurar **o Lojista**
-(controlador). Solicitações relativas ao BoraHapp: **[E-MAIL DPO/ENCARREGADO]**.
+(controlador). Solicitações relativas ao BoraHapp: **WhatsApp (11) 97110-1563**.
 
 ## 7. Encarregado (DPO)
-Encarregado pelo tratamento de dados: **[NOME]** — contato: **[E-MAIL]**.
+Encarregado pelo tratamento de dados: **Anderson Luiz Ferreira** — contato: **WhatsApp (11) 97110-1563**.
 
 ## 8. Cookies
 O painel usa armazenamento local (localStorage) para sessão e preferências. [Descrever cookies de
@@ -58,4 +58,4 @@ Caso algum subprocessador trate dados fora do Brasil, adotaremos salvaguardas co
 Podemos atualizar esta Política, informando a data de revisão. Mudanças relevantes serão comunicadas.
 
 ---
-Contato: [E-MAIL] — [RAZÃO SOCIAL], CNPJ [CNPJ].
+Contato: WhatsApp (11) 97110-1563 — ADF SISTEMAS E TECNOLOGIAS LTDA, CNPJ 68.761.778/0001-57.

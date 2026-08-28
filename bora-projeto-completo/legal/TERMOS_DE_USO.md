@@ -3,10 +3,10 @@
 > **Rascunho para revisão jurídica.** Este documento é um ponto de partida técnico e **deve ser
 > revisado por um advogado** antes de entrar em produção. Preencha os campos entre colchetes.
 
-**Última atualização:** [DATA]
+**Última atualização:** 28 de agosto de 2026
 
 Bem-vindo ao **BoraHapp**, plataforma de gestão de delivery white-label operada por
-**[RAZÃO SOCIAL], CNPJ [CNPJ]**, com sede em [ENDEREÇO] ("BoraHapp", "nós").
+**ADF SISTEMAS E TECNOLOGIAS LTDA, CNPJ 68.761.778/0001-57**, com sede em Rua José Silvino Garcia, 131 — Horto Florestal, Sorocaba/SP, CEP 18074-760 ("BoraHapp", "nós").
 
 Ao contratar ou usar o BoraHapp, você ("Cliente", "Lojista") concorda com estes Termos.
 
@@ -26,24 +26,24 @@ usuários (funcionários, entregadores).
 por loja; recursos e preço estão descritos em https://borahapp.com.br.
 3.2. A assinatura é **mensal e recorrente**, cobrada automaticamente pelo meio de pagamento
 cadastrado (via processador **Asaas**), até o cancelamento.
-3.3. Em caso de inadimplência, o acesso poderá ser **suspenso** após [X] dias e a conta
-**cancelada** após [Y] dias, sem prejuízo da cobrança dos valores devidos.
+3.3. Em caso de inadimplência, o acesso poderá ser **suspenso** após 10 dias e a conta
+**cancelada** após 30 dias, sem prejuízo da cobrança dos valores devidos.
 3.4. Reajustes de preço serão comunicados com antecedência mínima de 30 dias.
 3.5. Tributos aplicáveis são de responsabilidade de cada parte conforme a lei.
 
 ## 4. Período de teste
-Se oferecido, o período de teste gratuito tem duração de [X] dias. Ao término, a cobrança do
+Se oferecido, o período de teste gratuito tem duração de 7 dias. Ao término, a cobrança do
 plano contratado é iniciada automaticamente, salvo cancelamento prévio.
 
 ## 5. Cancelamento
-5.1. O Lojista pode cancelar a qualquer momento pelo painel ou por [CANAL].
+5.1. O Lojista pode cancelar a qualquer momento pelo painel ou por WhatsApp (11) 97110-1563.
 5.2. O cancelamento encerra a renovação; o acesso permanece até o fim do ciclo já pago.
 5.3. Não há reembolso de períodos já utilizados, salvo disposição legal em contrário.
 
 ## 6. Disponibilidade e suporte
 6.1. Envidamos esforços para manter a plataforma disponível, mas **não garantimos** operação
 ininterrupta. Manutenções programadas serão comunicadas quando possível.
-6.2. Suporte disponível por [CANAL / HORÁRIO]. Metas de atendimento (SLA) por plano em [URL].
+6.2. Suporte disponível por WhatsApp (11) 97110-1563, de segunda a sábado, das 9h às 22h. Metas de atendimento (SLA) por plano na Central de Ajuda do painel.
 
 ## 7. Responsabilidades do Lojista
 7.1. Conteúdo cadastrado (produtos, preços, imagens), atendimento ao consumidor final e
@@ -52,12 +52,12 @@ cumprimento das obrigações fiscais e sanitárias são de responsabilidade excl
 próprias do Lojista junto a cada parceiro.
 
 ## 8. Propriedade intelectual
-O software, marca "BoraHapp", código e documentação pertencem à [RAZÃO SOCIAL]. A personalização
+O software, marca "BoraHapp", código e documentação pertencem à ADF SISTEMAS E TECNOLOGIAS LTDA. A personalização
 white-label concede ao Lojista o direito de uso da plataforma com sua marca, sem transferir a
 titularidade do software.
 
 ## 9. Dados e privacidade
-O tratamento de dados pessoais segue a **Política de Privacidade** ([URL]) e a LGPD (Lei
+O tratamento de dados pessoais segue a **Política de Privacidade** (borahapp.com.br) e a LGPD (Lei
 13.709/2018). O BoraHapp atua como **operador** dos dados dos consumidores finais tratados em nome
 do Lojista (que é o **controlador**).
 
@@ -70,7 +70,7 @@ Podemos atualizar estes Termos, comunicando com antecedência razoável. O uso c
 vigência implica concordância.
 
 ## 12. Foro
-Fica eleito o foro da comarca de [CIDADE/UF], salvo competência legal diversa (ex.: consumidor).
+Fica eleito o foro da comarca de Sorocaba/SP, salvo competência legal diversa (ex.: consumidor).
 
 ---
-Contato: [E-MAIL] — [RAZÃO SOCIAL], CNPJ [CNPJ].
+Contato: WhatsApp (11) 97110-1563 — ADF SISTEMAS E TECNOLOGIAS LTDA, CNPJ 68.761.778/0001-57.
