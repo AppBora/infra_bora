@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BoraHapp — Protótipo Rede (inspirado nas telas do cliente)</title>
+<style>
+:root{--primary:#7c3aed;--secondary:#22c55e;--bg:#f6f7fb;--card:#fff;--text:#111827;--muted:#6b7280;--danger:#ef4444;--warn:#f59e0b;--info:#3b82f6;--radius:18px}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,Arial,sans-serif;background:var(--bg);color:var(--text)}
+a{text-decoration:none;color:inherit}
+.layout{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
+.side{background:#111827;color:#fff;padding:22px;position:sticky;top:0;height:100vh;overflow-y:auto}
+.brand{display:flex;align-items:center;gap:12px;margin-bottom:28px}
+.logo{width:44px;height:44px;border-radius:14px;background:var(--primary);display:grid;place-items:center;font-weight:900;color:#fff;font-size:20px}
+.brand small{color:#c7d2fe}
+.nav a{display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:12px;color:#d1d5db;margin:3px 0;font-size:14px;font-weight:600;cursor:pointer}
+.nav a:hover,.nav a.active{background:rgba(255,255,255,.12);color:#fff}
+.nav a.active{box-shadow:inset 3px 0 0 var(--primary)}
+.navic{width:20px;text-align:center;flex:0 0 20px}
+.main{padding:24px}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;flex-wrap:wrap;gap:12px}
+.title h1{margin:0;font-size:26px;letter-spacing:-.02em}
+.title p{margin:4px 0;color:var(--muted);font-size:14px}
+.btn{border:0;padding:10px 15px;border-radius:12px;background:var(--primary);color:#fff;font-weight:700;cursor:pointer;font-size:14px}
+.btn.secondary{background:#e5e7eb;color:#111827}
+.btn.ghost{background:#64748b}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{border:1px solid #e5e7eb;background:#fff;color:#475569;padding:9px 14px;border-radius:999px;font-size:13px;font-weight:700;cursor:pointer}
+.chip.active{background:var(--primary);border-color:var(--primary);color:#fff}
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
+.statcard{background:var(--card);border-radius:16px;padding:16px;box-shadow:0 6px 20px rgba(15,23,42,.05);position:relative;overflow:hidden}
+.statcard .ico{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;font-size:18px;margin-bottom:10px}
+.statcard .v{font-size:24px;font-weight:900;letter-spacing:-.02em;color:#0f172a;line-height:1}
+.statcard .l{color:var(--muted);font-size:12px;margin-top:6px}
+.ico.money{background:#ecfdf5;color:#059669}.ico.moto{background:#eff6ff;color:#2563eb}.ico.bag{background:#fff7ed;color:#ea580c}.ico.salao{background:#f0fdf4;color:#16a34a}.ico.ficha{background:#fef2f2;color:#dc2626}
+.panel{background:var(--card);border-radius:16px;padding:18px;box-shadow:0 6px 20px rgba(15,23,42,.05);margin-top:16px}
+.panel h2{margin:0 0 4px;font-size:17px}
+.panel .sub{color:var(--muted);font-size:13px;margin:0 0 14px}
+.table{width:100%;border-collapse:collapse}
+.table th,.table td{text-align:left;padding:11px 12px;border-bottom:1px solid #eef2f7;font-size:14px}
+.table th{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#64748b}
+.table td.num,.table th.num{text-align:right}
+.table tbody tr:hover{background:#f8fafc}
+.rep{position:relative;background:#eef2ff;border-radius:999px;height:22px;min-width:120px;overflow:hidden}
+.rep i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,#7c3aed,#a855f7);border-radius:999px}
+.rep span{position:relative;z-index:2;font-size:12px;font-weight:800;color:#312e81;line-height:22px;padding-left:9px}
+.bars{display:flex;align-items:flex-end;gap:18px;height:230px;padding:10px 6px 0;border-bottom:2px solid #e5e7eb}
+.bar{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;height:100%;justify-content:flex-end}
+.bar .fill{width:70%;max-width:80px;background:linear-gradient(180deg,#8b5cf6,#7c3aed);border-radius:10px 10px 0 0;position:relative;transition:height .4s}
+.bar .fill b{position:absolute;top:-22px;left:50%;transform:translateX(-50%);font-size:12px;font-weight:800;color:#0f172a;white-space:nowrap}
+.bar .lbl{font-size:12px;color:#475569;text-align:center;font-weight:600;line-height:1.2}
+.tag{padding:5px 9px;border-radius:999px;font-size:12px;font-weight:800}
+.t-up{background:#dcfce7;color:#166534}.t-down{background:#fee2e2;color:#991b1b}.t-flat{background:#f1f5f9;color:#475569}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+.tabsview{display:none}.tabsview.active{display:block}
+.rankrow{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #f1f5f9}
+.rankrow .pos{width:26px;height:26px;border-radius:8px;background:#f1f5f9;display:grid;place-items:center;font-weight:800;font-size:13px;color:#475569;flex:0 0 26px}
+.rankrow .pos.gold{background:#fef3c7;color:#92400e}
+.rankrow .nm{flex:1;font-weight:600}
+.rankrow .barmini{flex:0 0 130px;height:10px;background:#eef2ff;border-radius:999px;overflow:hidden}
+.rankrow .barmini i{display:block;height:100%;background:linear-gradient(90deg,#7c3aed,#a855f7)}
+.rankrow .vv{flex:0 0 90px;text-align:right;font-weight:800;font-size:14px}
+.channel{display:flex;align-items:center;gap:12px;padding:14px;border-radius:14px;color:#fff;margin-bottom:10px}
+.channel .pct{font-size:20px;font-weight:900}
+.channel .nm{flex:1;font-weight:700}
+.channel .vl{font-weight:800}
+.compare{background:linear-gradient(135deg,#faf5ff,#eff6ff);border:2px solid #ddd6fe;border-radius:16px;padding:20px;margin-top:16px}
+.compare h3{margin:0 0 6px;font-size:18px;color:#5b21b6}
+.compare .big{font-size:34px;font-weight:900;color:#7c3aed;letter-spacing:-.02em}
+.compare .muted{color:#6b7280;font-size:14px}
+.heat{display:grid;grid-template-columns:70px repeat(12,1fr);gap:4px;font-size:11px}
+.heat .hh{color:#94a3b8;text-align:center;font-weight:700;padding-bottom:4px}
+.heat .day{display:flex;align-items:center;font-weight:700;color:#475569;font-size:12px}
+.heat .cell{height:34px;border-radius:7px;display:grid;place-items:center;font-size:10px;font-weight:700;color:#334155}
+.legend{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:12px;color:#64748b}
+.legend .sw{width:22px;height:12px;border-radius:4px}
+.status-flow{display:flex;flex-direction:column;gap:10px}
+.status-flow .st{display:flex;align-items:center;gap:14px}
+.status-flow .dot{width:14px;height:14px;border-radius:50%;flex:0 0 14px}
+.status-flow .nm{flex:0 0 170px;font-weight:700;font-size:14px}
+.status-flow .track{flex:1;height:26px;background:#f1f5f9;border-radius:8px;overflow:hidden;position:relative}
+.status-flow .track i{position:absolute;left:0;top:0;bottom:0;border-radius:8px;display:flex;align-items:center;padding-left:10px;color:#fff;font-weight:800;font-size:12px}
+.status-flow .tm{flex:0 0 90px;text-align:right;font-weight:800;font-size:14px}
+.badge{padding:5px 9px;border-radius:999px;font-size:12px;font-weight:800}
+.b-alert{background:#fef3c7;color:#92400e}
+.note{background:#f0fdf4;border-left:4px solid var(--secondary);border-radius:8px;padding:10px 14px;font-size:13px;color:#166534;margin-top:14px}
+.newbadge{background:var(--secondary);color:#fff;font-size:10px;font-weight:800;padding:2px 7px;border-radius:999px;vertical-align:middle;margin-left:6px}
+@media(max-width:1100px){.kpis{grid-template-columns:repeat(2,1fr)}.two{grid-template-columns:1fr}.heat{grid-template-columns:60px repeat(12,1fr);font-size:9px}}
+@media(max-width:900px){.layout{grid-template-columns:1fr}.side{position:static;height:auto}}
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside class="side">
+    <div class="brand"><div class="logo">B</div><div><b>Zirá Açaí</b><br><small>Rede · 5 lojas</small></div></div>
+    <nav class="nav">
+      <a><span class="navic">📊</span> Dashboard</a>
+      <a><span class="navic">🧾</span> Pedidos</a>
+      <a><span class="navic">👥</span> Clientes</a>
+      <a><span class="navic">🍧</span> Produtos</a>
+      <a class="active" data-tab="rede"><span class="navic">🏪</span> Faturamento da rede</a>
+      <a data-tab="canais"><span class="navic">📡</span> Canais de venda</a>
+      <a data-tab="horario"><span class="navic">⏰</span> Vendas por horário</a>
+      <a data-tab="status"><span class="navic">⏱️</span> Tempo &amp; cancelamentos</a>
+      <a><span class="navic">⚙️</span> Configurações</a>
+    </nav>
+    <div style="margin-top:24px;padding:12px;background:rgba(124,58,237,.15);border-radius:12px;font-size:12px;color:#c7d2fe">
+      Protótipo de demonstração<br>Números reais do seu Saipos, na cara do BoraHapp.
+    </div>
+  </aside>
+
+  <main class="main">
+
+  <!-- ============ TELA 1: FATURAMENTO DA REDE ============ -->
+  <section class="tabsview active" id="tab-rede">
+    <header class="top">
+      <div class="title"><h1>Faturamento da rede</h1><p>Consolidado das 5 lojas · 09/07/2026</p></div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <div class="chips"><button class="chip">Hoje</button><button class="chip active">Período</button><button class="chip">Mês</button></div>
+        <button class="btn">Buscar</button>
+        <button class="btn ghost">Exportar</button>
+      </div>
+    </header>
+
+    <div class="kpis">
+      <div class="statcard"><div class="ico money">💰</div><div class="v">R$ 5.460,89</div><div class="l">Faturamento total</div></div>
+      <div class="statcard"><div class="ico moto">🛵</div><div class="v">R$ 44,72</div><div class="l">Ticket entrega</div></div>
+      <div class="statcard"><div class="ico bag">🥡</div><div class="v">R$ 0,00</div><div class="l">Ticket retirada</div></div>
+      <div class="statcard"><div class="ico salao">🍽️</div><div class="v">R$ 0,00</div><div class="l">Ticket salão</div></div>
+      <div class="statcard"><div class="ico ficha">🎫</div><div class="v">R$ 0,00</div><div class="l">Ticket ficha</div></div>
+    </div>
+
+    <div class="panel">
+      <h2>Desempenho por loja <span class="newbadge">com representatividade</span></h2>
+      <p class="sub">Quanto cada loja pesa no faturamento da rede — o Saipos mostra o %, nós mostramos e ainda deixamos você agir em cima.</p>
+      <table class="table">
+        <thead><tr><th>Loja</th><th class="num">Pedidos</th><th class="num">Ticket médio</th><th class="num">Faturamento</th><th>Representatividade</th></tr></thead>
+        <tbody>
+          <tr><td>Zirá Açaí Zona Norte</td><td class="num">57</td><td class="num">R$ 45,26</td><td class="num"><b>R$ 2.579,62</b></td><td><div class="rep"><i style="width:100%"></i><span>47,24%</span></div></td></tr>
+          <tr><td>Zirá Açaí Vila Hortência</td><td class="num">37</td><td class="num">R$ 44,57</td><td class="num"><b>R$ 1.649,22</b></td><td><div class="rep"><i style="width:63.9%"></i><span>30,20%</span></div></td></tr>
+          <tr><td>Zirá Açaí Nova Esperança</td><td class="num">30</td><td class="num">R$ 37,64</td><td class="num"><b>R$ 1.129,24</b></td><td><div class="rep"><i style="width:43.8%"></i><span>20,68%</span></div></td></tr>
+          <tr><td>Zirá Açaí Vitória Régia</td><td class="num">2</td><td class="num">R$ 51,41</td><td class="num"><b>R$ 102,81</b></td><td><div class="rep"><i style="width:4%"></i><span>1,88%</span></div></td></tr>
+          <tr><td>Zirá Açaí São Bento <span class="badge b-alert">sem vendas</span></td><td class="num">0</td><td class="num">R$ 0,00</td><td class="num"><b>R$ 0,00</b></td><td><div class="rep"><i style="width:0%"></i><span>0,00%</span></div></td></tr>
+        </tbody>
+        <tfoot><tr style="border-top:2px solid var(--primary);font-weight:800"><td>TOTAL DA REDE</td><td class="num">126</td><td class="num">R$ 43,34</td><td class="num">R$ 5.460,89</td><td>100%</td></tr></tfoot>
+      </table>
+      <div class="note">⚡ São Bento está zerada hoje — o Gerente Virtual do BoraHapp já teria te avisado no WhatsApp às 12h. (recurso exclusivo, o Saipos não tem)</div>
+    </div>
+
+    <div class="panel">
+      <h2>Faturamento por loja</h2>
+      <p class="sub">Comparativo visual — mesma leitura do gráfico que você já conhece.</p>
+      <div class="bars">
+        <div class="bar"><div class="fill" style="height:100%"><b>R$ 2.579</b></div><div class="lbl">Zona Norte</div></div>
+        <div class="bar"><div class="fill" style="height:64%"><b>R$ 1.649</b></div><div class="lbl">Vila Hortência</div></div>
+        <div class="bar"><div class="fill" style="height:44%"><b>R$ 1.129</b></div><div class="lbl">Nova Esperança</div></div>
+        <div class="bar"><div class="fill" style="height:5%"><b>R$ 102</b></div><div class="lbl">Vitória Régia</div></div>
+        <div class="bar"><div class="fill" style="height:1%"><b>R$ 0</b></div><div class="lbl">São Bento</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ TELA 2: CANAIS DE VENDA ============ -->
+  <section class="tabsview" id="tab-canais">
+    <header class="top">
+      <div class="title"><h1>Canais de venda</h1><p>De onde vêm os pedidos da rede · 09/07/2026</p></div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <div class="chips"><button class="chip active">Todas as lojas</button></div>
+        <button class="btn ghost">Exportar produtos</button>
+      </div>
+    </header>
+
+    <div class="two" style="grid-template-columns:1.3fr 1fr">
+      <div class="panel" style="margin-top:0">
+        <h2>Faturamento por canal</h2>
+        <p class="sub">Total no período: R$ 5.486,24</p>
+        <div class="channel" style="background:linear-gradient(135deg,#ef4444,#f87171)"><div class="pct">70%</div><div class="nm">99 Food</div><div class="vl">R$ 3.840,37</div></div>
+        <div class="channel" style="background:linear-gradient(135deg,#dc2626,#ef4444)"><div class="pct">30%</div><div class="nm">iFood</div><div class="vl">R$ 1.645,87</div></div>
+        <div class="channel" style="background:linear-gradient(135deg,#7c3aed,#a855f7)"><div class="pct">0%</div><div class="nm">Canal próprio (WhatsApp / cardápio) <span class="newbadge">a ativar</span></div><div class="vl">R$ 0,00</div></div>
+      </div>
+      <div class="panel" style="margin-top:0">
+        <h2>Ranking de canais</h2>
+        <p class="sub">Participação no faturamento</p>
+        <div class="rankrow"><div class="pos gold">1</div><div class="nm">99 Food</div><div class="barmini"><i style="width:100%"></i></div><div class="vv">70%</div></div>
+        <div class="rankrow"><div class="pos">2</div><div class="nm">iFood</div><div class="barmini"><i style="width:43%"></i></div><div class="vv">30%</div></div>
+        <div class="rankrow"><div class="pos">3</div><div class="nm">Canal próprio</div><div class="barmini"><i style="width:0%"></i></div><div class="vv">0%</div></div>
+      </div>
+    </div>
+
+    <!-- DIFERENCIAL -->
+    <div class="compare">
+      <h3>💡 Comparador de custo de canal <span class="newbadge">exclusivo BoraHapp</span></h3>
+      <p class="muted">Isto o Saipos não te mostra: quanto os marketplaces custaram de comissão neste período — e o que sobraria no seu bolso pelo canal próprio.</p>
+      <div class="two" style="margin-top:14px;grid-template-columns:1fr 1fr 1fr">
+        <div><div class="muted">Comissão paga (99 Food ~23% + iFood ~27%)</div><div class="big" style="color:#dc2626">− R$ 1.327</div></div>
+        <div><div class="muted">No canal próprio você pagaria</div><div class="big" style="color:#059669">R$ 0</div></div>
+        <div><div class="muted">Projeção de economia no mês</div><div class="big">R$ 7.400</div></div>
+      </div>
+      <div class="note" style="background:#faf5ff;border-color:#7c3aed;color:#5b21b6">Migrar só 30% desses pedidos para o WhatsApp/cardápio próprio do BoraHapp já cobre a mensalidade da rede inteira várias vezes.</div>
+    </div>
+
+    <div class="panel">
+      <h2>Ranking de produtos</h2>
+      <p class="sub">Mais e menos vendidos no período — base para promoção e ficha técnica.</p>
+      <div class="two" style="margin-top:0">
+        <div>
+          <h3 style="font-size:14px;color:#16a34a;margin:0 0 8px">🔥 Mais vendidos</h3>
+          <div class="rankrow"><div class="pos gold">1</div><div class="nm">Açaí 500ml completo</div><div class="vv">312 un</div></div>
+          <div class="rankrow"><div class="pos">2</div><div class="nm">Açaí 300ml</div><div class="vv">248 un</div></div>
+          <div class="rankrow"><div class="pos">3</div><div class="nm">Combo casal 1L</div><div class="vv">96 un</div></div>
+          <div class="rankrow"><div class="pos">4</div><div class="nm">Cupuaçu 500ml</div><div class="vv">61 un</div></div>
+        </div>
+        <div>
+          <h3 style="font-size:14px;color:#dc2626;margin:0 0 8px">🐢 Menos vendidos</h3>
+          <div class="rankrow"><div class="pos">1</div><div class="nm">Açaí zero açúcar 300ml</div><div class="vv">4 un</div></div>
+          <div class="rankrow"><div class="pos">2</div><div class="nm">Sorvete pote 2L</div><div class="vv">6 un</div></div>
+          <div class="rankrow"><div class="pos">3</div><div class="nm">Vitamina de açaí</div><div class="vv">9 un</div></div>
+          <div class="rankrow"><div class="pos">4</div><div class="nm">Barca família 2L</div><div class="vv">11 un</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ TELA 3: VENDAS POR HORÁRIO ============ -->
+  <section class="tabsview" id="tab-horario">
+    <header class="top">
+      <div class="title"><h1>Vendas por horário</h1><p>Onde estão seus picos — dias úteis x fins de semana</p></div>
+      <div class="chips"><button class="chip active">Rede</button><button class="chip">Por loja</button></div>
+    </header>
+
+    <div class="panel">
+      <h2>Vendas por horário — dias úteis</h2>
+      <p class="sub">Concentração de pedidos por faixa (seg a sex, últimas 4 semanas)</p>
+      <div class="heat" id="heatWeek"></div>
+      <div class="legend"><span>Menos</span><span class="sw" style="background:#ede9fe"></span><span class="sw" style="background:#c4b5fd"></span><span class="sw" style="background:#a78bfa"></span><span class="sw" style="background:#7c3aed"></span><span class="sw" style="background:#5b21b6"></span><span>Mais</span></div>
+    </div>
+
+    <div class="panel">
+      <h2>Vendas por horário — fins de semana</h2>
+      <p class="sub">Concentração de pedidos por faixa (sáb e dom, últimas 4 semanas)</p>
+      <div class="heat" id="heatWeekend"></div>
+      <div class="legend"><span>Menos</span><span class="sw" style="background:#dcfce7"></span><span class="sw" style="background:#86efac"></span><span class="sw" style="background:#4ade80"></span><span class="sw" style="background:#22c55e"></span><span class="sw" style="background:#15803d"></span><span>Mais</span></div>
+    </div>
+
+    <div class="note">📌 Leitura automática do BoraHapp: seu pico é <b>sex–dom das 19h às 22h</b>. Sugestão: escalar +1 entregador nesse turno e disparar cupom relâmpago às 18h30 nos dias fracos.</div>
+  </section>
+
+  <!-- ============ TELA 4: TEMPO POR STATUS + CANCELAMENTOS ============ -->
+  <section class="tabsview" id="tab-status">
+    <header class="top">
+      <div class="title"><h1>Tempo &amp; cancelamentos</h1><p>Quanto tempo o pedido fica parado em cada etapa e por que cancela</p></div>
+      <div class="chips"><button class="chip active">30 dias</button></div>
+    </header>
+
+    <div class="panel">
+      <h2>Tempo médio por status</h2>
+      <p class="sub">Do recebimento à entrega — onde está o gargalo (dado do log de status).</p>
+      <div class="status-flow">
+        <div class="st"><span class="dot" style="background:#3b82f6"></span><div class="nm">Recebido → Confirmado</div><div class="track"><i style="width:18%;background:#3b82f6">2 min</i></div><div class="tm">2 min</div></div>
+        <div class="st"><span class="dot" style="background:#f59e0b"></span><div class="nm">Confirmado → Em preparo</div><div class="track"><i style="width:35%;background:#f59e0b">6 min</i></div><div class="tm">6 min</div></div>
+        <div class="st"><span class="dot" style="background:#ef4444"></span><div class="nm">Em preparo → Pronto</div><div class="track"><i style="width:100%;background:#ef4444">21 min ⚠</i></div><div class="tm">21 min</div></div>
+        <div class="st"><span class="dot" style="background:#8b5cf6"></span><div class="nm">Pronto → Saiu p/ entrega</div><div class="track"><i style="width:42%;background:#8b5cf6">8 min</i></div><div class="tm">8 min</div></div>
+        <div class="st"><span class="dot" style="background:#22c55e"></span><div class="nm">Saiu → Entregue</div><div class="track"><i style="width:70%;background:#22c55e">14 min</i></div><div class="tm">14 min</div></div>
+      </div>
+      <div class="note" style="background:#fffbeb;border-color:#f59e0b;color:#92400e">⚠ Gargalo no <b>preparo (21 min)</b> — acima do alvo de 15 min. O alerta de atraso (RN04) marca esses pedidos em vermelho no quadro em tempo real.</div>
+    </div>
+
+    <div class="two">
+      <div class="panel" style="margin-top:0">
+        <h2>Motivos de cancelamento</h2>
+        <p class="sub">Total no período: 11 cancelamentos (2,1%)</p>
+        <div class="rankrow"><div class="pos gold">1</div><div class="nm">Cliente desistiu</div><div class="barmini"><i style="width:100%"></i></div><div class="vv">5</div></div>
+        <div class="rankrow"><div class="pos">2</div><div class="nm">Fora da área de entrega</div><div class="barmini"><i style="width:60%"></i></div><div class="vv">3</div></div>
+        <div class="rankrow"><div class="pos">3</div><div class="nm">Produto em falta</div><div class="barmini"><i style="width:40%"></i></div><div class="vv">2</div></div>
+        <div class="rankrow"><div class="pos">4</div><div class="nm">Endereço não encontrado</div><div class="barmini"><i style="width:20%"></i></div><div class="vv">1</div></div>
+      </div>
+      <div class="panel" style="margin-top:0">
+        <h2>Cancelamentos por loja</h2>
+        <p class="sub">Onde focar a atenção</p>
+        <table class="table">
+          <thead><tr><th>Loja</th><th class="num">Cancel.</th><th class="num">% s/ pedidos</th></tr></thead>
+          <tbody>
+            <tr><td>Vitória Régia</td><td class="num">4</td><td class="num"><span class="tag t-down">18%</span></td></tr>
+            <tr><td>Nova Esperança</td><td class="num">3</td><td class="num"><span class="tag t-flat">9%</span></td></tr>
+            <tr><td>Zona Norte</td><td class="num">3</td><td class="num"><span class="tag t-up">5%</span></td></tr>
+            <tr><td>Vila Hortência</td><td class="num">1</td><td class="num"><span class="tag t-up">3%</span></td></tr>
+          </tbody>
+        </table>
+        <div class="note">Vitória Régia cancela 18% — provável problema de raio de entrega. Vale revisar a taxa/área.</div>
+      </div>
+    </div>
+  </section>
+
+  </main>
+</div>
+
+<script>
+// navegação por abas
+document.querySelectorAll('.nav a[data-tab]').forEach(a=>{
+  a.addEventListener('click',()=>{
+    document.querySelectorAll('.nav a').forEach(x=>x.classList.remove('active'));
+    a.classList.add('active');
+    document.querySelectorAll('.tabsview').forEach(v=>v.classList.remove('active'));
+    document.getElementById('tab-'+a.dataset.tab).classList.add('active');
+    window.scrollTo(0,0);
+  });
+});
+
+// mapa de calor
+function buildHeat(el,base,palette){
+  const hours=['11h','12h','13h','14h','15h','16h','17h','18h','19h','20h','21h','22h'];
+  const days=base.dias;
+  let html='<div class="hh"></div>'+hours.map(h=>`<div class="hh">${h}</div>`).join('');
+  days.forEach((d,di)=>{
+    html+=`<div class="day">${d.nome}</div>`;
+    d.vals.forEach(v=>{
+      const c=palette[Math.min(palette.length-1,Math.round(v*(palette.length-1)))];
+      const txt=v>0.15?Math.round(v*40):'';
+      html+=`<div class="cell" style="background:${c};color:${v>0.55?'#fff':'#334155'}">${txt}</div>`;
+    });
+  });
+  el.innerHTML=html;
+}
+const wk={dias:[
+  {nome:'Seg',vals:[.1,.25,.3,.15,.1,.12,.2,.35,.6,.7,.55,.3]},
+  {nome:'Ter',vals:[.12,.28,.32,.18,.1,.14,.22,.4,.62,.72,.5,.28]},
+  {nome:'Qua',vals:[.14,.3,.35,.2,.12,.16,.26,.45,.68,.78,.6,.32]},
+  {nome:'Qui',vals:[.15,.32,.38,.22,.14,.2,.3,.5,.72,.82,.65,.4]},
+  {nome:'Sex',vals:[.2,.4,.45,.28,.2,.28,.42,.62,.85,.95,.8,.55]},
+]};
+const wknd={dias:[
+  {nome:'Sáb',vals:[.3,.55,.6,.45,.4,.5,.6,.75,.9,1,.92,.7]},
+  {nome:'Dom',vals:[.28,.5,.58,.5,.45,.55,.68,.8,.95,1,.88,.62]},
+]};
+buildHeat(document.getElementById('heatWeek'),wk,['#f5f3ff','#ede9fe','#c4b5fd','#a78bfa','#7c3aed','#5b21b6']);
+buildHeat(document.getElementById('heatWeekend'),wknd,['#f0fdf4','#dcfce7','#86efac','#4ade80','#22c55e','#15803d']);
+</script>
+</body>
+</html>
