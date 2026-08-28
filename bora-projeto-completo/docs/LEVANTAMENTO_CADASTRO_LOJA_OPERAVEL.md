@@ -1,5 +1,15 @@
 # Levantamento — Cadastro de Loja Totalmente Operável e Integrada
 
+> **⚠️ DOCUMENTO HISTÓRICO (escrito em 10/07/2026, ANTES da implementação).**
+> As camadas 1 e 2 propostas aqui **já foram construídas e estão em produção desde 28/08/2026**:
+> `ProvisionamentoService` semeia os defaults no cadastro e `GET /api/onboarding` alimenta o card
+> "Comece por aqui" na dashboard. A seção 2 ("o gap") **não descreve mais o sistema atual**.
+> Para o passo a passo operacional de cadastrar uma loja hoje, use
+> **[GUIA_CADASTRO_DE_LOJA.md](GUIA_CADASTRO_DE_LOJA.md)**. Este arquivo fica como registro do
+> levantamento que originou a implementação.
+
+---
+
 > Objetivo: definir **tudo** que é preciso para que uma loja recém-cadastrada nasça (ou fique rapidamente) **100% operacional** e integrada a todas as funcionalidades da plataforma BoraHapp. Este documento é o mapa: o que já existe, o que falta, o que deve ser semeado automaticamente e o que o lojista preenche por um assistente guiado.
 
 ---
