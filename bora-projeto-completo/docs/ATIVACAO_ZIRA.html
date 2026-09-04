@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ativação da Zirá — BoraHapp</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+
+<style>
+  :root{
+    --ground:#FBFAFD; --surface:#FFFFFF; --surface-2:#F4F1FA;
+    --ink:#171325; --ink-2:#453D5E; --muted:#6B6480; --line:#E4DEF0;
+    --accent:#6D28D9; --accent-soft:#F0E9FE; --zira:#5B1A8B; --amarelo:#FFD100;
+    --ok:#0F766E; --ok-bg:#DCF4F0;
+    --wait:#B45309; --wait-bg:#FDF0DC;
+    --block:#9F1239; --block-bg:#FCE4EA;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ground:#141021; --surface:#1C1730; --surface-2:#241D3C;
+      --ink:#F2EFFA; --ink-2:#CFC7E4; --muted:#9C93B5; --line:#332A4E;
+      --accent:#B69BFF; --accent-soft:#2A2145; --zira:#B69BFF; --amarelo:#FFD100;
+      --ok:#5EE3CE; --ok-bg:#123A38;
+      --wait:#F5B65C; --wait-bg:#3D2C13;
+      --block:#FF8FA8; --block-bg:#3E1522;
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#141021; --surface:#1C1730; --surface-2:#241D3C;
+    --ink:#F2EFFA; --ink-2:#CFC7E4; --muted:#9C93B5; --line:#332A4E;
+    --accent:#B69BFF; --accent-soft:#2A2145; --zira:#B69BFF; --amarelo:#FFD100;
+    --ok:#5EE3CE; --ok-bg:#123A38;
+    --wait:#F5B65C; --wait-bg:#3D2C13;
+    --block:#FF8FA8; --block-bg:#3E1522;
+  }
+
+  *{box-sizing:border-box}
+  body{margin:0; background:var(--ground); color:var(--ink);
+       font-family:"Source Sans 3","Segoe UI",system-ui,sans-serif; font-size:17px; line-height:1.65;
+       -webkit-font-smoothing:antialiased}
+  .wrap{max-width:840px; margin:0 auto; padding:52px 22px 96px}
+  h1,h2,h3{font-family:Archivo,"Segoe UI",system-ui,sans-serif; margin:0; text-wrap:balance}
+  h1{font-size:clamp(30px,5vw,42px); font-weight:700; letter-spacing:-.02em; line-height:1.1}
+  h2{font-size:22px; font-weight:650; letter-spacing:-.01em}
+  h3{font-size:17px; font-weight:650}
+  p{margin:0}
+  code{font-family:"JetBrains Mono",ui-monospace,monospace; font-size:.85em; background:var(--surface-2);
+       padding:2px 6px; border-radius:5px; color:var(--ink-2); word-break:break-all}
+
+  .eyebrow{font-family:"JetBrains Mono",monospace; font-size:12px; letter-spacing:.14em;
+           text-transform:uppercase; color:var(--zira)}
+  header.top{display:flex; flex-direction:column; gap:12px}
+  .lede{font-size:19px; color:var(--ink-2); max-width:60ch}
+
+  .barra{margin-top:22px; display:flex; flex-direction:column; gap:8px}
+  .trilho{height:10px; border-radius:999px; background:var(--surface-2); overflow:hidden; display:flex}
+  .trilho i{display:block; background:linear-gradient(90deg,var(--zira),var(--accent)); width:40%}
+  .barra small{font-size:14px; color:var(--muted); font-family:"JetBrains Mono",monospace}
+
+  section{margin-top:42px; display:flex; flex-direction:column; gap:14px}
+  .sec-head{display:flex; align-items:baseline; gap:10px; flex-wrap:wrap}
+
+  .chip{font-family:"JetBrains Mono",monospace; font-size:11px; font-weight:600; letter-spacing:.06em;
+        text-transform:uppercase; padding:3px 9px; border-radius:999px; white-space:nowrap}
+  .c-ok{background:var(--ok-bg); color:var(--ok)}
+  .c-wait{background:var(--wait-bg); color:var(--wait)}
+  .c-block{background:var(--block-bg); color:var(--block)}
+
+  .feito{background:var(--surface); border:1px solid var(--line); border-radius:12px; overflow:hidden}
+  .feito div{display:flex; gap:12px; align-items:flex-start; padding:12px 18px; border-bottom:1px solid var(--line)}
+  .feito div:last-child{border-bottom:none}
+  .feito b{font-family:Archivo,sans-serif; font-weight:600; min-width:150px}
+  .feito span{color:var(--ink-2); font-size:15.5px}
+  .tick{color:var(--ok); font-weight:700; flex-shrink:0}
+
+  .tarefa{background:var(--surface); border:1px solid var(--line); border-left:3px solid var(--wait);
+          border-radius:0 12px 12px 0; padding:18px 20px; display:flex; flex-direction:column; gap:10px}
+  .tarefa.bloq{border-left-color:var(--block)}
+  .tarefa h3{display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+  .quem{font-size:14px; color:var(--muted)}
+  .quem b{color:var(--ink-2)}
+  ul.lista{margin:0; padding-left:20px; display:flex; flex-direction:column; gap:6px; font-size:15.5px; color:var(--ink-2)}
+
+  .dados{display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:10px}
+  .dado{background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:12px 15px}
+  .dado b{display:block; font-family:Archivo,sans-serif; font-size:12px; text-transform:uppercase;
+          letter-spacing:.07em; color:var(--muted); margin-bottom:3px}
+  .dado span{font-size:15px; word-break:break-word}
+
+  .aviso{border-left:3px solid var(--wait); background:var(--wait-bg); color:var(--ink);
+         padding:13px 16px; border-radius:0 9px 9px 0; font-size:15.5px}
+  .aviso b{color:var(--wait)}
+
+  footer{margin-top:52px; padding-top:16px; border-top:1px solid var(--line); font-size:14px; color:var(--muted)}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="eyebrow">Cliente 1 · loja 18 · Sorocaba/SP</div>
+    <h1>Zirá Açaíteria: o que falta para operar 100%</h1>
+    <p class="lede">O cardápio já está no ar e vende. Faltam cinco peças — três delas dependem só de
+      uma conversa com a Maria Eduarda.</p>
+    <div class="barra">
+      <div class="trilho"><i></i></div>
+      <small>2 de 5 passos obrigatórios concluídos</small>
+    </div>
+  </header>
+
+  <section>
+    <div class="sec-head"><h2>Já está pronto</h2><span class="chip c-ok">no ar</span></div>
+    <div class="feito">
+      <div><span class="tick">✓</span><b>Loja e empresa</b><span>Loja 18, CNPJ 53.953.786/0001-28. A empresa foi criada pelo CNPJ — as outras 7 unidades entram nela e um gerente atende todas com um login.</span></div>
+      <div><span class="tick">✓</span><b>Identidade</b><span>Nome “Zirá Açaíteria” no cardápio, no app instalável e no painel. Roxo <code>#5B1A8B</code> e amarelo <code>#FFD100</code>.</span></div>
+      <div><span class="tick">✓</span><b>Cardápio</b><span>33 produtos em 12 categorias, 31 com foto, 16 com complementos — 42 grupos e 404 opções, puxados do 99.</span></div>
+      <div><span class="tick">✓</span><b>Horário</b><span>13h às 23h, de segunda a segunda.</span></div>
+      <div><span class="tick">✓</span><b>Módulo IA</b><span>Add-on liberado e WhatsApp da dona gravado (<code>5515981034318</code>).</span></div>
+      <div><span class="tick">✓</span><b>99Food, meio caminho</b><span>Merchant ID salvo e recebimento ativado — status <b>PRONTO</b>, esperando só a credencial.</span></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Falta — e de quem depende</h2></div>
+
+    <div class="tarefa">
+      <h3>Bairros e taxa de entrega <span class="chip c-wait">trava o pedido</span></h3>
+      <p class="quem">Depende da <b>Maria Eduarda</b> · Ajustes › Taxas · 5 minutos</p>
+      <p>É o item mais urgente: <b>sem ao menos um bairro cadastrado, o cliente dela não consegue fechar
+        pedido com entrega.</b> Hoje são zero.</p>
+      <p>Não dá para puxar do 99 — lá quem entrega é a própria 99, com frete calculado por distância.
+        A tabela do canal próprio é decisão dela.</p>
+      <ul class="lista">
+        <li>Quais bairros ela atende</li>
+        <li>Quanto cobra em cada um</li>
+        <li>Em quanto tempo entrega</li>
+      </ul>
+    </div>
+
+    <div class="tarefa">
+      <h3>Logo <span class="chip c-wait">aguardando arquivo</span></h3>
+      <p class="quem">Depende da <b>Maria Eduarda</b> · Configurações › Identidade · 1 minuto</p>
+      <p>O Instagram só entrega a foto de perfil em 150 pixels — fica borrada no cabeçalho e no ícone do
+        app instalável, que pede 512. Precisamos do arquivo original: aquele círculo roxo com a tacinha,
+        em PNG com fundo transparente.</p>
+    </div>
+
+    <div class="tarefa">
+      <h3>Assinatura <span class="chip c-wait">sem receita até aqui</span></h3>
+      <p class="quem">Depende da <b>Maria Eduarda</b> · Planos · 2 minutos</p>
+      <p>Só o administrador da loja consegue ativar. Ela informa o CNPJ e assina: são <b>7 dias de
+        cortesia</b> antes da primeira cobrança de R$ 199.</p>
+      <div class="aviso"><b>Antes de ela clicar:</b> se houver preço negociado, ele precisa estar
+        definido — depois da assinatura, ela já entrou pelo valor de tabela.</div>
+    </div>
+
+    <div class="tarefa">
+      <h3>PIX online <span class="chip c-wait">maior impacto</span></h3>
+      <p class="quem">Depende do <b>Anderson</b> + KYC dela · Integrações › Recebimento por PIX · 10 minutos</p>
+      <p>Hoje o cardápio só fecha pedido para pagar na entrega. Com o PIX, o cliente paga no ato e o
+        dinheiro cai direto na conta dela.</p>
+      <p>Cria uma subconta Asaas em nome dela — CPF/CNPJ, celular, endereço, CEP e faturamento estimado —
+        e devolve um link de KYC com documentos e selfie, que ela conclui. Vira ativo quando o Asaas aprova.</p>
+      <p class="quem">Abrir conta financeira em nome da cliente é ação do dono da plataforma.</p>
+    </div>
+
+    <div class="tarefa">
+      <h3>Cashback: decidir <span class="chip c-wait">está em 5%</span></h3>
+      <p class="quem">Depende de <b>vocês dois</b> · Configurações · 1 minuto</p>
+      <p>A loja nasceu dando <b>5% de cashback</b> em todo pedido do cardápio — é o padrão do
+        provisionamento, não uma escolha dela. Como no cardápio todo pedido tem telefone, isso incide em
+        100% das vendas do canal. Confirmar ou zerar antes de divulgar o link.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Bloqueado por terceiros</h2><span class="chip c-block">fora do nosso alcance</span></div>
+
+    <div class="tarefa bloq">
+      <h3>Pedidos do 99Food no painel</h3>
+      <p class="quem">Falta <b>Client ID + Client Secret</b> — o resto está pronto</p>
+      <p>Duas origens servem: a qualificação da ADF, em análise no 99, ou um aplicativo criado pela
+        própria Zirá no portal de desenvolvedores. O sistema aceita as duas e prefere a da loja quando
+        existe.</p>
+      <p>O caminho mais rápido costuma ser o segundo: ela já é estabelecimento aprovado no 99.</p>
+    </div>
+
+    <div class="tarefa bloq">
+      <h3>Robô de WhatsApp e resumo diário</h3>
+      <p class="quem">Bloqueio da <b>Meta</b>, vale para a plataforma inteira</p>
+      <p>A Meta recusa envio do número de teste americano para o Brasil. Destrava com um chip brasileiro
+        novo (~R$ 15, nunca usado no WhatsApp) ou com a verificação da empresa pelo CNPJ da ADF.</p>
+      <p>No dia em que subir, o Gerente Virtual dela já começa a mandar o resumo de vendas às 8h — o
+        número está gravado.</p>
+    </div>
+
+    <div class="tarefa bloq">
+      <h3>Cardápio por foto</h3>
+      <p class="quem">Falta a <b>chave da Claude</b> no servidor</p>
+      <p>Não afeta a Zirá agora — o cardápio dela já foi importado. Mas é o que torna o próximo cliente
+        rápido: print do cardápio vira produto cadastrado.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Dados da loja</h2></div>
+    <div class="dados">
+      <div class="dado"><b>Cardápio público</b><span>borahapp.com.br/cardapio.html?loja=18</span></div>
+      <div class="dado"><b>Login da lojista</b><span>mariaeduardaoliveiramattos2005@gmail.com</span></div>
+      <div class="dado"><b>CNPJ</b><span>53.953.786/0001-28</span></div>
+      <div class="dado"><b>WhatsApp</b><span>(15) 98103-4318</span></div>
+      <div class="dado"><b>Merchant ID no 99</b><span><code>5764615393256407102</code></span></div>
+      <div class="dado"><b>Endereço</b><span>R. Firmino Mineli, 751 — Sorocaba/SP <i>(do Instagram, confirmar)</i></span></div>
+      <div class="dado"><b>Plano</b><span>Único · R$ 199/mês · até 15 usuários</span></div>
+      <div class="dado"><b>Equipe</b><span>1 usuário — só a Maria Eduarda</span></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Três coisas para confirmar com ela</h2></div>
+    <div class="tarefa">
+      <ul class="lista">
+        <li><b>Horário.</b> O Instagram diz 13h–23h, mas o painel do 99 registrava 2,71h de funcionamento
+          médio por dia. Se o horário real for menor, o cardápio vai ficar aberto em hora que ela não atende.</li>
+        <li><b>Dois produtos de 5 litros</b> com preços diferentes — R$ 85,00 e R$ 79,90 — vieram os dois,
+          como estão no 99. Pode ser proposital ou legado.</li>
+        <li><b>Os três Cremes</b> (Avelã, Leitinho, Paçoca) estão marcados com status diferente no 99,
+          provavelmente pausados. Vieram assim mesmo; se estiverem fora, é desativar.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Ordem sugerida</h2></div>
+    <div class="tarefa">
+      <ul class="lista">
+        <li><b>Hoje, com ela:</b> bairros e taxa, logo, e a decisão do cashback. Uma ligação resolve os três.</li>
+        <li><b>Em seguida:</b> ela ativa a assinatura — é o que inicia a receita.</li>
+        <li><b>Depois:</b> PIX online, que muda a experiência de pagamento do cliente final dela.</li>
+        <li><b>Em paralelo, cobrando terceiros:</b> credencial do 99 e o chip para o WhatsApp.</li>
+      </ul>
+    </div>
+  </section>
+
+  <footer>
+    Estado verificado no sistema em 4 de setembro de 2026. Os dois passos concluídos do checklist
+    obrigatório são cardápio e horário; faltam marca, entrega e assinatura.
+  </footer>
+
+</div>
+</body>
+</html>

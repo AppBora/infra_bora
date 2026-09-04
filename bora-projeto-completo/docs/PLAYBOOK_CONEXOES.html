@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Playbook de Conexões — BoraHapp</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+
+<style>
+  :root{
+    --ground:#FBFAFD;
+    --surface:#FFFFFF;
+    --surface-2:#F4F1FA;
+    --ink:#171325;
+    --ink-2:#453D5E;
+    --muted:#6B6480;
+    --line:#E4DEF0;
+    --accent:#6D28D9;
+    --accent-soft:#F0E9FE;
+    --ok:#0F766E;      --ok-bg:#DCF4F0;
+    --wait:#B45309;    --wait-bg:#FDF0DC;
+    --block:#9F1239;   --block-bg:#FCE4EA;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ground:#141021;
+      --surface:#1C1730;
+      --surface-2:#241D3C;
+      --ink:#F2EFFA;
+      --ink-2:#CFC7E4;
+      --muted:#9C93B5;
+      --line:#332A4E;
+      --accent:#B69BFF;
+      --accent-soft:#2A2145;
+      --ok:#5EE3CE;      --ok-bg:#123A38;
+      --wait:#F5B65C;    --wait-bg:#3D2C13;
+      --block:#FF8FA8;   --block-bg:#3E1522;
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#141021;
+    --surface:#1C1730;
+    --surface-2:#241D3C;
+    --ink:#F2EFFA;
+    --ink-2:#CFC7E4;
+    --muted:#9C93B5;
+    --line:#332A4E;
+    --accent:#B69BFF;
+    --accent-soft:#2A2145;
+    --ok:#5EE3CE;      --ok-bg:#123A38;
+    --wait:#F5B65C;    --wait-bg:#3D2C13;
+    --block:#FF8FA8;   --block-bg:#3E1522;
+  }
+
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--ground); color:var(--ink);
+    font-family:"Source Sans 3","Segoe UI",system-ui,sans-serif;
+    font-size:17px; line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:820px; margin:0 auto; padding:56px 22px 96px}
+  h1,h2,h3{font-family:Archivo,"Segoe UI",system-ui,sans-serif; text-wrap:balance; margin:0}
+  h1{font-size:clamp(30px,5vw,44px); font-weight:700; letter-spacing:-.02em; line-height:1.1}
+  h2{font-size:23px; font-weight:650; letter-spacing:-.01em}
+  h3{font-size:17px; font-weight:650}
+  p{margin:0}
+  code{font-family:"JetBrains Mono",ui-monospace,monospace; font-size:.86em; background:var(--surface-2);
+      padding:2px 6px; border-radius:5px; color:var(--ink-2); word-break:break-word}
+  a{color:var(--accent)}
+
+  header.top{display:flex; flex-direction:column; gap:14px; margin-bottom:14px}
+  .eyebrow{font-family:"JetBrains Mono",monospace; font-size:12px; letter-spacing:.14em;
+           text-transform:uppercase; color:var(--accent)}
+  .lede{font-size:19px; color:var(--ink-2); max-width:62ch}
+  .meta{font-size:14px; color:var(--muted); border-top:1px solid var(--line); padding-top:12px}
+
+  section{margin-top:44px; display:flex; flex-direction:column; gap:16px}
+  .sec-head{display:flex; align-items:baseline; gap:12px; flex-wrap:wrap}
+  .num{font-family:"JetBrains Mono",monospace; font-size:13px; font-weight:600; color:var(--accent);
+       background:var(--accent-soft); padding:3px 9px; border-radius:999px; flex-shrink:0}
+
+  .card{background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:20px 22px;
+        display:flex; flex-direction:column; gap:12px}
+  .card h3{display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+
+  .chip{font-family:"JetBrains Mono",monospace; font-size:11px; font-weight:600; letter-spacing:.06em;
+        text-transform:uppercase; padding:3px 9px; border-radius:999px; white-space:nowrap}
+  .c-ok{background:var(--ok-bg); color:var(--ok)}
+  .c-wait{background:var(--wait-bg); color:var(--wait)}
+  .c-block{background:var(--block-bg); color:var(--block)}
+
+  .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:12px}
+  .mini{background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:14px 16px;
+        display:flex; flex-direction:column; gap:6px}
+  .mini b{font-family:Archivo,sans-serif; font-size:15px}
+  .mini span{font-size:14px; color:var(--muted)}
+
+  .tabela{overflow-x:auto; border:1px solid var(--line); border-radius:12px; background:var(--surface)}
+  table{border-collapse:collapse; width:100%; font-size:15px; min-width:520px}
+  th,td{text-align:left; padding:11px 16px; border-bottom:1px solid var(--line); vertical-align:top}
+  th{font-family:Archivo,sans-serif; font-size:13px; text-transform:uppercase; letter-spacing:.06em;
+     color:var(--muted); font-weight:600}
+  tr:last-child td{border-bottom:none}
+
+  ol.passos{margin:0; padding-left:22px; display:flex; flex-direction:column; gap:8px}
+  ul.lista{margin:0; padding-left:20px; display:flex; flex-direction:column; gap:7px}
+
+  .aviso{border-left:3px solid var(--wait); background:var(--wait-bg); color:var(--ink);
+         padding:13px 16px; border-radius:0 9px 9px 0; font-size:15.5px}
+  .aviso b{color:var(--wait)}
+
+  footer{margin-top:56px; padding-top:18px; border-top:1px solid var(--line);
+         font-size:14px; color:var(--muted)}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="eyebrow">BoraHapp · operação</div>
+    <h1>Ligar um cliente em tudo que a plataforma entrega</h1>
+    <p class="lede">Sete passos, do cadastro ao teste de aceitação — com quem fornece cada peça,
+      onde ela entra e o que deixa de funcionar sem ela.</p>
+    <p class="meta">Levantado do código em produção · 4 de setembro de 2026</p>
+  </header>
+
+  <section>
+    <div class="sec-head"><h2>Estado da plataforma hoje</h2></div>
+    <p>Estas credenciais valem para <b>todos</b> os clientes e são configuradas uma vez, no servidor.
+      Enquanto faltarem, o recurso correspondente fica indisponível para qualquer loja.</p>
+    <div class="grid">
+      <div class="mini"><b>Cobrança da mensalidade</b><span class="chip c-ok" style="align-self:flex-start">no ar</span><span>Asaas configurado — clientes conseguem assinar.</span></div>
+      <div class="mini"><b>Split do PIX</b><span class="chip c-ok" style="align-self:flex-start">no ar</span><span>Taxa em 0%: nada é retido do lojista.</span></div>
+      <div class="mini"><b>Acesso da plataforma</b><span class="chip c-ok" style="align-self:flex-start">no ar</span><span>Super-admin ativo, com entrada de suporte nas lojas.</span></div>
+      <div class="mini"><b>Módulo IA</b><span class="chip c-block" style="align-self:flex-start">falta chave</span><span><code>BORA_CLAUDE_API_KEY</code> — sem ela, cardápio por foto e IA respondem erro.</span></div>
+      <div class="mini"><b>99Food</b><span class="chip c-wait" style="align-self:flex-start">em análise</span><span>Qualificação da ADF enviada. Alternativa: credencial do próprio lojista.</span></div>
+      <div class="mini"><b>iFood</b><span class="chip c-wait" style="align-self:flex-start">em fila</span><span>Depende da homologação como integradora.</span></div>
+      <div class="mini"><b>WhatsApp</b><span class="chip c-block" style="align-self:flex-start">bloqueado</span><span>A Meta recusa o número de teste. Destrava com chip BR ou verificação da empresa.</span></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="num">Passo 1</span><h2>Criar a loja</h2></div>
+    <div class="card">
+      <h3>Configurações › card Plataforma › Nova loja</h3>
+      <p>Nome, CNPJ, responsável, e-mail, senha provisória e preço — vazio usa os R$ 199 de tabela.
+        Leva dois minutos.</p>
+      <p>O CNPJ cria a <b>Empresa</b>: lojas com o mesmo CNPJ caem na mesma empresa, e a partir daí um
+        gerente atende todas elas com um login só, trocando pelo seletor do menu.</p>
+      <p>Na mesma linha do cliente você libera o <b>Módulo IA</b>, se contratado, e ajusta o
+        <b>cashback</b> — que nasce em 5% em toda loja nova.</p>
+    </div>
+    <div class="aviso"><b>Antes de entregar:</b> o horário nasce 18h–23h todos os dias e o cashback nasce
+      em 5%. Os dois são chute do provisionamento, não decisão de ninguém. Confira ambos.</div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="num">Passo 2</span><h2>Entrar na loja</h2></div>
+    <div class="card">
+      <p>Botão <b>Entrar na loja</b>, na linha do cliente. Você passa a operar dentro dela sem pedir a
+        senha do lojista, e a entrada fica registrada no log de auditoria.</p>
+      <p>É o que permite a plataforma fazer o cadastro pelo cliente — sem depender de uma senha que ele
+        pode trocar amanhã.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="num">Passo 3</span><h2>Conteúdo: o que torna a loja vendável</h2></div>
+    <div class="card">
+      <ol class="passos">
+        <li><b>Marca</b> — logo e cor, em Configurações.</li>
+        <li><b>Cardápio</b> — um a um, colando a lista no formato <code>Categoria ; Nome ; Preço</code>,
+          ou por foto com o Módulo IA.</li>
+        <li><b>Complementos</b> — botão 🧩 na linha do produto. Em açaí e pizza, é metade do pedido.</li>
+        <li><b>Entrega</b> — Ajustes › Taxas: bairro, valor e tempo.</li>
+        <li><b>Horário real</b> — Ajustes › Horário.</li>
+        <li><b>Equipe e entregadores</b>, se houver.</li>
+      </ol>
+      <div class="aviso">Sem <b>ao menos um bairro com taxa</b>, o cliente final não consegue fechar
+        pedido com entrega. É o passo que mais trava loja nova.</div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="num">Passo 4</span><h2>Dinheiro</h2></div>
+    <div class="card">
+      <h3>Assinatura <span class="chip c-ok">disponível</span></h3>
+      <p>O lojista ativa em Planos, com CPF ou CNPJ. São 7 dias de cortesia antes da primeira cobrança,
+        e só o administrador da loja consegue assinar.</p>
+      <p><b>Defina o preço negociado antes disso</b> — depois de assinar, ele já entrou pelo valor de tabela.</p>
+    </div>
+    <div class="card">
+      <h3>PIX online <span class="chip c-ok">disponível</span></h3>
+      <p>Integrações › Recebimento por PIX › Ativar. Cria uma subconta Asaas em nome do lojista — pede
+        CPF/CNPJ, celular, endereço, CEP e faturamento — e devolve um link de <b>KYC</b>: documentos e
+        selfie, que ele precisa concluir. Quando o Asaas aprova, o PIX passa a aparecer no checkout.</p>
+      <p>Sem isso, o cardápio só fecha pedido para pagar na entrega — o cliente não paga no ato.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="num">Passo 5</span><h2>Canais externos</h2></div>
+    <div class="tabela">
+      <table>
+        <thead><tr><th>Canal</th><th>O que exige</th><th>Situação</th></tr></thead>
+        <tbody>
+          <tr><td><b>99Food</b></td><td><code>Client ID</code> + <code>Secret</code> e o merchant ID da loja. A credencial pode ser da plataforma ou <b>do próprio lojista</b> — o sistema prefere a da loja quando existe.</td><td><span class="chip c-wait">aguardando</span></td></tr>
+          <tr><td><b>iFood</b></td><td>Mesmo modelo, só com a homologação de integradora aprovada.</td><td><span class="chip c-wait">em fila</span></td></tr>
+          <tr><td><b>WhatsApp</b></td><td>Por loja: <code>Phone Number ID</code> e token da API oficial da Meta.</td><td><span class="chip c-block">bloqueado</span></td></tr>
+          <tr><td>Rappi, Uber&nbsp;Eats, aiqfome, Goomer</td><td>Estão no catálogo, mas não são integrações oficiais — o vínculo é manual, com credencial obtida em cada portal.</td><td><span class="chip c-block">manual</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>O merchant ID do 99 sai do painel do lojista: aparece no cache de sessão como <code>shopId</code>.</p>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="num">Passo 6</span><h2>Add-ons pagos</h2></div>
+    <div class="card">
+      <h3>Módulo IA — R$ 99/mês por loja</h3>
+      <p>Liberado só pelo super-admin, na linha do cliente. Entrega três coisas: cardápio por foto,
+        Gerente Virtual (resumo diário de vendas às 8h no WhatsApp do dono) e recuperador de clientes
+        que sumiram há mais de 21 dias.</p>
+      <p>O primeiro depende da chave da Claude; os outros dois dependem também do canal de WhatsApp.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="num">Passo 7</span><h2>Aceitação antes de entregar</h2></div>
+    <div class="card">
+      <p>Um pedido de ponta a ponta, pelo celular, como se você fosse o cliente dela:</p>
+      <ul class="lista">
+        <li>Montar um pedido com um produto que tenha complemento</li>
+        <li>Aplicar um cupom, se houver</li>
+        <li>Fechar o pedido</li>
+        <li>No painel, avançar o status até <b>ENTREGUE</b></li>
+        <li>Conferir o link público de acompanhamento, a Dashboard e o Relatório</li>
+      </ul>
+      <p>Passou nos cinco, a loja está operacional.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>O que o cliente sente quando falta cada peça</h2></div>
+    <div class="tabela">
+      <table>
+        <thead><tr><th>Falta</th><th>Como aparece para ele</th></tr></thead>
+        <tbody>
+          <tr><td>Bairro com taxa</td><td>Não consegue fechar pedido com entrega</td></tr>
+          <tr><td>Horário real</td><td>O cardápio abre e fecha na hora errada</td></tr>
+          <tr><td>Logo e cor</td><td>Cardápio com a cara do BoraHapp, não da loja dele</td></tr>
+          <tr><td>Assinatura</td><td>Loja suspensa quando o webhook de inadimplência rodar</td></tr>
+          <tr><td>PIX online</td><td>Só paga na entrega — nada de pagamento no ato</td></tr>
+          <tr><td>Credencial de marketplace</td><td>Os pedidos do canal não entram no painel</td></tr>
+          <tr><td>WhatsApp</td><td>Sem robô e sem resumo diário de vendas</td></tr>
+          <tr><td>Chave da Claude</td><td>Cardápio por foto e recursos de IA respondem erro</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Em que ordem atacar</h2></div>
+    <div class="card">
+      <ol class="passos">
+        <li><b>Loja e conteúdo</b> — é o que ele contratou, e não depende de ninguém de fora.</li>
+        <li><b>Assinatura</b> — sem ela não há receita.</li>
+        <li><b>PIX online</b> — o maior impacto entre os que dependem só de você e do lojista.</li>
+        <li><b>WhatsApp</b> — um chip novo resolve em horas.</li>
+        <li><b>Marketplaces</b> — dependem de aprovação de terceiro: comece cedo, entregue por último.</li>
+      </ol>
+    </div>
+  </section>
+
+  <footer>
+    O que nasce pronto em toda loja: 4 formas de pagamento, 5 motivos de cancelamento, 7 horários,
+    cashback de 5%, cardápio público, app instalável, QR e link de acompanhamento do pedido.
+  </footer>
+
+</div>
+</body>
+</html>
