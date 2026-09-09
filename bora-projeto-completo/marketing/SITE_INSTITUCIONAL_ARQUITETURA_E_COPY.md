@@ -1,7 +1,7 @@
 # Site institucional BoraHapp (borahapp.com.br) — Arquitetura e Copy
 
 > Base lida: `bora-landing/index.html` (landing atual, página única) e `bora-projeto-completo/docs/ESTUDO_MERCADO_2026.md` (guerra do delivery, jul/2026).
-> Empresa: ADF Sistemas e Tecnologias LTDA, CNPJ 68.761.778/0001-57, Sorocaba/SP. WhatsApp (11) 97110-1563.
+> Empresa: ADF Sistemas e Tecnologias LTDA, CNPJ 68.761.778/0001-57, Sorocaba/SP. WhatsApp (15) 99860-2332.
 > Preço a comunicar: **R$ 199/mês por loja**, pedidos ilimitados, até 15 usuários, sem taxa por pedido, sem comissão.
 
 ## 0. Decisões
@@ -336,7 +336,7 @@ O BoraHapp nasceu pra inverter isso: um sistema com a marca da sua loja, não a 
 
 **Seção — Quem está por trás**
 
-O BoraHapp é um produto da ADF Sistemas e Tecnologias LTDA, CNPJ 68.761.778/0001-57, com sede em Sorocaba/SP. Atendemos lojistas de delivery em todo o Brasil pelo WhatsApp (11) 97110-1563.
+O BoraHapp é um produto da ADF Sistemas e Tecnologias LTDA, CNPJ 68.761.778/0001-57, com sede em Sorocaba/SP. Atendemos lojistas de delivery em todo o Brasil pelo WhatsApp (15) 99860-2332.
 
 **CTA:** Quer conversar com a gente antes de assinar? Falar no WhatsApp
 
@@ -345,7 +345,7 @@ O BoraHapp é um produto da ADF Sistemas e Tecnologias LTDA, CNPJ 68.761.778/000
 ### PÁGINA 5 — CONTATO
 
 **Título da aba:** Fale com o BoraHapp — WhatsApp, suporte e vendas
-**Meta description:** Fale com o time do BoraHapp pelo WhatsApp (11) 97110-1563. Tire dúvidas, peça uma demonstração ou comece sua loja hoje.
+**Meta description:** Fale com o time do BoraHapp pelo WhatsApp (15) 99860-2332. Tire dúvidas, peça uma demonstração ou comece sua loja hoje.
 
 **H1:** Bora conversar?
 **Subtítulo:** Tira dúvida, pede uma demonstração ou já começa sua loja — tudo pelo WhatsApp, com gente de verdade do outro lado.
@@ -359,7 +359,7 @@ Três botões, cada um com WhatsApp pré-preenchido diferente:
 ADF Sistemas e Tecnologias LTDA
 CNPJ 68.761.778/0001-57
 Sorocaba/SP
-WhatsApp: (11) 97110-1563
+WhatsApp: (15) 99860-2332
 
 **Linha final:** Antes de falar com a gente, dá uma olhada nas perguntas mais frequentes → (link pra Preços#faq)
 
@@ -393,7 +393,7 @@ Não. Se você sabe usar WhatsApp, sabe usar o BoraHapp. Não tem curso nem manu
 Em geral, minutos: você cadastra nome, logo e cores, monta o cardápio e já pode publicar o QR Code. Se quiser ajuda, a gente acompanha o processo pelo WhatsApp.
 
 **A empresa é confiável? Quem está por trás do BoraHapp?**
-O BoraHapp é operado pela ADF Sistemas e Tecnologias LTDA, CNPJ 68.761.778/0001-57, sediada em Sorocaba/SP. Você pode conferir nosso CNPJ, falar com a gente pelo WhatsApp (11) 97110-1563 antes de assinar, e ver os Termos de Uso e a Política de Privacidade no rodapé do site.
+O BoraHapp é operado pela ADF Sistemas e Tecnologias LTDA, CNPJ 68.761.778/0001-57, sediada em Sorocaba/SP. Você pode conferir nosso CNPJ, falar com a gente pelo WhatsApp (15) 99860-2332 antes de assinar, e ver os Termos de Uso e a Política de Privacidade no rodapé do site.
 
 **Meus clientes vão ver a marca do BoraHapp?**
 Não. O painel, o cardápio digital e os relatórios rodam com a sua marca — seu logo, suas cores e o nome da sua loja. O BoraHapp fica nos bastidores.

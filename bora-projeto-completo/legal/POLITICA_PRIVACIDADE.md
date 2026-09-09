@@ -42,10 +42,10 @@ eliminados ou anonimizados.
 ## 6. Direitos do titular (art. 18 da LGPD)
 O titular pode solicitar: confirmação de tratamento, acesso, correção, anonimização, portabilidade,
 eliminação e informações sobre compartilhamento. Consumidores finais devem procurar **o Lojista**
-(controlador). Solicitações relativas ao BoraHapp: **WhatsApp (11) 97110-1563**.
+(controlador). Solicitações relativas ao BoraHapp: **WhatsApp (15) 99860-2332**.
 
 ## 7. Encarregado (DPO)
-Encarregado pelo tratamento de dados: **Anderson Luiz Ferreira** — contato: **WhatsApp (11) 97110-1563**.
+Encarregado pelo tratamento de dados: **Anderson Luiz Ferreira** — contato: **WhatsApp (15) 99860-2332**.
 
 ## 8. Cookies
 O painel usa armazenamento local (localStorage) para sessão e preferências. [Descrever cookies de
@@ -58,4 +58,4 @@ Caso algum subprocessador trate dados fora do Brasil, adotaremos salvaguardas co
 Podemos atualizar esta Política, informando a data de revisão. Mudanças relevantes serão comunicadas.
 
 ---
-Contato: WhatsApp (11) 97110-1563 — ADF SISTEMAS E TECNOLOGIAS LTDA, CNPJ 68.761.778/0001-57.
+Contato: WhatsApp (15) 99860-2332 — ADF SISTEMAS E TECNOLOGIAS LTDA, CNPJ 68.761.778/0001-57.

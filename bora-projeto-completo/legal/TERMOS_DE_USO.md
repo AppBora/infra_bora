@@ -36,14 +36,14 @@ Se oferecido, o período de teste gratuito tem duração de 7 dias. Ao término,
 plano contratado é iniciada automaticamente, salvo cancelamento prévio.
 
 ## 5. Cancelamento
-5.1. O Lojista pode cancelar a qualquer momento pelo painel ou por WhatsApp (11) 97110-1563.
+5.1. O Lojista pode cancelar a qualquer momento pelo painel ou por WhatsApp (15) 99860-2332.
 5.2. O cancelamento encerra a renovação; o acesso permanece até o fim do ciclo já pago.
 5.3. Não há reembolso de períodos já utilizados, salvo disposição legal em contrário.
 
 ## 6. Disponibilidade e suporte
 6.1. Envidamos esforços para manter a plataforma disponível, mas **não garantimos** operação
 ininterrupta. Manutenções programadas serão comunicadas quando possível.
-6.2. Suporte disponível por WhatsApp (11) 97110-1563, de segunda a sábado, das 9h às 22h. Metas de atendimento (SLA) por plano na Central de Ajuda do painel.
+6.2. Suporte disponível por WhatsApp (15) 99860-2332, de segunda a sábado, das 9h às 22h. Metas de atendimento (SLA) por plano na Central de Ajuda do painel.
 
 ## 7. Responsabilidades do Lojista
 7.1. Conteúdo cadastrado (produtos, preços, imagens), atendimento ao consumidor final e
@@ -73,4 +73,4 @@ vigência implica concordância.
 Fica eleito o foro da comarca de Sorocaba/SP, salvo competência legal diversa (ex.: consumidor).
 
 ---
-Contato: WhatsApp (11) 97110-1563 — ADF SISTEMAS E TECNOLOGIAS LTDA, CNPJ 68.761.778/0001-57.
+Contato: WhatsApp (15) 99860-2332 — ADF SISTEMAS E TECNOLOGIAS LTDA, CNPJ 68.761.778/0001-57.
