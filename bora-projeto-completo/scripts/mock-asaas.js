@@ -21,6 +21,10 @@ const DOCS = [
     responsible: { name: '53.953.786 FULANO DE TESTE', type: 'MEI' }, documents: [] },
   { id: 'doc-selfie', type: 'IDENTIFICATION_SELFIE', status: 'NOT_SENT', onboardingUrl: null,
     title: 'Selfie de identificação', description: 'Para enviar esse documento acesse nosso aplicativo.',
+    responsible: { name: '53.953.786 FULANO DE TESTE', type: 'MEI' }, documents: [] },
+  // Tipo que o Asaas aceita por API - e o que mantem o upload da tela vivo e testavel.
+  { id: 'doc-extra', type: 'CUSTOM', status: 'NOT_SENT', onboardingUrl: null,
+    title: 'Comprovante de endereço', description: 'Documento extra solicitado na analise.',
     responsible: { name: '53.953.786 FULANO DE TESTE', type: 'MEI' }, documents: [] }
 ];
 
@@ -53,6 +57,15 @@ const servidor = http.createServer((req, res) => {
     }
     if (req.method === 'POST' && url.startsWith('/myAccount/documents/')) {
       const id = url.split('/').pop();
+      // O Asaas de verdade RECUSA identidade e selfie por API (400 invalid_object): a captura tem
+      // que ser ao vivo, pela camera. Descoberto na producao depois que este mock aceitou tudo e
+      // deu falsa confianca. Agora o mock recusa igual - quem testar aqui ve o mesmo que la.
+      const doc0 = DOCS.find(d => d.id === id);
+      if (doc0 && ['IDENTIFICATION', 'IDENTIFICATION_SELFIE'].includes(doc0.type)) {
+        console.log('  -> recusado (tipo so aceita captura ao vivo), igual ao Asaas real');
+        return json(res, 400, { errors: [{ code: 'invalid_object',
+          description: 'Esse tipo de documento não pode ser enviado via API. Por favor, entre em contato com o suporte.' }] });
+      }
       const tipoConteudo = req.headers['content-type'] || '';
       const texto = bruto.toString('latin1');
       const achado = {
