@@ -14,6 +14,7 @@ const http = require('http');
 
 const PORTA = process.env.PORT || 8099;
 const recebidos = [];
+let aprovada = false;
 
 const DOCS = [
   { id: 'doc-identificacao', type: 'IDENTIFICATION', status: 'NOT_SENT', onboardingUrl: null,
@@ -50,8 +51,12 @@ const servidor = http.createServer((req, res) => {
     }
     if (req.method === 'GET' && url === '/myAccount/status') {
       return json(res, 200, { id: 'sub-mock-1', commercialInfo: 'APPROVED', bankAccountInfo: 'PENDING',
-                              documentation: 'PENDING', general: 'PENDING' });
+                              documentation: aprovada ? 'APPROVED' : 'PENDING',
+                              general: aprovada ? 'APPROVED' : 'PENDING' });
     }
+    // Vira o KYC para aprovado, para o teste provar a corrente inteira: aprovacao -> asaasStatus
+    // ATIVO -> pixDisponivel true no cardapio publico. Sem isto, so da para testar a metade.
+    if (req.method === 'POST' && url === '/__aprovar') { aprovada = true; return json(res, 200, { aprovada }); }
     if (req.method === 'GET' && url === '/myAccount/documents') {
       return json(res, 200, { data: DOCS, rejectReasons: null });
     }
