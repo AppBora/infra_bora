@@ -33,6 +33,23 @@ done
 checa "pedido importado para o painel"       "sim" "$([ -n "$ID" ] && echo sim || echo nao)"
 [ -z "$ID" ] && { echo "RESULTADO: $ok PASS / $((fail+1)) FALHA"; exit 1; }
 
+echo "== o pedido chegou com o que a homologacao exige =="
+PED=$(curl -s "$API/api/pedidos" -H "$AUTH" | python -c "
+import sys,json
+print(json.dumps([p for p in json.load(sys.stdin) if p.get('idExterno')=='$PEDIDO_IFOOD'][0]))")
+OBS=$(echo "$PED" | python -c "import sys,json;print(json.load(sys.stdin).get('observacao') or '')")
+CLI=$(echo "$PED" | python -c "import sys,json;print(json.load(sys.stdin).get('clienteId') or '')")
+END=$(curl -s "$API/api/clientes" -H "$AUTH" | python -c "
+import sys,json
+c=[x for x in json.load(sys.stdin) if str(x['id'])=='$CLI']
+print(c[0].get('endereco') or '' if c else '')")
+echo "  observacao: $OBS"
+echo "  endereco:   $END"
+checa "observacao de ENTREGA veio junto"     "sim" "$(echo "$OBS" | grep -qi 'interfone' && echo sim || echo nao)"
+checa "observacao do pedido preservada"      "sim" "$(echo "$OBS" | grep -qi 'mock' && echo sim || echo nao)"
+checa "complemento no endereco"              "sim" "$(echo "$END" | grep -qi 'apto' && echo sim || echo nao)"
+checa "ponto de referencia no endereco"      "sim" "$(echo "$END" | grep -qi 'portao' && echo sim || echo nao)"
+
 echo "== o lojista cancela, com motivo =="
 curl -s -o /dev/null -X PATCH "$API/api/pedidos/$ID/status?status=CANCELADO&motivo=item%20indisponivel" -H "$AUTH"
 sleep 3

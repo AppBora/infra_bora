@@ -39,8 +39,12 @@ function novoPedido(merchantId) {
     delivery: {
       deliveryAddress: {
         streetName: 'Rua da Integração', streetNumber: String(100 + seq),
-        neighborhood: 'Centro', complement: 'apto ' + seq
-      }
+        neighborhood: 'Centro', complement: 'apto ' + seq,
+        reference: 'portao azul, ao lado da padaria'
+      },
+      // Criterio de homologacao do iFood: esta observacao TEM que aparecer na tela de quem recebe
+      // o pedido. E campo do delivery, nao do pedido - sao dois "observations" diferentes.
+      observations: 'Interfone quebrado, ligar ao chegar'
     },
     payments: { methods: [{ method: 'CREDIT', type: 'ONLINE' }] },
     items: [
