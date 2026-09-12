@@ -143,8 +143,34 @@ const server = http.createServer(async (req, res) => {
     return json(res, 200, p);
   }
 
+  // O iFood devolve a lista de motivos VALIDOS para aquele pedido; a doc dele proibe lista fixa no
+  // parceiro. O mock antes aceitava requestCancellation sem corpo nenhum - e foi assim que passou
+  // despercebido que a gente cancelava sem motivo.
+  const motivos = rota.match(/^\/order\/v1\.0\/orders\/([^/]+)\/cancellationReasons$/);
+  if (motivos && req.method === 'GET') {
+    return json(res, 200, [
+      { cancelCodeId: '501', description: 'PROBLEMAS DE SISTEMA' },
+      { cancelCodeId: '502', description: 'PEDIDO EM DUPLICIDADE' },
+      { cancelCodeId: '506', description: 'ITEM INDISPONIVEL' }
+    ]);
+  }
+
   const acao = rota.match(/^\/order\/v1\.0\/orders\/([^/]+)\/(confirm|startPreparation|readyToPickup|dispatch|requestCancellation)$/);
   if (acao && req.method === 'POST') {
+    // Cancelamento sem codigo de motivo o iFood recusa. O mock passa a recusar tambem: mock que
+    // aceita o que o real recusa nao prova nada - foi assim que o furo do cancelamento sobreviveu.
+    if (acao[2] === 'requestCancellation') {
+      let enviado = {};
+      try { enviado = JSON.parse(corpo || '{}'); } catch (e) { enviado = {}; }
+      const codigo = enviado.reason || enviado.cancellationCode;
+      if (!codigo) {
+        log('CANCELAMENTO RECUSADO: veio sem motivo');
+        return json(res, 400, { error: { code: 'INVALID_CANCELLATION', message: 'informe o codigo do motivo' } });
+      }
+      statusRecebidos.push({ orderId: acao[1], verbo: acao[2], motivo: codigo, em: new Date().toISOString() });
+      log('CANCELAMENTO ACEITO: ' + acao[1] + ' motivo ' + codigo);
+      return json(res, 202, {});
+    }
     statusRecebidos.push({ orderId: acao[1], verbo: acao[2], em: new Date().toISOString() });
     log('STATUS RECEBIDO: ' + acao[1] + ' -> ' + acao[2]);
     return json(res, 202, {});
