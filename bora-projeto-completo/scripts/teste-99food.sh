@@ -40,14 +40,23 @@ import sys,json
 print(' '.join(r['verbo'] for r in json.load(sys.stdin)['recebidos'] if r.get('orderId')==sys.argv[1]))" "$1"; }
 mudar_status() { curl -s -o /dev/null -X PATCH "$API/api/pedidos/$1/status?status=$2&motivo=$3" -H "$AUTH"; }
 
-echo "== 1. vinculo: token por loja em form-urlencoded, client_id = app_id + app shop id =="
-curl -s -o /dev/null -X PUT $API/api/integracoes/NOVE_NOVE -H "$JSON" -H "$AUTH" -d "{\"merchantId\":\"$SHOP\",\"ativo\":true}"
-curl -s -o /dev/null -X POST $API/api/integracoes/NOVE_NOVE/vincular -H "$AUTH"
-EST=$(curl -s $API/api/integracoes -H "$AUTH" | python -c "
+card99() { curl -s $API/api/integracoes -H "$AUTH" | python -c "
 import sys,json
 for c in json.load(sys.stdin):
-    if c['canal']=='NOVE_NOVE': print(c['status'])")
-checa "conexao com a 99 validada" "CONECTADO" "$EST"
+    if c['canal']=='NOVE_NOVE': print(c['status'], c.get('recebendo'))"; }
+
+echo "== 0. o card nao diz conectado sem a 99 ter aceitado a loja =="
+curl -s -o /dev/null -X PUT $API/api/integracoes/NOVE_NOVE -H "$JSON" -H "$AUTH" -d "{\"merchantId\":\"$SHOP\",\"ativo\":true}"
+checa "chave ligada, sem conectar" "PRONTO False" "$(card99)"
+WH=$(curl -s $API/api/integracoes -H "$AUTH" | python -c "
+import sys,json
+print([c for c in json.load(sys.stdin) if c['canal']=='NOVE_NOVE'][0]['webhookPath'])")
+curl -s -o /dev/null -X POST "$API$WH" -H "$JSON" -d '{"id":"simulado-1","displayId":"9001","customer":{"name":"Teste"},"total":{"orderAmount":{"value":10}},"items":[{"name":"X","quantity":1,"totalPrice":{"value":10}}]}'
+checa "pedido simulado nao vira conectado" "PRONTO False" "$(card99)"
+
+echo "== 1. vinculo: token por loja em form-urlencoded, client_id = app_id + app shop id =="
+curl -s -o /dev/null -X POST $API/api/integracoes/NOVE_NOVE/vincular -H "$AUTH"
+checa "conexao com a 99 validada" "CONECTADO True" "$(card99)"
 
 echo "== 2. pedido com entrega da LOJA e pagamento em DINHEIRO =="
 O1=$(novo_pedido MERCHANT CASH)
