@@ -36,13 +36,14 @@ igual() { python -c "import sys;print('sim' if sys.argv[1] and abs(float(sys.arg
 
 echo "== cartao online: total, itens com complementos e observacao, bandeira =="
 read O1 P1 <<< "$(pedido 'pagamento=ONLINE')"
-checa "total certo (itens 73,90 + entrega 7,00)" "sim" "$(igual "$(campo $P1 valorTotal)" 80.9)"
+checa "total certo (itens 89,90 + entrega 7,00)" "sim" "$(igual "$(campo $P1 valorTotal)" 96.9)"
 checa "taxa de entrega gravada" "sim" "$(igual "$(campo $P1 taxaEntrega)" 7)"
 checa "numero do pedido e o que o cliente ve" "sim" "$(campo $P1 codigo | grep -qE '^1[0-9]{3}$' && echo sim || echo nao)"
 IT=$(itens $P1)
 contem "complemento do item" "Borda catupiry" "$IT"
 contem "observacao do item" "obs: sem cebola" "$IT"
 contem "preco do item com complemento" "49.9" "$IT"
+contem "combo com todas as personalizacoes" "Customização 3 do Complemento 4" "$IT"
 contem "bandeira do cartao" "Pago online: Crédito Visa" "$(campo $P1 formaPagamento)"
 contem "entrega pela loja" "Entrega pela loja" "$(campo $P1 observacao)"
 avancar $P1
@@ -56,7 +57,7 @@ contem "as duas bandeiras" "Crédito Master" "$(campo $P9 formaPagamento)"
 echo "== dinheiro com troco =="
 read O2 P2 <<< "$(pedido 'pagamento=CASH&troco=100')"
 contem "troco para R\$ 100,00" 'Dinheiro na entrega — troco para R$ 100,00' "$(campo $P2 formaPagamento)"
-contem "falta pagar o total" 'falta pagar R$ 80,90' "$(campo $P2 observacao)"
+contem "falta pagar o total" 'falta pagar R$ 96,90' "$(campo $P2 observacao)"
 
 echo "== cartao na entrega (maquininha) =="
 read O3 P3 <<< "$(pedido 'pagamento=CARD_OFFLINE')"
@@ -65,7 +66,7 @@ contem "cartao na entrega com bandeira" 'Na entrega: Débito Elo (maquininha)' "
 echo "== cupom e quem paga =="
 read O4 P4 <<< "$(pedido 'pagamento=ONLINE&cupom=IFOOD')"
 contem "cupom pago pelo iFood" 'Cupom R$ 10,00 (pago pelo iFood)' "$(campo $P4 observacao)"
-checa "total ja com o desconto" "sim" "$(igual "$(campo $P4 valorTotal)" 70.9)"
+checa "total ja com o desconto" "sim" "$(igual "$(campo $P4 valorTotal)" 86.9)"
 read O5 P5 <<< "$(pedido 'pagamento=ONLINE&cupom=MERCHANT')"
 contem "cupom pago pela loja" 'Cupom R$ 10,00 (pago pela loja)' "$(campo $P5 observacao)"
 

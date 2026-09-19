@@ -43,9 +43,22 @@ function novoPedido(merchantId, clienteId, op) {
       totalPrice: 49.9, price: 45.9, observations: 'sem cebola',
       options: [{ index: 2, name: 'Borda catupiry', groupName: 'Borda', quantity: 1, unitPrice: 4, price: 4 }] },
     { index: 3, id: 'it-b-' + seq, name: 'Refrigerante 2L', quantity: 2, unit: 'UN', unitPrice: 12, optionsPrice: 0,
-      totalPrice: 24, price: 24, observations: '', options: [] }
+      totalPrice: 24, price: 24, observations: '', options: [] },
+    // Igual ao combo do pedido real: quatro complementos e tres personalizacoes. Por extenso passa de 160
+    // caracteres - foi o que o banco recusou no primeiro pedido real (19/09).
+    { index: 4, id: 'it-c-' + seq, name: 'PRODUTO 2 (COMBO) - NÃO ENTREGAR - Primeiro Nível', type: 'COMBO_V2', quantity: 1,
+      unit: 'UN', unitPrice: 5, optionsPrice: 8, totalPrice: 16, price: 5, observations: '',
+      options: [
+        { index: 5, name: 'Complemento 1 - Segundo Nível', groupName: 'Adicione mais ingredientes', quantity: 1, unitPrice: 2, price: 2 },
+        { index: 6, name: 'Complemento 2 - Segundo Nível', groupName: 'Deseja adicionar molhos?', quantity: 1, unitPrice: 2, price: 2 },
+        { index: 7, name: 'Complemento 3 - Segundo Nível', groupName: 'Escolha seu acompanhamento', quantity: 1, unitPrice: 2, price: 2 },
+        { index: 8, name: 'Complemento 4 - Segundo Nível', groupName: 'Meu sanduíche favorito', quantity: 1, unitPrice: 2, price: 2,
+          customizations: [
+            { name: 'Customização 1 do Complemento 4 - Terceiro Nível', quantity: 1, unitPrice: 1, price: 1 },
+            { name: 'Customização 2 do Complemento 4 - Terceiro Nível', quantity: 1, unitPrice: 1, price: 1 },
+            { name: 'Customização 3 do Complemento 4 - Terceiro Nível', quantity: 1, unitPrice: 1, price: 1 }] }] }
   ];
-  const subTotal = 73.9;
+  const subTotal = 89.9;
   const deliveryFee = retirada ? 0 : 7;
   const desconto = op.cupom ? 10 : 0;
   const orderAmount = Math.round((subTotal + deliveryFee - desconto) * 100) / 100;
