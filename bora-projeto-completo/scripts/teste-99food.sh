@@ -21,6 +21,10 @@ T=$(curl -s -X POST $API/auth/login -H "Content-Type: application/json" -d '{"em
   | python -c "import sys,json;print(json.load(sys.stdin)['token'])")
 [ -z "$T" ] && { echo "sem token da API"; exit 1; }
 AUTH="Authorization: Bearer $T"; JSON="Content-Type: application/json"
+SUPER=$(curl -s -X POST $API/auth/login -H "Content-Type: application/json" -d '{"email":"super@local.test","senha":"local-teste-1234"}' | python -c "import sys,json;print(json.load(sys.stdin).get('token',''))")
+acessar() { curl -s -X POST "$API/admin-bora/lojas/$1/acessar" -H "Authorization: Bearer $SUPER" | python -c "import sys,json;print(json.load(sys.stdin).get('token',''))"; }
+PLAT=$(acessar 1)
+[ -z "$PLAT" ] && { echo "sem token da plataforma — suba a API com SUPERADMIN_EMAIL/SENHA"; exit 1; }
 
 # pedido do painel pelo id que a 99 deu (espera o polling por ate 60s)
 pedido_local() {
@@ -46,7 +50,7 @@ for c in json.load(sys.stdin):
     if c['canal']=='NOVE_NOVE': print(c['status'], c.get('recebendo'))"; }
 
 echo "== 0. o card nao diz conectado sem a 99 ter aceitado a loja =="
-curl -s -o /dev/null -X PUT $API/api/integracoes/NOVE_NOVE -H "$JSON" -H "$AUTH" -d "{\"merchantId\":\"$SHOP\",\"ativo\":true}"
+curl -s -o /dev/null -X PUT $API/api/integracoes/NOVE_NOVE -H "$JSON" -H "Authorization: Bearer $PLAT" -d "{\"merchantId\":\"$SHOP\",\"ativo\":true}"
 checa "chave ligada, sem conectar" "PRONTO False" "$(card99)"
 WH=$(curl -s $API/api/integracoes -H "$AUTH" | python -c "
 import sys,json
@@ -57,6 +61,14 @@ checa "pedido simulado nao vira conectado" "PRONTO False" "$(card99)"
 echo "== 1. vinculo: token por loja em form-urlencoded, client_id = app_id + app shop id =="
 curl -s -o /dev/null -X POST $API/api/integracoes/NOVE_NOVE/vincular -H "$AUTH"
 checa "conexao com a 99 validada" "CONECTADO True" "$(card99)"
+
+echo "== 1b. o codigo da loja na 99 e definido pela plataforma =="
+checa "lojista NAO troca o App Shop ID" "403" "$(curl -s -o /dev/null -w '%{http_code}' -X PUT $API/api/integracoes/NOVE_NOVE -H "$JSON" -H "$AUTH" -d '{"merchantId":"loja-de-outro","ativo":true}')"
+checa "lojista salva o card sem trocar o codigo" "200" "$(curl -s -o /dev/null -w '%{http_code}' -X PUT $API/api/integracoes/NOVE_NOVE -H "$JSON" -H "$AUTH" -d "{\"merchantId\":\"$SHOP\",\"ativo\":true}")"
+checa "e a loja CONTINUA conectada" "CONECTADO True" "$(card99)"
+L2=$(curl -s -X POST $API/admin-bora/lojas -H "$JSON" -H "Authorization: Bearer $SUPER" -d "{\"nomeLoja\":\"Outra Loja $RANDOM\",\"adminEmail\":\"outra-$RANDOM@local.test\",\"adminSenha\":\"senha123\"}" | python -c "import sys,json;print(json.load(sys.stdin).get('lojaId',''))")
+PL2=$(acessar $L2)
+checa "mesmo codigo em OUTRA loja: recusado" "409" "$(curl -s -o /dev/null -w '%{http_code}' -X PUT $API/api/integracoes/NOVE_NOVE -H "$JSON" -H "Authorization: Bearer $PL2" -d "{\"merchantId\":\"$SHOP\",\"ativo\":true}")"
 
 echo "== 2. pedido com entrega da LOJA e pagamento em DINHEIRO =="
 O1=$(novo_pedido MERCHANT CASH)

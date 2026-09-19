@@ -8,9 +8,13 @@ checa() { if [ "$2" = "$3" ]; then echo "  PASS  $1 ($3)"; ok=$((ok+1)); else ec
 
 T=$(curl -s -X POST $API/auth/login -H "Content-Type: application/json" -d '{"email":"admin@bora.app","senha":"bora123"}' | python -c "import sys,json;print(json.load(sys.stdin)['token'])")
 AUTH="Authorization: Bearer $T"; JSON="Content-Type: application/json"
+SUPER=$(curl -s -X POST $API/auth/login -H "Content-Type: application/json" -d '{"email":"super@local.test","senha":"local-teste-1234"}' | python -c "import sys,json;print(json.load(sys.stdin).get('token',''))")
+acessar() { curl -s -X POST "$API/admin-bora/lojas/$1/acessar" -H "Authorization: Bearer $SUPER" | python -c "import sys,json;print(json.load(sys.stdin).get('token',''))"; }
+PLAT=$(acessar 1)
+[ -z "$PLAT" ] && { echo "sem token da plataforma — suba a API com SUPERADMIN_EMAIL/SENHA"; exit 1; }
 
 echo "== vincula a loja ao iFood (fluxo userCode) =="
-curl -s -o /dev/null -X PUT $API/api/integracoes/IFOOD -H "$JSON" -H "$AUTH" -d '{"merchantId":"merchant-mock-1","ativo":true}'
+curl -s -o /dev/null -X PUT $API/api/integracoes/IFOOD -H "$JSON" -H "Authorization: Bearer $PLAT" -d '{"merchantId":"merchant-mock-1","ativo":true}'
 curl -s -o /dev/null -X POST $API/api/integracoes/IFOOD/vincular -H "$AUTH"
 curl -s -o /dev/null -X POST $API/api/integracoes/IFOOD/confirmar -H "$JSON" -H "$AUTH" -d '{"authorizationCode":"AUTORIZA-OK"}'
 EST=$(curl -s $API/api/integracoes -H "$AUTH" | python -c "
@@ -49,6 +53,13 @@ checa "observacao de ENTREGA veio junto"     "sim" "$(echo "$OBS" | grep -qi 'in
 checa "observacao do pedido preservada"      "sim" "$(echo "$OBS" | grep -qi 'mock' && echo sim || echo nao)"
 checa "complemento no endereco"              "sim" "$(echo "$END" | grep -qi 'apto' && echo sim || echo nao)"
 checa "ponto de referencia no endereco"      "sim" "$(echo "$END" | grep -qi 'portao' && echo sim || echo nao)"
+
+echo "== o aceite vai uma vez so, mesmo com o evento CONFIRMED que o iFood manda depois =="
+sleep 12
+NCONF=$(curl -s -H "Authorization: Bearer teste" "$MOCK/_mock/status" | python -c "
+import sys,json
+print(len([x for x in json.load(sys.stdin)['statusRecebidos'] if x['verbo']=='confirm' and x['orderId']=='$PEDIDO_IFOOD']))")
+checa "confirm enviado uma unica vez"        "1" "$NCONF"
 
 echo "== o lojista cancela, com motivo =="
 curl -s -o /dev/null -X PATCH "$API/api/pedidos/$ID/status?status=CANCELADO&motivo=item%20indisponivel" -H "$AUTH"

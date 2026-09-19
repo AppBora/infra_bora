@@ -176,6 +176,10 @@ const server = http.createServer(async (req, res) => {
       return json(res, 202, {});
     }
     statusRecebidos.push({ orderId: acao[1], verbo: acao[2], em: new Date().toISOString() });
+    // Como o iFood real: confirmar gera o evento CONFIRMED (code CFM) para o mesmo pedido.
+    if (acao[2] === 'confirm') {
+      eventos.push({ id: 'EV-CFM-' + acao[1], code: 'CFM', fullCode: 'CONFIRMED', orderId: acao[1], createdAt: new Date().toISOString() });
+    }
     log('STATUS RECEBIDO: ' + acao[1] + ' -> ' + acao[2]);
     return json(res, 202, {});
   }

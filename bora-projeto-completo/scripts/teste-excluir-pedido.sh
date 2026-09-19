@@ -14,7 +14,7 @@ import sys,json
 print([c for c in json.load(sys.stdin) if c['canal']=='NOVE_NOVE'][0]['pedidosRecebidos'])"; }
 
 echo "== dois pedidos de teste pelo Simular pedido da 99 =="
-curl -s -o /dev/null -X PUT $API/api/integracoes/NOVE_NOVE -H "$JSON" -H "$AUTH" -d '{"merchantId":"loja-excluir","ativo":true}'
+curl -s -o /dev/null -X PUT $API/api/integracoes/NOVE_NOVE -H "$JSON" -H "$AUTH" -d '{"ativo":true}'
 WH=$(curl -s $API/api/integracoes -H "$AUTH" | python -c "
 import sys,json
 print([c for c in json.load(sys.stdin) if c['canal']=='NOVE_NOVE'][0]['webhookPath'])")
