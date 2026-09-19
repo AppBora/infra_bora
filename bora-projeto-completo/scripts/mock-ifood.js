@@ -155,6 +155,10 @@ const server = http.createServer(async (req, res) => {
   // despercebido que a gente cancelava sem motivo.
   const motivos = rota.match(/^\/order\/v1\.0\/orders\/([^/]+)\/cancellationReasons$/);
   if (motivos && req.method === 'GET') {
+    // Como o iFood real: pedido que ja chegou em "pronto" nao aceita cancelamento pela loja (lista vazia).
+    if (statusRecebidos.some(s => s.orderId === motivos[1] && ['readyToPickup', 'dispatch'].includes(s.verbo))) {
+      return json(res, 200, []);
+    }
     return json(res, 200, [
       { cancelCodeId: '501', description: 'PROBLEMAS DE SISTEMA' },
       { cancelCodeId: '502', description: 'PEDIDO EM DUPLICIDADE' },
@@ -169,10 +173,12 @@ const server = http.createServer(async (req, res) => {
     if (acao[2] === 'requestCancellation') {
       let enviado = {};
       try { enviado = JSON.parse(corpo || '{}'); } catch (e) { enviado = {}; }
-      const codigo = enviado.reason || enviado.cancellationCode;
+      // O iFood real exige o codigo no campo cancellationCode (o mock aceitava "reason" e escondeu
+      // que mandavamos o campo errado ate o 1o cancelamento real, 19/09).
+      const codigo = enviado.cancellationCode;
       if (!codigo) {
-        log('CANCELAMENTO RECUSADO: veio sem motivo');
-        return json(res, 400, { error: { code: 'INVALID_CANCELLATION', message: 'informe o codigo do motivo' } });
+        log('CANCELAMENTO RECUSADO: sem cancellationCode');
+        return json(res, 400, { error: { code: 'InvalidParameter', message: "Invalid cancellation request: Field 'cancellationCode' is required" } });
       }
       statusRecebidos.push({ orderId: acao[1], verbo: acao[2], motivo: codigo, em: new Date().toISOString() });
       log('CANCELAMENTO ACEITO: ' + acao[1] + ' motivo ' + codigo);

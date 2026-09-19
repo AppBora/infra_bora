@@ -76,6 +76,25 @@ s=[x for x in json.load(sys.stdin)['statusRecebidos'] if x['verbo']=='requestCan
 print(s[-1].get('motivo','') if s else '')")
 checa "o iFood recebeu o cancelamento"       "requestCancellation" "$VERBO"
 checa "veio COM codigo de motivo"            "506" "$MOTIVO"
+checa "e so entao cancelou no Bora"          "CANCELADO" "$(curl -s "$API/api/pedidos" -H "$AUTH" | python -c "
+import sys,json;print([p for p in json.load(sys.stdin) if p['id']==$ID][0]['status'])")"
+
+echo "== pedido ja PRONTO: o iFood nao deixa cancelar, e o Bora tambem nao cancela =="
+OID2=$(curl -s -H "Authorization: Bearer teste" "$MOCK/_mock/novo-pedido?merchant=merchant-mock-1" | python -c "import sys,json;print(json.load(sys.stdin)['orderId'])")
+for i in $(seq 1 12); do
+  ID2=$(curl -s "$API/api/pedidos" -H "$AUTH" | python -c "
+import sys,json
+ps=[p for p in json.load(sys.stdin) if p.get('idExterno')=='$OID2']
+print(ps[0]['id'] if ps else '')" 2>/dev/null)
+  [ -n "$ID2" ] && break; sleep 5
+done
+curl -s -o /dev/null -X PATCH "$API/api/pedidos/$ID2/status?status=EM_PREPARO" -H "$AUTH"
+curl -s -o /dev/null -X PATCH "$API/api/pedidos/$ID2/status?status=PRONTO" -H "$AUTH"
+COD=$(curl -s -o /tmp/canc.json -w '%{http_code}' -X PATCH "$API/api/pedidos/$ID2/status?status=CANCELADO&motivo=item%20indisponivel" -H "$AUTH")
+checa "cancelamento recusado na tela"        "409" "$COD"
+checa "com a explicacao para a loja"         "sim" "$(grep -q 'Portal do Parceiro' /tmp/canc.json && echo sim || echo nao)"
+checa "pedido continua PRONTO no Bora"       "PRONTO" "$(curl -s "$API/api/pedidos" -H "$AUTH" | python -c "
+import sys,json;print([p for p in json.load(sys.stdin) if p['id']==$ID2][0]['status'])")"
 
 echo
 echo "RESULTADO: $ok PASS / $fail FALHA"
