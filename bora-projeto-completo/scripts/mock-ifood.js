@@ -85,6 +85,12 @@ function novoPedido(merchantId, clienteId, op) {
   if (op.pagamento === 'CASH') {
     pedido.payments = { prepaid: 0, pending: orderAmount, methods: [{ value: orderAmount, currency: 'BRL', method: 'CASH',
       prepaid: false, type: 'OFFLINE', cash: { changeFor: Number(op.troco || 0) } }] };
+  } else if (op.pagamento === 'DOIS_CARTOES') {
+    // Igual ao pedido real da loja de teste: dois cartoes online, cada um com a sua bandeira.
+    const a = Math.round(orderAmount * 60) / 100, b = Math.round((orderAmount - a) * 100) / 100;
+    pedido.payments = { prepaid: orderAmount, pending: 0, methods: [
+      { value: a, currency: 'BRL', method: 'CREDIT', prepaid: true, type: 'ONLINE', card: { brand: 'Visa' } },
+      { value: b, currency: 'BRL', method: 'CREDIT', prepaid: true, type: 'ONLINE', card: { brand: 'Master' } }] };
   } else if (op.pagamento === 'CARD_OFFLINE') {
     pedido.payments = { prepaid: 0, pending: orderAmount, methods: [{ value: orderAmount, currency: 'BRL', method: 'DEBIT',
       prepaid: false, type: 'OFFLINE', card: { brand: 'Elo' } }] };

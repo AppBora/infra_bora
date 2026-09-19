@@ -48,6 +48,11 @@ contem "entrega pela loja" "Entrega pela loja" "$(campo $P1 observacao)"
 avancar $P1
 checa "entrega da loja: despacho enviado" "confirm startPreparation readyToPickup dispatch" "$(verbos $O1)"
 
+echo "== dois cartoes (como o pedido real) =="
+read O9 P9 <<< "$(pedido 'pagamento=DOIS_CARTOES')"
+checa "pedido com dois cartoes gravado" "sim" "$([ -n "$P9" ] && echo sim || echo nao)"
+contem "as duas bandeiras" "Crédito Master" "$(campo $P9 formaPagamento)"
+
 echo "== dinheiro com troco =="
 read O2 P2 <<< "$(pedido 'pagamento=CASH&troco=100')"
 contem "troco para R\$ 100,00" 'Dinheiro na entrega — troco para R$ 100,00' "$(campo $P2 formaPagamento)"
