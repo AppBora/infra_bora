@@ -28,14 +28,17 @@ let eventos = [];
 let seq = 0;
 const statusRecebidos = [];
 
-function novoPedido(merchantId) {
+function novoPedido(merchantId, clienteId) {
   seq += 1;
   const id = 'MOCK-ORDER-' + seq;
   pedidos.set(id, {
     id,
     displayId: String(1000 + seq),
     merchant: { id: merchantId || 'merchant-teste-123' },
-    customer: { name: 'Cliente Mock ' + seq, phone: { number: '11955550' + String(100 + seq) } },
+    // Como o iFood real: o telefone e a CENTRAL do iFood (igual para todos) + localizador;
+    // quem identifica o cliente e o customer.id.
+    customer: { id: clienteId || ('cust-' + seq), name: 'Cliente Mock ' + seq,
+      phone: { number: '0800 705 1020', localizer: String(12345670 + seq), localizerExpiration: new Date(Date.now() + 3 * 3600e3).toISOString() } },
     delivery: {
       deliveryAddress: {
         streetName: 'Rua da Integração', streetNumber: String(100 + seq),
@@ -186,7 +189,7 @@ const server = http.createServer(async (req, res) => {
 
   // ---- utilitários do teste (fora do contrato do iFood) ----
   if (rota === '/_mock/novo-pedido') {
-    const id = novoPedido(url.searchParams.get('merchant'));
+    const id = novoPedido(url.searchParams.get('merchant'), url.searchParams.get('cliente'));
     log('pedido criado para o proximo polling: ' + id);
     return json(res, 200, { orderId: id, eventosPendentes: eventos.length });
   }
