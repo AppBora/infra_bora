@@ -28,36 +28,72 @@ let eventos = [];
 let seq = 0;
 const statusRecebidos = [];
 
-function novoPedido(merchantId, clienteId) {
+// Formato copiado de um pedido REAL da loja de teste (19/09/2026): total em numero, totalPrice do item
+// com complementos, card.brand, prepaid/pending. Variantes (pagamento, cupom, retirada, agendado,
+// entrega pelo iFood) seguem a documentacao do iFood ate serem vistas em pedido real.
+function novoPedido(merchantId, clienteId, op) {
+  op = op || {};
   seq += 1;
   const id = 'MOCK-ORDER-' + seq;
-  pedidos.set(id, {
-    id,
-    displayId: String(1000 + seq),
+  const agora = Date.now();
+  const iso = ms => new Date(ms).toISOString();
+  const retirada = op.tipo === 'TAKEOUT';
+  const itens = [
+    { index: 1, id: 'it-a-' + seq, name: 'Pizza Margherita', quantity: 1, unit: 'UN', unitPrice: 45.9, optionsPrice: 4,
+      totalPrice: 49.9, price: 45.9, observations: 'sem cebola',
+      options: [{ index: 2, name: 'Borda catupiry', groupName: 'Borda', quantity: 1, unitPrice: 4, price: 4 }] },
+    { index: 3, id: 'it-b-' + seq, name: 'Refrigerante 2L', quantity: 2, unit: 'UN', unitPrice: 12, optionsPrice: 0,
+      totalPrice: 24, price: 24, observations: '', options: [] }
+  ];
+  const subTotal = 73.9;
+  const deliveryFee = retirada ? 0 : 7;
+  const desconto = op.cupom ? 10 : 0;
+  const orderAmount = Math.round((subTotal + deliveryFee - desconto) * 100) / 100;
+  const pedido = {
+    id, displayId: String(1000 + seq), createdAt: iso(agora), category: 'FOOD',
+    orderTiming: op.agendado ? 'SCHEDULED' : 'IMMEDIATE',
+    orderType: retirada ? 'TAKEOUT' : 'DELIVERY',
     merchant: { id: merchantId || 'merchant-teste-123' },
     // Como o iFood real: o telefone e a CENTRAL do iFood (igual para todos) + localizador;
     // quem identifica o cliente e o customer.id.
     customer: { id: clienteId || ('cust-' + seq), name: 'Cliente Mock ' + seq,
-      phone: { number: '0800 705 1020', localizer: String(12345670 + seq), localizerExpiration: new Date(Date.now() + 3 * 3600e3).toISOString() } },
-    delivery: {
-      deliveryAddress: {
-        streetName: 'Rua da Integração', streetNumber: String(100 + seq),
-        neighborhood: 'Centro', complement: 'apto ' + seq,
-        reference: 'portao azul, ao lado da padaria'
-      },
+      phone: { number: '0800 705 1020', localizer: String(12345670 + seq), localizerExpiration: iso(agora + 3 * 3600e3) } },
+    items: itens,
+    total: { additionalFees: 0, subTotal, deliveryFee, benefits: desconto, orderAmount },
+    observations: 'Pedido de teste do mock'
+  };
+  if (!retirada) {
+    pedido.delivery = {
+      mode: 'DEFAULT', deliveredBy: op.entrega === 'IFOOD' ? 'IFOOD' : 'MERCHANT', deliveryDateTime: iso(agora + 45 * 60e3),
       // Criterio de homologacao do iFood: esta observacao TEM que aparecer na tela de quem recebe
       // o pedido. E campo do delivery, nao do pedido - sao dois "observations" diferentes.
-      observations: 'Interfone quebrado, ligar ao chegar'
-    },
-    payments: { methods: [{ method: 'CREDIT', type: 'ONLINE' }] },
-    items: [
-      { name: 'Pizza Margherita', quantity: 1, unitPrice: 45.9, price: 45.9 },
-      { name: 'Refrigerante 2L', quantity: 2, unitPrice: 12.0, price: 24.0 }
-    ],
-    total: { orderAmount: 69.9, deliveryFee: 0 },
-    observations: 'Pedido de teste do mock'
-  });
-  eventos.push({ id: 'EV-' + seq, code: 'PLC', fullCode: 'PLACED', orderId: id, createdAt: new Date().toISOString() });
+      observations: 'Interfone quebrado, ligar ao chegar',
+      deliveryAddress: {
+        streetName: 'Rua da Integração', streetNumber: String(100 + seq), neighborhood: 'Centro',
+        complement: 'apto ' + seq, reference: 'portao azul, ao lado da padaria'
+      },
+      pickupCode: '4321'
+    };
+  } else {
+    pedido.takeout = { mode: 'DEFAULT', takeoutDateTime: iso(agora + 30 * 60e3) };
+  }
+  if (op.agendado) pedido.schedule = { deliveryDateTimeStart: iso(agora + 2 * 3600e3), deliveryDateTimeEnd: iso(agora + 2.5 * 3600e3) };
+  if (desconto) {
+    pedido.benefits = [{ value: desconto, target: 'CART',
+      sponsorshipValues: [{ name: op.cupom, value: desconto, description: 'Cupom de teste' }] }];
+  }
+  if (op.pagamento === 'CASH') {
+    pedido.payments = { prepaid: 0, pending: orderAmount, methods: [{ value: orderAmount, currency: 'BRL', method: 'CASH',
+      prepaid: false, type: 'OFFLINE', cash: { changeFor: Number(op.troco || 0) } }] };
+  } else if (op.pagamento === 'CARD_OFFLINE') {
+    pedido.payments = { prepaid: 0, pending: orderAmount, methods: [{ value: orderAmount, currency: 'BRL', method: 'DEBIT',
+      prepaid: false, type: 'OFFLINE', card: { brand: 'Elo' } }] };
+  } else {
+    pedido.payments = { prepaid: orderAmount, pending: 0, methods: [{ value: orderAmount, currency: 'BRL', method: 'CREDIT',
+      prepaid: true, type: 'ONLINE', card: { brand: 'Visa' } }] };
+  }
+  pedidos.set(id, pedido);
+  eventos.push({ id: 'EV-' + seq, code: 'PLC', fullCode: 'PLACED', orderId: id, createdAt: iso(agora) });
   return id;
 }
 
@@ -197,7 +233,9 @@ const server = http.createServer(async (req, res) => {
 
   // ---- utilitários do teste (fora do contrato do iFood) ----
   if (rota === '/_mock/novo-pedido') {
-    const id = novoPedido(url.searchParams.get('merchant'), url.searchParams.get('cliente'));
+    const q = k => url.searchParams.get(k);
+    const id = novoPedido(q('merchant'), q('cliente'), { pagamento: q('pagamento'), troco: q('troco'),
+      cupom: q('cupom'), tipo: q('tipo'), agendado: q('agendado'), entrega: q('entrega') });
     log('pedido criado para o proximo polling: ' + id);
     return json(res, 200, { orderId: id, eventosPendentes: eventos.length });
   }
