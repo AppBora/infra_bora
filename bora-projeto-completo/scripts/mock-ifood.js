@@ -182,6 +182,8 @@ const server = http.createServer(async (req, res) => {
       }
       statusRecebidos.push({ orderId: acao[1], verbo: acao[2], motivo: codigo, em: new Date().toISOString() });
       log('CANCELAMENTO ACEITO: ' + acao[1] + ' motivo ' + codigo);
+      // Como o iFood real: aceitar o pedido de cancelamento gera, em seguida, o evento CANCELLED (code CAN).
+      eventos.push({ id: 'EV-CAN-' + acao[1], code: 'CAN', fullCode: 'CANCELLED', orderId: acao[1], createdAt: new Date().toISOString() });
       return json(res, 202, {});
     }
     statusRecebidos.push({ orderId: acao[1], verbo: acao[2], em: new Date().toISOString() });

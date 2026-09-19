@@ -76,6 +76,9 @@ s=[x for x in json.load(sys.stdin)['statusRecebidos'] if x['verbo']=='requestCan
 print(s[-1].get('motivo','') if s else '')")
 checa "o iFood recebeu o cancelamento"       "requestCancellation" "$VERBO"
 checa "veio COM codigo de motivo"            "506" "$MOTIVO"
+checa "registro diz o codigo E o motivo"     "sim" "$(docker logs bora99-api-1 2>&1 | grep "cancelamento do pedido $PEDIDO_IFOOD solicitado" | grep -q 'ITEM INDISPONIVEL' && echo sim || echo nao)"
+for n in $(seq 1 12); do docker logs bora99-api-1 2>&1 | grep -q "confirmou o cancelamento do pedido externo $PEDIDO_IFOOD" && break; sleep 3; done
+checa "confirmacao do iFood registrada"      "sim" "$(docker logs bora99-api-1 2>&1 | grep -q "confirmou o cancelamento do pedido externo $PEDIDO_IFOOD" && echo sim || echo nao)"
 checa "e so entao cancelou no Bora"          "CANCELADO" "$(curl -s "$API/api/pedidos" -H "$AUTH" | python -c "
 import sys,json;print([p for p in json.load(sys.stdin) if p['id']==$ID][0]['status'])")"
 
