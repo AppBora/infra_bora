@@ -54,7 +54,7 @@ function novoPedido(merchantId) {
     total: { orderAmount: 69.9, deliveryFee: 0 },
     observations: 'Pedido de teste do mock'
   });
-  eventos.push({ id: 'EV-' + seq, code: 'PLACED', fullCode: 'PLACED', orderId: id, createdAt: new Date().toISOString() });
+  eventos.push({ id: 'EV-' + seq, code: 'PLC', fullCode: 'PLACED', orderId: id, createdAt: new Date().toISOString() });
   return id;
 }
 
