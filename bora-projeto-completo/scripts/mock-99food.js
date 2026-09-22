@@ -95,11 +95,14 @@ function novoPedido(shop, entrega, pagamento) {
   seq += 1;
   const id = randomUUID();
   const pelaPlataforma = entrega === 'MARKETPLACE';
-  const itensTotal = 47, taxa = 7, desconto = 5, total = itensTotal + taxa - desconto; // 49,00
+  // Retirada (aviso do Time de Engenharia 99Food, 22/09/2026 + especificacao v1.7.1): type TAKEOUT,
+  // o objeto delivery NAO vem, vem o objeto takeout {mode, takeoutDateTime}; sem taxa de entrega.
+  const retirada = entrega === 'TAKEOUT';
+  const itensTotal = 47, taxa = retirada ? 0 : 7, desconto = 5, total = itensTotal + taxa - desconto; // 49,00 (retirada 42,00)
   const emDinheiro = pagamento === 'CASH' && !pelaPlataforma;
   const agora = new Date().toISOString();
   const pedido = {
-    id, type: 'DELIVERY', displayId: String(4200 + seq), createdAt: agora,
+    id, type: retirada ? 'TAKEOUT' : 'DELIVERY', displayId: String(4200 + seq), createdAt: agora,
     orderTiming: 'INSTANT', preparationStartDateTime: agora,
     merchant: { id: shop, name: 'Loja de Teste 99' },
     items: [
@@ -113,7 +116,7 @@ function novoPedido(shop, entrega, pagamento) {
       { id: randomUUID(), index: 2, name: 'Agua 500ml', externalCode: 'AGUA', quantity: 1,
         unitPrice: preco(4), totalPrice: preco(4) }
     ],
-    otherFees: [{ name: 'Taxa de entrega', type: 'DELIVERY_FEE',
+    otherFees: retirada ? [] : [{ name: 'Taxa de entrega', type: 'DELIVERY_FEE',
       receivedBy: pelaPlataforma ? 'MARKETPLACE' : 'MERCHANT', price: preco(taxa) }],
     discounts: [{ amount: preco(desconto), target: 'CART',
       sponsorshipValues: [{ name: 'MARKETPLACE', amount: preco(desconto) }] }],
@@ -134,6 +137,11 @@ function novoPedido(shop, entrega, pagamento) {
     },
     extraInfo: 'Tocar a campainha duas vezes'
   };
+  if (retirada) {
+    delete pedido.delivery;
+    pedido.extraInfo = 'Vou chegar de moto';
+    pedido.takeout = { mode: 'DEFAULT', takeoutDateTime: new Date(Date.now() + 20 * 60000).toISOString() };
+  }
   pedidos.set(id, { shop, entrega, pedido });
   emitir(shop, id, 'CREATED');
   return pedido;
@@ -257,6 +265,14 @@ const server = http.createServer(async (req, res) => {
     // Roteiro, pag. 23: com entrega pela 99 o ultimo status da loja e readyForPickup.
     if (alvo.entrega === 'MARKETPLACE' && (verbo === 'dispatch' || verbo === 'delivered')) {
       return recusar(res, 422, 'entrega pela 99: a loja para em readyForPickup', { orderId, verbo });
+    }
+    // Retirada: nao ha entrega para despachar nem entregar; o fim e pickedUp. E pickedUp so vale
+    // para TAKEOUT ("should be sent only ... when the Order serviceType = TAKEOUT").
+    if (alvo.entrega === 'TAKEOUT' && (verbo === 'dispatch' || verbo === 'delivered')) {
+      return recusar(res, 422, 'retirada: nao existe ' + verbo + ', o cliente retira (pickedUp)', { orderId, verbo });
+    }
+    if (verbo === 'pickedUp' && alvo.entrega !== 'TAKEOUT') {
+      return recusar(res, 422, 'pickedUp so vale para pedido de retirada (TAKEOUT)', { orderId, verbo });
     }
     let enviado = {};
     if (corpo) {

@@ -15,6 +15,7 @@ ok=0; fail=0
 
 checa()  { if [ "$2" = "$3" ]; then echo "  PASS  $1"; ok=$((ok+1)); else echo "  FALHA $1 — esperado [$2], veio [$3]"; fail=$((fail+1)); fi; }
 contem() { if printf '%s' "$3" | grep -qF -- "$2"; then echo "  PASS  $1"; ok=$((ok+1)); else echo "  FALHA $1 — [$2] nao aparece em: ${3:0:300}"; fail=$((fail+1)); fi; }
+nao_contem() { if printf '%s' "$3" | grep -qF -- "$2"; then echo "  FALHA $1 — [$2] nao devia aparecer em: ${3:0:300}"; fail=$((fail+1)); else echo "  PASS  $1"; ok=$((ok+1)); fi; }
 mesmo_valor() { python -c "import sys; a,b=sys.argv[1],sys.argv[2]; print('sim' if a and b and abs(float(a)-float(b))<0.005 else 'nao')" "$1" "$2"; }
 
 T=$(curl -s -X POST $API/auth/login -H "Content-Type: application/json" -d '{"email":"admin@bora.app","senha":"bora123"}' \
@@ -109,6 +110,20 @@ contem "falta pagar zero" 'falta pagar R$ 0,00' "$(campo "$P2" observacao)"
 mudar_status "$ID2" PRONTO; mudar_status "$ID2" SAIU_PARA_ENTREGA; mudar_status "$ID2" ENTREGUE
 sleep 2
 checa "dispatch e delivered nao enviados" "confirm readyForPickup" "$(verbos_do "$O2")"
+
+echo "== 4b. RETIRADA no balcao (aviso da 99 de 22/09): sem entrega, e o fim e pickedUp =="
+O8=$(novo_pedido TAKEOUT ONLINE)
+P8=$(pedido_local "$O8")
+ID8=$(campo "$P8" id)
+checa "pedido de retirada entrou" "sim" "$([ -n "$ID8" ] && echo sim || echo nao)"
+contem "card avisa que e retirada" 'RETIRADA NO BALCÃO' "$(campo "$P8" observacao)"
+contem "hora que o cliente vem buscar" 'cliente vem buscar' "$(campo "$P8" observacao)"
+nao_contem "nao manda a loja entregar" 'Entrega pela loja' "$(campo "$P8" observacao)"
+checa "total sem taxa de entrega (47 - 5)" "sim" "$(mesmo_valor "$(campo "$P8" valorTotal)" 42)"
+mudar_status "$ID8" EM_PREPARO; mudar_status "$ID8" PRONTO
+mudar_status "$ID8" SAIU_PARA_ENTREGA; mudar_status "$ID8" ENTREGUE
+sleep 2
+checa "retirada: sem dispatch/delivered, fecha com pickedUp" "confirm preparing readyForPickup pickedUp" "$(verbos_do "$O8")"
 
 echo "== 5. cancelamento pela LOJA: reason + code da lista + mode =="
 O3=$(novo_pedido MERCHANT ONLINE)
