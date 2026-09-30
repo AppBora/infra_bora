@@ -324,3 +324,163 @@ footer.rodape a:hover { color: #fff; text-decoration: underline; }
   .rodape-grid { grid-template-columns: 1fr; }
   .acoes .btn { width: 100%; }
 }
+
+/* ====================================================================
+   PEÇAS ANIMADAS (hero ao vivo, esteira de canais, robô do WhatsApp)
+   Tudo em CSS/JS próprios: nenhuma requisição a mais. Quem pediu menos
+   movimento no sistema (prefers-reduced-motion) já é atendido lá em cima,
+   onde toda animação e transição é desligada — aqui só somamos peças.
+   ==================================================================== */
+
+/* cores de canal: a do próprio parceiro, para o lojista reconhecer de longe */
+.tag {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 11.5px; font-weight: 800; letter-spacing: .02em;
+  padding: 3px 9px; border-radius: 999px; white-space: nowrap;
+}
+.tag::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.tag-ifood   { background: #FDE7E9; color: #C0141F; }
+.tag-99      { background: #FFF3CC; color: #8A6A00; }
+.tag-zap     { background: #DCF6E6; color: #0F6B3F; }
+.tag-qr      { background: #EDE7FD; color: #5B32C4; }
+.tag-balcao  { background: #E6EEF8; color: #23507F; }
+.tag-rappi   { background: #FFE8E1; color: #C23A18; }
+
+/* ---------------- hero: o painel respirando ---------------- */
+.palco-topo .ponto { animation: pulsa 2.4s ease-in-out infinite; }
+.palco-contador { font-variant-numeric: tabular-nums; font-weight: 800; color: var(--verde); }
+@keyframes pulsa {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(23,107,79,.55); }
+  70%      { box-shadow: 0 0 0 8px rgba(23,107,79,0); }
+}
+
+.vivo-lista { display: grid; gap: 10px; min-height: 232px; align-content: start; }
+.vivo-item { animation: entra .5s cubic-bezier(.2,.8,.3,1) both; }
+.vivo-item.saindo { animation: sai .45s ease forwards; }
+.vivo-item .pedido { margin-bottom: 0; transition: border-left-color .4s ease, background .4s ease; }
+.vivo-item .pedido-cab { gap: 8px; flex-wrap: wrap; }
+.vivo-item .pedido .valor-item { margin-left: auto; font-size: 13.5px; font-weight: 700; color: var(--verde); }
+@keyframes entra {
+  from { opacity: 0; transform: translateY(-14px) scale(.97); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes sai {
+  to { opacity: 0; transform: translateY(10px); height: 0; margin: 0; padding: 0; border-width: 0; }
+}
+
+/* ---------------- seção "veja funcionando" ---------------- */
+.demo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; align-items: start; margin-top: 30px; }
+.quadro {
+  background: var(--branco); border-radius: 18px; padding: 20px;
+  box-shadow: 0 24px 60px -30px rgba(0,0,0,.65); color: var(--tinta);
+}
+.quadro > h3 { font-size: 1.02rem; margin-bottom: 4px; color: var(--tinta); }
+.quadro > .mini { margin: 0 0 16px; }
+
+/* esteira: canal → linha → painel */
+.canais { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.canal-chip {
+  display: inline-flex; align-items: center; gap: 7px;
+  border: 1px solid var(--linha); border-radius: 999px; padding: 6px 12px;
+  font-size: 13px; font-weight: 700; color: var(--tinta-2); background: var(--papel);
+  transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease, color .25s ease;
+}
+.canal-chip i { width: 9px; height: 9px; border-radius: 50%; background: currentColor; font-style: normal; }
+.canal-chip.ifood { color: #C0141F; } .canal-chip.n99 { color: #A07B00; }
+.canal-chip.zap { color: #0F6B3F; }   .canal-chip.qr  { color: #5B32C4; }
+.canal-chip.aceso {
+  transform: translateY(-2px); border-color: currentColor;
+  box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 16%, transparent);
+}
+
+.esteira { position: relative; height: 34px; margin: 0 4px 14px; }
+.esteira::before {
+  content: ""; position: absolute; left: 0; right: 0; top: 16px; height: 2px;
+  background: repeating-linear-gradient(90deg, var(--linha-forte) 0 8px, transparent 8px 16px);
+}
+.bolha {
+  position: absolute; top: 6px; left: 0; display: none;
+  font-size: 11.5px; font-weight: 800; padding: 3px 10px; border-radius: 999px;
+  background: var(--tinta); color: #fff; white-space: nowrap;
+}
+.bolha.viajando { display: inline-block; animation: viaja 1.05s cubic-bezier(.45,.05,.3,1) forwards; }
+@keyframes viaja {
+  from { left: 0; opacity: 0; transform: scale(.85); }
+  12%  { opacity: 1; transform: none; }
+  88%  { opacity: 1; }
+  to   { left: calc(100% - 86px); opacity: 0; transform: scale(.85); }
+}
+
+.mini-painel { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.mp-col { background: var(--papel); border: 1px solid var(--linha); border-radius: 12px; padding: 10px; min-height: 186px; }
+.mp-col > b { display: block; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 8px; }
+.mp-col.novo > b     { color: var(--brasa-esc); }
+.mp-col.cozinha > b  { color: #A06F1E; }
+.mp-col.rua > b      { color: #23507F; }
+.mp-card {
+  background: var(--branco); border: 1px solid var(--linha); border-radius: 9px;
+  padding: 9px 10px; margin-bottom: 8px; animation: entra .45s cubic-bezier(.2,.8,.3,1) both;
+}
+.mp-card b { display: block; font-size: 13px; }
+.mp-card span { display: block; font-size: 12px; color: var(--fumaca); margin-top: 2px; }
+.mp-card .tag { margin-top: 6px; }
+
+/* telefone com o robô */
+.fone {
+  max-width: 320px; margin: 0 auto; background: var(--carvao); border-radius: 26px; padding: 10px;
+  box-shadow: 0 30px 70px -34px rgba(0,0,0,.8);
+}
+.fone-tela { background: #E9E2DA; border-radius: 18px; overflow: hidden; }
+.fone-topo {
+  background: #0F6B3F; color: #fff; padding: 11px 14px; display: flex; align-items: center; gap: 10px;
+}
+.fone-topo .ava {
+  width: 30px; height: 30px; border-radius: 50%; background: #fff; color: #0F6B3F;
+  display: grid; place-items: center; font-weight: 800; font-size: 13px; flex: 0 0 auto;
+}
+.fone-topo b { font-size: 14px; display: block; line-height: 1.25; }
+.fone-topo small { font-size: 11.5px; opacity: .85; }
+.fone-chat { padding: 14px; display: grid; gap: 8px; min-height: 322px; align-content: start; }
+.msg {
+  max-width: 84%; padding: 8px 11px; border-radius: 12px; font-size: 13.5px; line-height: 1.45;
+  animation: entra .4s cubic-bezier(.2,.8,.3,1) both; box-shadow: 0 1px 1px rgba(0,0,0,.06);
+}
+.msg.bot    { background: #fff; border-top-left-radius: 3px; justify-self: start; }
+.msg.cliente{ background: #D6F5C8; border-top-right-radius: 3px; justify-self: end; }
+.msg small { display: block; font-size: 11px; color: var(--fumaca); margin-top: 3px; }
+.msg.ok { background: #fff; border-left: 3px solid var(--verde); }
+.digitando { display: inline-flex; gap: 4px; align-items: center; }
+.digitando i { width: 6px; height: 6px; border-radius: 50%; background: #9BB3A5; animation: bolinha 1.1s infinite; }
+.digitando i:nth-child(2) { animation-delay: .15s; }
+.digitando i:nth-child(3) { animation-delay: .3s; }
+@keyframes bolinha { 0%,60%,100% { opacity: .35; transform: none; } 30% { opacity: 1; transform: translateY(-3px); } }
+
+.nota-demo {
+  margin-top: 22px; font-size: 14px; color: #B3A69B; border-left: 3px solid #4A3A30;
+  padding-left: 14px; max-width: 76ch;
+}
+.nota-demo b { color: #F0A88C; }
+
+/* ---------------- entrada ao rolar ---------------- */
+html.js .revela { opacity: 0; transform: translateY(18px); transition: opacity .6s ease, transform .6s cubic-bezier(.2,.8,.3,1); }
+html.js .revela.visivel { opacity: 1; transform: none; }
+
+@media (max-width: 900px) {
+  .demo-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 520px) {
+  .mini-painel { grid-template-columns: 1fr; }
+  .mp-col { min-height: 0; }
+}
+
+/* Os quadros claros vivem dentro de section.escura, cujas regras pintam h3/p de branco.
+   Sem estes seletores mais específicos o título do quadro sai branco no branco. */
+section.escura .quadro h3 { color: var(--tinta); }
+section.escura .quadro p { color: var(--tinta-2); }
+section.escura .quadro .mini { color: var(--fumaca); }
+section.escura .quadro .mp-card b { color: var(--tinta); }
+section.escura .quadro .mp-card span { color: var(--fumaca); }
+section.escura .quadro .msg { color: var(--tinta); }
+section.escura .quadro .fone-topo b,
+section.escura .quadro .fone-topo small { color: #fff; }
+section.escura .nota-demo { color: #B3A69B; }
