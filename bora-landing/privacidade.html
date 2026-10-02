@@ -29,11 +29,16 @@
 <h2>1. Papéis (controlador x operador)</h2>
 <ul>
 <li>Em relação aos <b>dados do Lojista</b> (cadastro, cobrança, uso da plataforma): o BoraHapp é <b>controlador</b>.</li>
-<li>Em relação aos <b>dados dos consumidores finais</b> (clientes que fazem pedidos): o **Lojista é o</li>
+<li>Em relação aos <b>dados dos consumidores finais</b> (clientes que fazem pedidos): o <b>Lojista é o controlador</b> e o BoraHapp atua como <b>operador</b>, tratando os dados sob instrução do Lojista.</li>
 </ul>
-<p>  controlador<b> e o BoraHapp atua como </b>operador**, tratando os dados sob instrução do Lojista.</p>
 <h2>2. Dados que tratamos</h2>
-<p>| Categoria | Exemplos | Origem | |-----------|----------|--------| | Cadastro do Lojista | nome, e-mail, telefone, CNPJ, endereço | fornecido no cadastro | | Pagamento | dados de cobrança (processados pelo <b>Asaas</b>; não armazenamos o cartão completo) | fornecido | | Consumidor final | nome, telefone, endereço de entrega, histórico de pedidos | inserido pelo Lojista/pedidos | | Uso e técnicos | logs de acesso, IP, ações no sistema | coletado automaticamente |</p>
+<table style="width:100%;border-collapse:collapse;margin:10px 0">
+  <tr><th style="text-align:left;padding:8px;border-bottom:2px solid var(--linha-forte)">Categoria</th><th style="text-align:left;padding:8px;border-bottom:2px solid var(--linha-forte)">Exemplos</th><th style="text-align:left;padding:8px;border-bottom:2px solid var(--linha-forte)">Origem</th></tr>
+  <tr><td style="padding:8px;border-bottom:1px solid var(--linha)">Cadastro do Lojista</td><td style="padding:8px;border-bottom:1px solid var(--linha)">nome, e-mail, telefone, CNPJ, endereço</td><td style="padding:8px;border-bottom:1px solid var(--linha)">fornecido no cadastro</td></tr>
+  <tr><td style="padding:8px;border-bottom:1px solid var(--linha)">Pagamento</td><td style="padding:8px;border-bottom:1px solid var(--linha)">dados de cobrança (processados pelo <b>Asaas</b>; não armazenamos o cartão completo)</td><td style="padding:8px;border-bottom:1px solid var(--linha)">fornecido</td></tr>
+  <tr><td style="padding:8px;border-bottom:1px solid var(--linha)">Consumidor final</td><td style="padding:8px;border-bottom:1px solid var(--linha)">nome, telefone, endereço de entrega, histórico de pedidos</td><td style="padding:8px;border-bottom:1px solid var(--linha)">inserido pelo Lojista ou pelo próprio consumidor no cardápio</td></tr>
+  <tr><td style="padding:8px">Uso e técnicos</td><td style="padding:8px">logs de acesso, IP, ações no sistema</td><td style="padding:8px">coletado automaticamente</td></tr>
+</table>
 <h2>3. Finalidades e base legal</h2>
 <ul>
 <li><b>Execução do contrato</b> — prestar o serviço, processar pedidos e cobranças.</li>
@@ -42,7 +47,16 @@
 <li><b>Consentimento</b> — comunicações de marketing (quando aplicável), revogável a qualquer tempo.</li>
 </ul>
 <h2>4. Compartilhamento</h2>
-<p>Compartilhamos dados apenas com: (a) <b>processador de pagamento</b> (Asaas); (b) **provedor de nuvem<b> (AWS); (c) </b>marketplaces** integrados por escolha do Lojista; (d) autoridades, quando exigido por lei. Não vendemos dados pessoais.</p>
+<p>Compartilhamos dados apenas com:</p>
+<ul>
+<li><b>Processador de pagamento</b> — Asaas (cobrança da mensalidade e PIX dos pedidos).</li>
+<li><b>Provedor de nuvem</b> — Amazon Web Services (AWS), região Brasil (São Paulo).</li>
+<li><b>Marketplaces</b> integrados por escolha do Lojista — iFood, 99Food e similares, apenas os dados do pedido feito por lá.</li>
+<li><b>Meta Platforms</b> — quando o Lojista conecta o WhatsApp da loja, o nome e o telefone do consumidor passam pela API oficial da Meta para a mensagem chegar.</li>
+<li><b>Anthropic</b> — quando o Lojista contrata o Módulo IA, trechos dos dados de venda da loja são enviados para gerar os resumos e as sugestões. <b>Esse tratamento ocorre fora do Brasil</b> (ver item 9).</li>
+<li><b>Autoridades</b>, quando exigido por lei.</li>
+</ul>
+<p>Não vendemos dados pessoais.</p>
 <h2>5. Armazenamento e segurança</h2>
 <p>5.1. Dados hospedados na <b>AWS (região Brasil — São Paulo)</b>. 5.2. Medidas de segurança: <b>HTTPS/TLS</b>, controle de acesso por autenticação (JWT), isolamento por loja (multi-tenant), senhas com hash (BCrypt) e backups. 5.3. Retenção pelo tempo necessário às finalidades e obrigações legais; após isso, os dados são eliminados ou anonimizados.</p>
 <h2>6. Direitos do titular (art. 18 da LGPD)</h2>
@@ -50,9 +64,9 @@
 <h2>7. Encarregado (DPO)</h2>
 <p>Encarregado pelo tratamento de dados: <b>Anderson Luiz Ferreira</b> — contato: <b>WhatsApp (15) 99860-2332</b>.</p>
 <h2>8. Cookies</h2>
-<p>O painel usa armazenamento local (localStorage) para sessão e preferências. [Descrever cookies de analytics, se houver.]</p>
+<p>O painel e o cardápio usam o armazenamento local do navegador (localStorage) para manter a sessão, o carrinho e as preferências de tela. <b>Não usamos cookies de rastreamento, de publicidade nem ferramentas de analytics de terceiros</b> — nada do que você faz aqui é enviado a redes de anúncios. Se isso mudar, esta Política será atualizada antes.</p>
 <h2>9. Transferência internacional</h2>
-<p>Caso algum subprocessador trate dados fora do Brasil, adotaremos salvaguardas conforme a LGPD.</p>
+<p>Os dados ficam hospedados no Brasil (AWS, região São Paulo). Há uma exceção conhecida: quando o Lojista contrata o <b>Módulo IA</b>, os trechos enviados para gerar resumos e sugestões são processados pela <b>Anthropic, nos Estados Unidos</b>. Esse envio acontece apenas nesse módulo, é opcional e pode ser desligado a qualquer momento — sem ele, nenhum dado sai do Brasil. Para transferências internacionais, adotamos as salvaguardas previstas na LGPD (arts. 33 a 36).</p>
 <h2>10. Alterações</h2>
 <p>Podemos atualizar esta Política, informando a data de revisão. Mudanças relevantes serão comunicadas.</p>
 <p>--- Contato: WhatsApp (15) 99860-2332 — ADF SISTEMAS E TECNOLOGIAS LTDA, CNPJ 68.761.778/0001-57.</p>
