@@ -10,3 +10,8 @@ deploy-lightsail.env
 node_modules/
 .DS_Store
 .claude/settings.local.json
+
+# copias de seguranca feitas antes de mexer num arquivo: ficam no disco, nao no repositorio
+*.bak-*
+*.bak2-*
+*.bak3-*
