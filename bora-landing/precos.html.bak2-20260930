@@ -4,17 +4,17 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Preços do BoraHapp — R$ 199/mês por loja, pedidos ilimitados</title>
-<meta name="description" content="Um plano só, com tudo incluso: R$ 199 por mês por loja, pedidos ilimitados, até 15 usuários, sem taxa por pedido. Sem fidelidade e com 7 dias de garantia.">
+<meta name="description" content="Um plano só, com tudo incluso: R$ 199 por mês por loja, pedidos ilimitados, até 15 usuários, sem taxa por pedido. Sem fidelidade e com garantia de 30 dias.">
 <link rel="canonical" href="https://borahapp.com.br/precos.html">
 <link rel="icon" href="/assets/img/icone-bora.svg">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://borahapp.com.br/precos.html">
 <meta property="og:site_name" content="BoraHapp">
 <meta property="og:title" content="Um plano. Tudo incluso. Sem pegadinha.">
-<meta property="og:description" content="R$ 199/mês por loja, pedidos ilimitados, sem taxa por pedido e sem comissão. 7 dias grátis e 7 dias de garantia.">
+<meta property="og:description" content="R$ 199/mês por loja, pedidos ilimitados, sem taxa por pedido e sem comissão. 7 dias grátis e garantia de 30 dias.">
 <meta property="og:image" content="https://borahapp.com.br/assets/img/og-borahapp.png">
 <meta name="theme-color" content="#D9502B">
-<link rel="stylesheet" href="/assets/site.css?v=20260930">
+<link rel="stylesheet" href="/assets/site.css?v=20260828">
 </head>
 <body>
 
@@ -49,7 +49,7 @@
       <div>
         <p class="kicker">Plano BoraHapp</p>
         <div class="preco">R$ 199<span> /mês por loja</span></div>
-        <p class="apoio" style="margin-top:14px">Os primeiros <b>7 dias são grátis</b> — a cobrança só começa depois. E se nos <b>7 dias seguintes à primeira cobrança</b> não for para você, devolvemos o que pagou.</p>
+        <p class="apoio" style="margin-top:14px">Os primeiros <b>7 dias são grátis</b> — a cobrança só começa depois. Se em 30 dias não for para você, devolvemos o que pagou.</p>
         <div class="acoes">
           <a class="btn btn-principal" href="https://wa.me/5515998602332?text=Quero%20assinar%20o%20BoraHapp" target="_blank" rel="noopener">Falar no WhatsApp</a>
           <a class="btn btn-linha" href="/cadastro.html">Criar minha loja</a>
@@ -63,7 +63,7 @@
         <li>Frente de caixa e fechamento</li>
         <li>Entregas por bairro e acerto com motoboy</li>
         <li>Cardápio digital com QR Code</li>
-        <li>PIX online, com a conta de recebimento aberta pelo sistema</li>
+        <li>PIX online com a sua conta Asaas</li>
         <li>Rede multi-lojas com balancete</li>
         <li>CRM, cashback e promoções</li>
         <li>Estoque, CMV e relatórios</li>
@@ -126,7 +126,7 @@
     <div class="faq">
       <details>
         <summary>E se eu quiser sair?</summary>
-        <p>Não tem fidelidade nem multa. A assinatura é mensal: você cancela quando quiser e o acesso continua até o fim do período já pago. Se cancelar em até <b>7 dias depois da primeira cobrança</b>, devolvemos o valor pago.</p>
+        <p>Não tem fidelidade nem multa. A assinatura é mensal: você cancela quando quiser e o acesso continua até o fim do período já pago. No primeiro mês vale a garantia de 30 dias — se não for para você, devolvemos o valor.</p>
       </details>
       <details>
         <summary>Como é cobrada a assinatura?</summary>
@@ -150,7 +150,7 @@
       </details>
       <details>
         <summary>Preciso abandonar o iFood ou outros aplicativos?</summary>
-        <p>Não. O BoraHapp cuida do seu canal próprio — WhatsApp, cardápio com QR Code e pedido direto —, que é o que não paga comissão. Você continua recebendo pelos aplicativos normalmente. A integração para trazer esses pedidos ao mesmo painel está em homologação com os dois aplicativos — o motor já está pronto e testado, e ainda não está liberado para lojas novas.</p>
+        <p>Não. O BoraHapp cuida do seu canal próprio — WhatsApp, cardápio com QR Code e pedido direto —, que é o que não paga comissão. Você continua recebendo pelos aplicativos normalmente. A integração para trazer esses pedidos ao mesmo painel está em construção, e ainda não está no ar.</p>
       </details>
       <details>
         <summary>Funciona no celular? Preciso de computador?</summary>

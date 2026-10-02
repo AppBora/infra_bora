@@ -14,7 +14,7 @@
 <meta property="og:description" content="Pedidos em tempo real, tela de cozinha, entregas por bairro, cardápio com QR, CRM, estoque e relatórios — com a sua marca.">
 <meta property="og:image" content="https://borahapp.com.br/assets/img/og-borahapp.png">
 <meta name="theme-color" content="#D9502B">
-<link rel="stylesheet" href="/assets/site.css?v=20260930">
+<link rel="stylesheet" href="/assets/site.css?v=20260828">
 </head>
 <body>
 
@@ -107,7 +107,7 @@
       </div>
       <div class="cartao">
         <h3>PIX online, direto na sua conta</h3>
-        <p>O cliente paga por PIX no próprio cardápio: QR na tela, confirmação automática e o dinheiro caindo na <b>sua</b> conta. A conta de recebimento é aberta por dentro do BoraHapp, em minutos — ou você conecta a sua conta Asaas, se já tiver uma. Nada passa pela nossa.</p>
+        <p>Se você conecta a sua conta Asaas, o cliente paga por PIX no próprio cardápio: QR na tela, confirmação automática e o dinheiro caindo na <b>sua</b> conta. Nada passa pela nossa.</p>
       </div>
       <div class="cartao">
         <h3>Cupons e promoções</h3>
@@ -200,7 +200,7 @@
         <span class="marca-estado estado-obra">em homologação</span>
         <div>
           <h3>Pedido do iFood e do 99Food caindo no seu painel</h3>
-          <p>O motor já está pronto e testado — com um pedido real do iFood e com os pedidos de exemplo oficiais da 99, cobrindo entrega pelo aplicativo, retirada no balcão e cancelamento. Estamos na etapa de aprovação com cada um deles. Enquanto isso, você continua recebendo por lá normalmente.</p>
+          <p>O motor já está pronto e testado com pedidos reais dos dois — inclusive entrega pelo aplicativo, retirada no balcão e cancelamento. Estamos na etapa de aprovação com cada um deles. Enquanto isso, você continua recebendo por lá normalmente.</p>
         </div>
       </div>
       <div class="item-trilha">

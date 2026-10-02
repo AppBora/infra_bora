@@ -47,7 +47,7 @@
         <a class="btn btn-principal" href="https://wa.me/5515998602332?text=Quero%20conhecer%20o%20BoraHapp" target="_blank" rel="noopener">Falar no WhatsApp</a>
         <a class="btn btn-linha" href="/funcionalidades.html">Ver o que já funciona</a>
       </div>
-      <p class="hero-nota">R$ 199/mês por loja · pedidos ilimitados · sem fidelidade · 7 dias de garantia</p>
+      <p class="hero-nota">R$ 199/mês por loja · pedidos ilimitados · sem fidelidade · garantia de 30 dias</p>
     </div>
 
     <!-- O painel "respirando": pedido novo entra pelo topo a cada poucos segundos e os de
@@ -318,7 +318,7 @@
       </div>
       <div>
         <b>Saída sem multa</b>
-        <span>Sem fidelidade, com 7 dias de garantia e exportação dos seus dados</span>
+        <span>Sem fidelidade, com garantia de 30 dias e exportação dos seus dados</span>
       </div>
     </div>
     <div class="acoes">
@@ -353,7 +353,7 @@
         <li>Estoque, CMV e relatórios</li>
         <li>Sua marca em tudo</li>
         <li>Sem fidelidade — cancele quando quiser</li>
-        <li>Garantia de 7 dias</li>
+        <li>Garantia de 30 dias</li>
       </ul>
     </div>
   </div>

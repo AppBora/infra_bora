@@ -14,7 +14,7 @@
 <meta property="og:description" content="Sua marca, seu cliente e seu dinheiro — por uma mensalidade fixa que não sobe quando você vende mais. R$ 199/mês por loja.">
 <meta property="og:image" content="https://borahapp.com.br/assets/img/og-borahapp.png">
 <meta name="theme-color" content="#D9502B">
-<link rel="stylesheet" href="/assets/site.css?v=20260930">
+<link rel="stylesheet" href="/assets/site.css?v=20260828">
 </head>
 <body>
 
@@ -47,7 +47,7 @@
         <a class="btn btn-principal" href="https://wa.me/5515998602332?text=Quero%20conhecer%20o%20BoraHapp" target="_blank" rel="noopener">Falar no WhatsApp</a>
         <a class="btn btn-linha" href="/funcionalidades.html">Ver o que já funciona</a>
       </div>
-      <p class="hero-nota">R$ 199/mês por loja · pedidos ilimitados · sem fidelidade · 7 dias de garantia</p>
+      <p class="hero-nota">R$ 199/mês por loja · pedidos ilimitados · sem fidelidade · garantia de 30 dias</p>
     </div>
 
     <!-- O painel "respirando": pedido novo entra pelo topo a cada poucos segundos e os de
@@ -223,7 +223,7 @@
 
     <p class="mini" style="margin-top:26px;color:#A99C92;max-width:70ch">
       Você não precisa abandonar o aplicativo hoje: dá para continuar recebendo pedidos por lá enquanto constrói seu canal próprio.
-      <a href="/funcionalidades.html#construindo" style="color:#F0A88C">A integração automática com iFood e 99Food está em homologação →</a>
+      <a href="/funcionalidades.html#construindo" style="color:#F0A88C">A integração automática com iFood e 99Food está em construção →</a>
     </p>
   </div>
 </section>
@@ -318,7 +318,7 @@
       </div>
       <div>
         <b>Saída sem multa</b>
-        <span>Sem fidelidade, com 7 dias de garantia e exportação dos seus dados</span>
+        <span>Sem fidelidade, com garantia de 30 dias e exportação dos seus dados</span>
       </div>
     </div>
     <div class="acoes">
@@ -353,7 +353,7 @@
         <li>Estoque, CMV e relatórios</li>
         <li>Sua marca em tudo</li>
         <li>Sem fidelidade — cancele quando quiser</li>
-        <li>Garantia de 7 dias</li>
+        <li>Garantia de 30 dias</li>
       </ul>
     </div>
   </div>
@@ -435,212 +435,6 @@
 
   [ped, tk, tx].forEach(function (el) { el.addEventListener('input', calcular); });
   calcular();
-})();
-</script>
-<script>
-/* Peças vivas do site: o painel do hero, a esteira dos canais e o robô do WhatsApp.
-   Três regras valem para as três peças:
-   1) quem pediu menos movimento no sistema vê a cena montada, parada — nunca um quadro vazio;
-   2) nada roda fora da tela nem com a aba atrás (bateria de celular);
-   3) sem JS nenhum, o que está no HTML já conta a história. */
-(function () {
-  var quieto = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  var PEDIDOS = [
-    { c: 'ifood', tag: 'ifood', rot: 'iFood',       n: '#1042', q: '1× Portuguesa G, 1× Suco',  b: 'Centro · R$ 74,50' },
-    { c: 'zap',   tag: 'zap',   rot: 'WhatsApp',    n: '#1043', q: '2× Calabresa G',            b: 'Campolim · R$ 108,00' },
-    { c: 'n99',   tag: '99',    rot: '99Food',      n: '#1044', q: '1× Combo família',          b: 'Retirada · R$ 96,00' },
-    { c: 'qr',    tag: 'qr',    rot: 'Cardápio QR', n: '#1045', q: '1× Calzone, 1× Cerveja',    b: 'Vila Hortência · R$ 60,00' }
-  ];
-
-  /* As falas são as que o robô manda de verdade: menu de opções, link do cardápio
-     e os avisos de status do pedido. */
-  var ROTEIRO = [
-    { de: 'cliente', txt: 'Boa noite! 😊' },
-    { de: 'bot', txt: 'Olá! 👋 Sou o assistente da <b>Pizzaria Bella Napoli</b>.<br><br>Digite o número da opção:<br><b>1</b> 🍽️ Ver cardápio e fazer pedido<br><b>2</b> 🕒 Horário de funcionamento<br><b>3</b> 👤 Falar com um atendente' },
-    { de: 'cliente', txt: '1' },
-    { de: 'bot', txt: '🍽️ Aqui está o cardápio da <b>Pizzaria Bella Napoli</b>!<br><br>Monte seu pedido e pague por PIX ou na entrega:<br>borahapp.com.br/cardapio' },
-    { de: 'bot', ok: true, txt: '✅ Seu pedido <b>#1042</b> foi confirmado! Já vamos começar o preparo.<br><small>Acompanhe ao vivo: borahapp.com.br/acompanhar</small>' },
-    { de: 'bot', ok: true, txt: '🛵 Seu pedido <b>#1042</b> saiu para entrega! Já já chega aí.' }
-  ];
-
-  var colNovo = document.getElementById('dmNovo'),
-      colCoz  = document.getElementById('dmCozinha'),
-      colRua  = document.getElementById('dmRua'),
-      bolha   = document.getElementById('dmBolha'),
-      chat    = document.getElementById('dmChat');
-
-  function cartao(p) {
-    var d = document.createElement('div');
-    d.className = 'mp-card';
-    d.innerHTML = '<b>' + p.n + '</b><span>' + p.q + '</span><span>' + p.b + '</span>' +
-      '<span class="tag tag-' + p.tag + '">' + p.rot + '</span>';
-    return d;
-  }
-  function fala(m) {
-    var d = document.createElement('div');
-    d.className = 'msg ' + (m.de === 'bot' ? 'bot' : 'cliente') + (m.ok ? ' ok' : '');
-    d.innerHTML = m.txt;
-    return d;
-  }
-
-  /* ---------- cena parada, para quem pediu menos movimento ---------- */
-  if (quieto) {
-    if (colNovo) {
-      colNovo.appendChild(cartao(PEDIDOS[3]));
-      colCoz.appendChild(cartao(PEDIDOS[0]));
-      colRua.appendChild(cartao(PEDIDOS[1]));
-    }
-    if (chat) { ROTEIRO.slice(1).forEach(function (m) { chat.appendChild(fala(m)); }); }
-    document.querySelectorAll('.canal-chip').forEach(function (c) { c.classList.add('aceso'); });
-    return;
-  }
-
-  document.documentElement.classList.add('js');
-
-  /* entra ao rolar */
-  if ('IntersectionObserver' in window) {
-    var obs = new IntersectionObserver(function (itens) {
-      itens.forEach(function (i) { if (i.isIntersecting) { i.target.classList.add('visivel'); obs.unobserve(i.target); } });
-    }, { rootMargin: '0px 0px -12% 0px' });
-    document.querySelectorAll('.revela').forEach(function (el) { obs.observe(el); });
-  } else {
-    document.querySelectorAll('.revela').forEach(function (el) { el.classList.add('visivel'); });
-  }
-
-  /* liga a peça só quando ela está na tela e a aba está à frente */
-  function aoAparecer(el, liga, desliga) {
-    if (!el) return;
-    var ligado = false, naTela = false;
-    function avaliar() {
-      var deve = naTela && !document.hidden;
-      if (deve && !ligado) { ligado = true; liga(); }
-      else if (!deve && ligado) { ligado = false; desliga(); }
-    }
-    if ('IntersectionObserver' in window) {
-      new IntersectionObserver(function (e) { naTela = e[0].isIntersecting; avaliar(); }, { threshold: .12 }).observe(el);
-      document.addEventListener('visibilitychange', avaliar);
-    } else { naTela = true; avaliar(); }
-  }
-
-  /* ---------- 1. painel do hero ---------- */
-  (function () {
-    var lista = document.getElementById('vvLista'), cont = document.getElementById('vvContador');
-    if (!lista) return;
-    var fila = [
-      { t: 'qr',     r: 'Cardápio QR', i: '1× Esfiha de carne · 1× Coca 600ml',      v: 'R$ 22,00' },
-      { t: 'ifood',  r: 'iFood',       i: '1× Portuguesa G · 1× Suco de laranja 1L', v: 'R$ 74,50' },
-      { t: 'zap',    r: 'WhatsApp',    i: '2× Hambúrguer artesanal · 1× Batata G',   v: 'R$ 68,00' },
-      { t: '99',     r: '99Food',      i: '1× Combo família · 2× Refrigerante lata', v: 'R$ 96,00' },
-      { t: 'balcao', r: 'Balcão',      i: '1× Marmita executiva · 1× Suco natural',  v: 'R$ 27,50' },
-      { t: 'qr',     r: 'Cardápio QR', i: '2× Pizza Calabresa G · 1× Guaraná 2L',    v: 'R$ 71,90' },
-      { t: 'zap',    r: 'WhatsApp',    i: '1× Açaí 500ml com granola e leite ninho', v: 'R$ 28,90' }
-    ];
-    var n = 128, k = 0, timer = null;
-    var fases = [
-      { rot: 'novo',              cls: 'etiqueta',    caixa: 'pedido' },
-      { rot: 'na cozinha',        cls: 'etiqueta',    caixa: 'pedido' },
-      { rot: 'saiu para entrega', cls: 'etiqueta ok', caixa: 'pedido pronto' }
-    ];
-
-    function pintar() {
-      var itens = lista.querySelectorAll('.vivo-item:not(.saindo)');
-      for (var x = 0; x < itens.length && x < 3; x++) {
-        var f = fases[x], cx = itens[x].querySelector('.pedido'), et = itens[x].querySelector('.etiqueta');
-        if (cx) cx.className = f.caixa;
-        if (et) { et.className = f.cls; et.textContent = f.rot; }
-      }
-    }
-
-    function novo() {
-      var p = fila[k % fila.length]; k++; n++;
-      var el = document.createElement('div');
-      el.className = 'vivo-item';
-      el.innerHTML = '<div class="pedido"><div class="pedido-cab"><b>#' + n + '</b> ' +
-        '<span class="etiqueta">novo</span> <span class="tag tag-' + p.t + '">' + p.r + '</span> ' +
-        '<span class="valor-item">' + p.v + '</span></div><p>' + p.i + '</p></div>';
-      lista.insertBefore(el, lista.firstChild);
-      pintar();
-      if (cont) cont.textContent = n;
-      var sobra = lista.querySelectorAll('.vivo-item:not(.saindo)');
-      if (sobra.length > 3) {
-        var ultimo = sobra[sobra.length - 1];
-        ultimo.classList.add('saindo');
-        setTimeout(function () { if (ultimo.parentNode) ultimo.parentNode.removeChild(ultimo); }, 460);
-      }
-    }
-
-    aoAparecer(lista,
-      function () { timer = setInterval(novo, 3400); },
-      function () { clearInterval(timer); });
-  })();
-
-  /* ---------- 2. esteira: canal -> painel ---------- */
-  (function () {
-    if (!bolha || !colNovo) return;
-    var i = 0, timer = null, pendentes = [];
-    function esperar(ms, fn) { var t = setTimeout(fn, ms); pendentes.push(t); return t; }
-    function enxugar(col) { while (col.children.length > 2) col.removeChild(col.lastChild); }
-
-    function soltar() {
-      var p = PEDIDOS[i % PEDIDOS.length]; i++;
-      var chip = document.querySelector('.canal-chip[data-canal="' + p.c + '"]');
-      if (chip) { chip.classList.add('aceso'); esperar(1400, function () { chip.classList.remove('aceso'); }); }
-
-      bolha.textContent = p.rot + ' · ' + p.n;
-      bolha.classList.remove('viajando');
-      void bolha.offsetWidth;                 /* reinicia a animação */
-      bolha.classList.add('viajando');
-
-      esperar(950, function () {
-        var a = cartao(p); colNovo.insertBefore(a, colNovo.firstChild); enxugar(colNovo);
-        esperar(2500, function () {
-          if (a.parentNode) a.parentNode.removeChild(a);
-          var b = cartao(p); colCoz.insertBefore(b, colCoz.firstChild); enxugar(colCoz);
-          esperar(2500, function () {
-            if (b.parentNode) b.parentNode.removeChild(b);
-            var c = cartao(p); colRua.insertBefore(c, colRua.firstChild); enxugar(colRua);
-            esperar(3600, function () { if (c.parentNode) c.parentNode.removeChild(c); });
-          });
-        });
-      });
-    }
-
-    aoAparecer(document.querySelector('.mini-painel'),
-      function () { soltar(); timer = setInterval(soltar, 3200); },
-      function () { clearInterval(timer); pendentes.forEach(clearTimeout); pendentes = []; });
-  })();
-
-  /* ---------- 3. robô do WhatsApp ---------- */
-  (function () {
-    if (!chat) return;
-    var j = 0, pendentes = [];
-    function esperar(ms, fn) { var t = setTimeout(fn, ms); pendentes.push(t); return t; }
-    function enxugar() { while (chat.children.length > 4) chat.removeChild(chat.firstChild); }
-
-    function passo() {
-      if (j >= ROTEIRO.length) { esperar(3600, function () { chat.innerHTML = ''; j = 0; passo(); }); return; }
-      var m = ROTEIRO[j++];
-      if (m.de === 'bot') {
-        var t = document.createElement('div');
-        t.className = 'msg bot';
-        t.innerHTML = '<span class="digitando"><i></i><i></i><i></i></span>';
-        chat.appendChild(t); enxugar();
-        esperar(950, function () {
-          if (t.parentNode) t.parentNode.removeChild(t);
-          chat.appendChild(fala(m)); enxugar();
-          esperar(1900, passo);
-        });
-      } else {
-        chat.appendChild(fala(m)); enxugar();
-        esperar(1400, passo);
-      }
-    }
-
-    aoAparecer(chat,
-      function () { chat.innerHTML = ''; j = 0; passo(); },
-      function () { pendentes.forEach(clearTimeout); pendentes = []; });
-  })();
 })();
 </script>
 </body>
