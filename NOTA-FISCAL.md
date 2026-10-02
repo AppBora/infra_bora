@@ -65,10 +65,21 @@ O Asaas emite NFS-e sozinho a cada mensalidade da assinatura. Exige:
 - certificado digital / usuário e senha, conforme o que o município exige;
 - **e Sorocaba precisa estar entre os municípios integrados do Asaas.**
 
-⚠️ **Essa última parte eu não consegui confirmar.** A checagem exige a chave do Asaas, e fui barrado ao
-ler o arquivo de ambiente do servidor. **Você confere em 1 minuto:** entre no painel do Asaas, menu
-**Notas Fiscais** — ele diz se o seu município está disponível. Se estiver, o caminho B vira o destino
-natural e eu ligo no código (a assinatura já é criada por nós; é configurar a emissão nela).
+✅ **CONFIRMADO em 02/10/2026, olhando o painel do Asaas com o dono.** Em *Notas Fiscais → Iniciar a
+configuração*, o Asaas já reconhece o município e responde:
+
+> *"Sua prefeitura utiliza autenticação através de Certificado Digital."*
+
+Ou seja: **Sorocaba está entre os municípios integrados do Asaas** e o caminho automático está
+disponível. Bate com o padrão público do município (ABRASF 2.03, certificado A1).
+
+O assistente tem 3 passos: **1) Dados de acesso** (certificado digital + senha) · **2) Serviços** ·
+**3) Informações Fiscais**. Os passos 2 e 3 são exatamente as perguntas do contador da seção 5 — por
+isso a configuração ficou parada ali, sem preencher: nota emitida com código de serviço ou ISS errado
+dá trabalho para cancelar.
+
+**Com isso, o caminho B vira o destino.** O caminho A (à mão) continua valendo como ponte até o
+certificado e as respostas do contador chegarem.
 
 ---
 
@@ -84,6 +95,19 @@ Leve estas perguntas — nenhuma delas eu posso responder por você, e todas mud
 4. A nota sai **no recebimento** ou **na competência** do mês?
 5. Quando o cliente for PJ, há **ISS retido na fonte**? Isso muda o valor líquido que entra.
 6. **Inscrição Municipal**: já existe? Se não, é o primeiro passo — sem ela não há caminho A nem B.
+
+### Ordem para destravar
+
+| | O quê | Com quem |
+|---|---|---|
+| 1 | Inscrição Municipal na Prefeitura de Sorocaba | você / contador |
+| 2 | Certificado digital **A1** da ADF Sistemas | você / contador |
+| 3 | Código de serviço municipal + alíquota de ISS + marcação do Simples | contador |
+| 4 | Subir o certificado e preencher os passos 2 e 3 no Asaas | você, com as respostas em mãos |
+| 5 | Ligar a emissão automática na assinatura, no nosso código | Claude |
+
+Fechados os quatro primeiros, a nota sai sozinha a cada mensalidade e o registro manual da tela vira
+só rede de segurança.
 
 ---
 
