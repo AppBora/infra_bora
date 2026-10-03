@@ -11,7 +11,11 @@ node_modules/
 .DS_Store
 .claude/settings.local.json
 
-# copias de seguranca feitas antes de mexer num arquivo: ficam no disco, nao no repositorio
-*.bak-*
-*.bak2-*
-*.bak3-*
+# copias de seguranca feitas antes de mexer num arquivo: ficam no disco, nao no repositorio.
+# O padrao e aberto de proposito: a lista fechada (bak-, bak2-, bak3-) ja deixou passar um ".bak4-".
+*.bak*
+
+# DUMPS DO BANCO: dados reais de cliente. Nunca no repositorio.
+# Sao ~29 MB de pg_dump da producao; um "git add ." distraido publicaria a base inteira.
+backups-bora/
+*.dump

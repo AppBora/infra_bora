@@ -1,0 +1,77 @@
+CONTATO COM A RAPPI — PARCERIA DE INTEGRAÇÃO (não é cadastro de loja)
+Atualizado em 19/09/2026
+
+--------------------------------------------------------------------
+ASSUNTO DO E-MAIL / PRIMEIRA LINHA NO LINKEDIN
+--------------------------------------------------------------------
+Parceria de integração: sistema de delivery com lojas em Goiânia (ADF / BoraHapp)
+
+
+--------------------------------------------------------------------
+TEXTO (e-mail ou mensagem)
+--------------------------------------------------------------------
+Olá, tudo bem?
+
+Sou [SEU NOME], da ADF (CNPJ [CNPJ]), empresa de tecnologia criadora do
+BoraHapp (https://borahapp.com.br) — um sistema de gestão de pedidos e
+delivery usado por restaurantes, sorveterias e comércios de Goiânia.
+
+Não estou procurando cadastrar uma loja na Rappi. Quero conversar sobre
+uma parceria de integração: receber, dentro do nosso sistema, os pedidos
+que as lojas nossas clientes vendem na Rappi, e devolver para vocês a
+confirmação, o preparo e a entrega de cada pedido — do mesmo jeito que
+fazemos hoje com o iFood e a 99Food.
+
+Onde estamos:
+- iFood: integração pronta e em processo de homologação.
+- 99Food: integração pronta pelo padrão Open Delivery, cadastro de
+  desenvolvedor em análise.
+- Rappi: é o que falta, e é por isso que estou escrevendo.
+
+Nossa equipe técnica já leu a documentação de vocês
+(dev-portal.rappi.com) e está pronta para desenvolver. Precisamos do
+passo seguinte: com quem falo para iniciar o cadastro como parceiro de
+integração e receber as credenciais do ambiente de testes?
+
+Fico à disposição para uma conversa rápida.
+
+[SEU NOME]
+ADF — BoraHapp
+[TELEFONE / WHATSAPP]
+[E-MAIL]
+https://borahapp.com.br
+
+
+--------------------------------------------------------------------
+VERSÃO CURTA (LinkedIn / WhatsApp — o LinkedIn corta mensagem longa)
+--------------------------------------------------------------------
+Olá, [NOME]! Sou [SEU NOME], da ADF, criadora do BoraHapp — sistema de
+gestão de delivery usado por comércios de Goiânia. Já integramos iFood e
+99Food e queremos integrar a Rappi, para que nossos clientes recebam os
+pedidos da Rappi dentro do nosso sistema. Não é cadastro de loja, é
+parceria de integração (POS). Com quem consigo falar para iniciar o
+cadastro de parceiro e receber as credenciais de teste? Obrigado!
+
+
+--------------------------------------------------------------------
+PARA ONDE MANDAR (testado em 19/09/2026)
+--------------------------------------------------------------------
+1) LinkedIn — melhor caminho hoje. Procure "Rappi" e filtre por pessoas
+   com cargo de Parcerias, Integrações, Partnerships ou Account Manager
+   no Brasil. Mande a versão curta para 3 ou 4 pessoas.
+
+2) E-mail: soporte@rappi.com
+   É o canal que a própria Rappi indica para assuntos administrativos e
+   problemas de integração. Não é comercial, mas costuma encaminhar.
+   Mande o texto longo.
+
+3) Cadastro de loja (só se você quiser abrir uma loja de teste):
+   https://merchants.rappi.com/pt-br/restaurants
+   Ao se cadastrar, a Rappi designa um executivo de conta — e é esse
+   executivo que consegue abrir a porta da área de integrações.
+   ATENÇÃO: isso cria um contrato comercial de loja. Só faça se decidir.
+
+Links que NÃO funcionam mais (não perca tempo):
+   sejaparceiro.rappi.com.br  — site fora do ar
+   rappi.kustomer.help        — página não encontrada
+   help.partners.rappi.com    — página não encontrada

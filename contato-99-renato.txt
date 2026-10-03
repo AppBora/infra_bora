@@ -1,0 +1,54 @@
+MENSAGEM PARA O RENATO (99) - pedido de ajuda para destravar a homologacao
+Escrita em 02/10/2026
+
+---
+
+Oi Renato, tudo bem?
+
+Sou da ADF Sistemas (BoraHapp). Estamos na homologacao da integracao com a 99Food e
+travamos num ponto que so voces conseguem destravar. Queria sua ajuda para empurrar.
+
+O QUE JA ESTA PRONTO DO NOSSO LADO
+
+A integracao esta conectada e funcionando: o nosso sistema consulta os eventos de
+voces a cada 30 segundos, sem nenhum erro, com a credencial da plataforma.
+
+O codigo ja foi testado com os pedidos de exemplo oficiais do manual (Open Delivery
+1.7.1), cobrindo entrega pelo aplicativo, retirada no balcao e cancelamento. Falta
+exatamente uma coisa: receber um pedido de verdade, feito pelo aplicativo, para
+fechar a homologacao.
+
+ONDE ESTAMOS TRAVADOS
+
+A loja de teste nao abre no aplicativo. A conta de teste entra normalmente, a busca
+encontra a loja (aparece como "Novo", 20-35 min, entrega gratis), mas ao tocar nela o
+aplicativo da sempre a mesma mensagem:
+
+   "Ops! A 99 esta em entrega. Atualize para tentar contatar a 99 novamente"
+
+Tentamos varias vezes, em dias diferentes, com o endereco do app em Sao Paulo. Sem
+conseguir abrir a loja, nao conseguimos fazer o pedido de teste.
+
+Chegamos a criar uma segunda loja de teste achando que a primeira estivesse com
+algum problema, e o comportamento e o mesmo nas duas.
+
+O QUE EU PRECISO DE VOCE
+
+1. Que alguem ai consiga liberar a loja de teste para abrir no aplicativo - ou,
+   se for mais rapido, que voces mesmos gerem um pedido de teste para ela. Qualquer
+   um dos dois nos destrava.
+2. Confirmar qual das duas lojas devemos usar (a segunda e a mais recente).
+3. Se faltar mais alguma coisa da nossa parte para fechar a homologacao, me diga -
+   prefiro saber agora a descobrir depois.
+
+DADOS PARA LOCALIZAR
+
+   ID da aplicacao .......... 5764607673624955027
+   Loja de teste 1 .......... 5764617823239801539  (AppShopID boraloja1)
+   Loja de teste 2 .......... 5764618161934043553  (AppShopID boraloja2)  <- a atual
+   Conta de teste ........... 00016472807
+   Chamado aberto ........... 29/09, 17:38 (status Processando, sem resposta ate agora)
+
+Qualquer informacao que precisar, me chama que respondo na hora.
+
+Obrigado!

@@ -1,0 +1,25 @@
+COMENTARIO PARA O CHAMADO 33648762 (portal do iFood > Adicionar comentario ao ticket)
+Gerado em 30/09/2026
+
+---
+
+Ola, tudo bem?
+
+Complementando o chamado: o usuario de teste foi cadastrado como adm@borahapp.com.br, mas
+esse endereco nao consegue receber o codigo de acesso — o dominio borahapp.com.br ainda nao
+tem servico de e-mail configurado (nao ha registro MX), entao a mensagem de verificacao nao
+chega e nao conseguimos concluir o acesso ao ambiente de teste.
+
+Podem, por favor, trocar o e-mail do usuario de teste para:
+
+    borahapp.teste@hotmail.com
+
+Esse endereco ja esta ativo e recebendo normalmente. Assim que a troca for feita, seguimos
+com os testes da homologacao no mesmo dia.
+
+Dados para localizar o cadastro:
+- Chamado: 33648762
+- E-mail atual do usuario de teste: adm@borahapp.com.br
+- E-mail novo solicitado: borahapp.teste@hotmail.com
+
+Obrigado!
