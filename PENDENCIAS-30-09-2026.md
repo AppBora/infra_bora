@@ -12,6 +12,28 @@ Doze agentes revisaram o sistema inteiro. Abaixo está a lista consolidada, sem 
 - ✅ **conferido por mim** — abri o código ou testei em produção, com o resultado na mão.
 - 📋 **achado de agente** — vem com arquivo e linha, mas eu não reconferi um a um.
 
+
+> ## 📌 Estado em 04/10/2026 — leia antes de usar esta lista
+>
+> Boa parte do que está abaixo **já foi corrigida e está em produção**. Quem ler a lista crua vai
+> achar que Swagger, `?api=`, cadastro com CNPJ de terceiro e cobrança furada seguem abertos.
+>
+> **Resolvido e no ar** (seções 1, 2, 3, 5, 6, 8, 11 e parte da 10):
+> cadastro com CNPJ de terceiro (fechado em duas rodadas — a primeira deixou passar quem já tinha
+> conta); `?api=` neutralizado; Swagger desligado; freio de tentativas; XSS escapado; PIX não pago
+> deixou de virar venda; cashback do PIX passou a ser debitado; estorno saiu do faturamento; carência
+> parou de se renovar sozinha; cancelar assinatura agora encerra o acesso; aceite dos Termos gravado;
+> Política de Privacidade corrigida; garantia unificada em 7 dias; "esqueci minha senha" e o botão de
+> redefinir senha do funcionário; backup com restauração testada e vigia interno.
+>
+> **Continua valendo:** seção 4 (WhatsApp sem assinatura da Meta), seção 7 (pedido de marketplace
+> podendo se perder em silêncio), seção 9 (marca do lojista no cardápio — parcialmente feito), o resto
+> da 10 (alarme externo, backup fora da máquina) e a seção 12 (o que quebra com 20-50 lojas — o pior
+> ponto, o pool preso pelo Asaas, foi resolvido em 04/10).
+>
+> **Nota sobre a numeração:** a tabela final ("O que eu faria") está deslocada — "item 9" aponta para
+> a seção 10 e "item 10" para a 11. Confira a seção pelo título, não pelo número.
+
 ---
 
 ## 1. PARE TUDO — qualquer um pode entrar na loja de um cliente seu

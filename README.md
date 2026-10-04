@@ -37,5 +37,8 @@ Alternativa mais simples/barata (sem AWS): [`docs/DEPLOY_RENDER.md`](bora-projet
 ```bash
 cp .env.example .env   # preencha BORA_JWT_SECRET e DB_PASSWORD
 docker compose up --build -d
-# API: http://localhost:8080  | Swagger: /swagger-ui.html
+# API: http://localhost:8080
+# Swagger: DESLIGADO por padrão (application.yml). O mapa inteiro da API aberto na internet era uma
+# das falhas da revisão de 30/09. Para ligar em desenvolvimento:
+#   SPRINGDOC_API_DOCS_ENABLED=true SPRINGDOC_SWAGGER_UI_ENABLED=true
 ```

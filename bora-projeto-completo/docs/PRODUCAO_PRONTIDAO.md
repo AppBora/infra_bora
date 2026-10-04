@@ -1,5 +1,15 @@
 # Bora — Prontidão para Produção
 
+
+> ⚠️ **Este documento está desatualizado (conferido em 04/10/2026).**
+> Dois fatos centrais mudaram: as migrações estão em **V44**, não "V1–V11"; e **não existem os planos
+> START/PRO/PREMIUM** — há um plano único (R$ 199/mês por loja) mais o add-on Módulo IA (+R$ 99).
+> O sistema também já está em produção na AWS Lightsail, ao contrário do que o texto sugere.
+>
+> Ele fica aqui como registro do que o projeto foi, não do que ele é. Antes de usar qualquer
+> instrução daqui, confira no código — foi assim que a revisão de 02/10 descobriu guias afirmando o
+> oposto do que o sistema faz, e decisão tomada em cima de documento velho custa caro.
+
 Documento vivo do estado do produto e do que falta para o go-live. **Regra do projeto: a engenharia vai até aqui; o deploy real (Terraform/infra) só com o ambiente provisionado pelo dono.**
 
 ## 1. O que já está pronto (funcional, testado local)

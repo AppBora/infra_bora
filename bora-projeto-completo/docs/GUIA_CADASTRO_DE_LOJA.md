@@ -170,10 +170,13 @@ Se os 7 passos funcionarem, a loja está operacional.
 
 ## Parte 9 — Pegadinhas conhecidas
 
-1. **⚠️ Permissões frouxas.** Ajustes, Produtos, Insumos, Entregadores, Integrações e Configurações
-   **não checam papel no backend** — um `OPERADOR` consegue alterar taxa de entrega, preço e white-label
-   pela API. Só têm proteção real: Usuários, Promoções/Cupons, Assinatura, Módulo IA e `/admin-bora/*`.
-   **Corrigir antes de ter lojas com equipe grande.**
+1. **~~Permissões frouxas~~ — CORRIGIDO, e este texto estava ERRADO (revisado em 04/10/2026).**
+   O que estava escrito aqui era o oposto do que o código faz: `ProdutoService` e `OperacaoService`
+   exigem `GERENTE` ou `ADMINISTRADOR_LOJA` desde sempre (`requirePapel` nas linhas 28/36/51 e 39/49/65),
+   e um `OPERADOR` recebe 403. O único caminho que de fato estava sem checagem era o de **complementos**
+   (preço dos adicionais), fechado em 04/10/2026.
+   Quem lesse isto acreditaria que o sistema está aberto e tomaria decisão errada — por isso a correção
+   fica registrada em vez de o parágrafo ser apagado.
 2. **O WhatsApp do `cardapio-qr.html` não é salvo no servidor** — fica só no `localStorage` do navegador
    e serve apenas para montar o link. Trocar de computador perde o valor.
 3. **Sem Módulo IA não existe tela para gravar o WhatsApp do dono** no backend.

@@ -9,7 +9,8 @@ Você é o Dev Front-end do **Bora**. Frontend em `bora-fase-2-frontend/` (HTML/
 
 ## O que validar após uma mudança
 - **Funciona e não quebra**: as páginas carregam, os scripts não lançam erro no console, e os fluxos (novo pedido → acompanhamento → entrega) levam a algum lugar útil.
-- **Tempo real**: telas de pedidos/entregas refletem atualizações ao vivo (WebSocket/SSE) sem refresh manual.
+- **"Tempo real" é POLLING, não WebSocket.** Não existe WebSocket nem SSE no projeto (conferido em
+  04/10/2026): `Bora.repetir()` recarrega a cada 6 a 15 segundos, e só com a aba visível.
 - **White-label**: logo, cores principal/secundárias, banner aplicados a partir da configuração do tenant/plano (PERSONALIZACAO_WHITE_LABEL.md). Nada de cores/identidade hardcoded.
 - **Contrato de API**: chamadas batem com os endpoints reais do backend; tratamento de loading/erro presente; token JWT enviado.
 - **Permissões**: elementos/ações escondidos conforme o papel do usuário (PERMISSOES.md) — lembrando que o bloqueio real é no backend.
