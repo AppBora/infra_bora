@@ -1,0 +1,29 @@
+18-230-57-33.nip.io, borahapp.com.br, www.borahapp.com.br {
+	log {
+		output stdout
+		format console
+	}
+	# Compactar na saida. O cardapio da loja sai com ~510 KB de JSON e o painel carrega varios .js:
+	# tudo isso e texto e encolhe bem. Medido no cardapio da Zira: 510 KB -> 351 KB (32% menos) no
+	# 4G do cliente final. zstd primeiro porque comprime mais; gzip para quem nao entende zstd.
+	encode zstd gzip
+
+	@api path /api/* /auth/* /public/* /webhooks/* /admin-bora/* /actuator/* /swagger-ui* /v3/api-docs*
+	handle @api {
+		# lb_try_duration: durante o deploy a API fica ~20s fora do ar entre o rm e o run,
+		# e o cliente levava 502 na cara. Com isto o Caddy segura a chamada ate a API
+		# responder de novo, dentro do teto. Deploy deixa de ser queda visivel.
+		reverse_proxy api:8080 {
+			lb_try_duration 40s
+			lb_try_interval 500ms
+		}
+	}
+	handle {
+		root * /srv
+		# O painel e atualizado direto por scp: sem isto o navegador do lojista fica
+		# com a tela antiga depois do deploy (ja aconteceu). no-cache nao desliga o
+		# cache, so obriga a revalidar - a resposta normal vira um 304 curtinho.
+		header Cache-Control "no-cache"
+		file_server
+	}
+}
