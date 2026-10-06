@@ -1,0 +1,58 @@
+Ensaio da homologacao 99Food - imagem bora-api:v105
+
+== Subindo a 99 de mentira
+de pe
+  [ok]    escutando em http://ensaio99-falsa:8077
+
+== Subindo banco e Bora
+  [ok]    Bora de pe, apontando o polling para a 99 de mentira
+
+== Ligando a loja 1 na 99 (como o lojista faria no painel)
+  [ok]    integracao CONECTADO com app shop boraloja1
+
+== Esperando os pedidos chegarem sozinhos (ate 40s)
+  [ok]    2 pedidos entraram sozinhos pelo polling
+
+== Conferindo o pedido de ENTREGA
+  Bruno Carvalho|44.00|7.00|Rua das Flores, 180, Fundos, ao lado da farmacia|Pedido 99 #4455 | Entrega pela loja | Obs: Trocar o troco em nota de 10, por favor | Taxa de entrega R$ 7,00 | Ja pago R$ 0,00 · falta pagar R$ 51,00
+  [ok]    cliente
+  [ok]    valor do pedido R$ 44,00 (itens), taxa a parte
+  [ok]    taxa de entrega R$ 7,00
+  [ok]    endereco
+  [ok]    numero do pedido na 99
+  [ok]    troco avisado ao balconista
+  itens: Acai 500ml (+ Leite condensado) x2 / Guarana lata x1
+  [ok]    item principal
+  [ok]    complemento no item
+
+== Conferindo o pedido de RETIRADA
+  Ana Paula Reis|14.00|ENDERECO=NULO|Pedido 99 #4456 | RETIRADA NO BALCÃO — cliente vem buscar às 05/10 15:40 | Ja pago R$ 14,00 · falta pagar R$ 0,00
+  [ok]    cliente
+  [ok]    sem endereco, como manda a retirada
+  [ok]    avisa RETIRADA NO BALCAO
+
+== Confirmando o recebimento (acknowledgment)
+  2 99-DELIVERY-1,99-TAKEOUT-1
+  [ok]    os 2 eventos foram confirmados; a 99 nao reenvia
+
+== Fluxo de status - ENTREGA (deve terminar em delivered)
+
+== Fluxo de status - RETIRADA (deve terminar em pickedUp, sem dispatch)
+
+== O que a 99 recebeu de volta
+99-DELIVERY-1: confirm > preparing > readyForPickup > dispatch > delivered
+99-TAKEOUT-1: confirm > preparing > readyForPickup > pickedUp
+  [ok]    entrega: fluxo completo
+  [ok]    retirada: fecha em pickedUp
+  [ok]    retirada: nenhum dispatch enviado
+
+== ATENCAO - diferenca entre canais (nao reprova, mas precisa de decisao)
+  Pedido da 99 de R$ 51,00 (R$ 44 de itens + R$ 7 de taxa) ficou gravado como
+  valor_total = 44,00 e taxa_entrega = 7,00.
+  No balcao e no cardapio proprio, o mesmo pedido ficaria com valor_total = 51,00.
+  O faturamento do dia soma SO o valor_total: pedido de marketplace entra R$ 7 menor.
+  Decisao do dono: a taxa de entrega conta como faturamento da loja? (muda conforme quem entrega)
+
+== RESULTADO
+  TUDO PASSOU. O ciclo completo da 99 funciona: pedido entra sozinho, dados certos,
+  recebimento confirmado, e os dois fluxos de status fecham do jeito que a 99 espera.
