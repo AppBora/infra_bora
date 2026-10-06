@@ -14,10 +14,9 @@ de pe
   [ok]    2 pedidos entraram sozinhos pelo polling
 
 == Conferindo o pedido de ENTREGA
-  Bruno Carvalho|44.00|7.00|Rua das Flores, 180, Fundos, ao lado da farmacia|Pedido 99 #4455 | Entrega pela loja | Obs: Trocar o troco em nota de 10, por favor | Taxa de entrega R$ 7,00 | Ja pago R$ 0,00 · falta pagar R$ 51,00
+  Bruno Carvalho|51.00|7.00|Rua das Flores, 180, Fundos, ao lado da farmacia|Pedido 99 #4455 | Entrega pela loja | Obs: Trocar o troco em nota de 10, por favor | Taxa de entrega R$ 7,00 | Ja pago R$ 0,00 · falta pagar R$ 51,00
   [ok]    cliente
-  [ok]    valor do pedido R$ 44,00 (itens), taxa a parte
-  [ok]    taxa de entrega R$ 7,00
+  [ok]    valor do pedido R$ 51,00 (igual ao orderAmount da 99)
   [ok]    endereco
   [ok]    numero do pedido na 99
   [ok]    troco avisado ao balconista
@@ -45,13 +44,6 @@ de pe
   [ok]    entrega: fluxo completo
   [ok]    retirada: fecha em pickedUp
   [ok]    retirada: nenhum dispatch enviado
-
-== ATENCAO - diferenca entre canais (nao reprova, mas precisa de decisao)
-  Pedido da 99 de R$ 51,00 (R$ 44 de itens + R$ 7 de taxa) ficou gravado como
-  valor_total = 44,00 e taxa_entrega = 7,00.
-  No balcao e no cardapio proprio, o mesmo pedido ficaria com valor_total = 51,00.
-  O faturamento do dia soma SO o valor_total: pedido de marketplace entra R$ 7 menor.
-  Decisao do dono: a taxa de entrega conta como faturamento da loja? (muda conforme quem entrega)
 
 == RESULTADO
   TUDO PASSOU. O ciclo completo da 99 funciona: pedido entra sozinho, dados certos,

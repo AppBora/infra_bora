@@ -109,15 +109,8 @@ select coalesce(c.nome,'?')||'|'||coalesce(p.valor_total::text,'?')||'|'||coales
 from pedido p left join cliente c on c.id=p.cliente_id where p.id_externo='99-DELIVERY-1';")
 echo "  $linha"
 case "$linha" in *"Bruno"*)        ok "cliente";;              *) falha "cliente errado";; esac
-# ATENCAO, e de proposito que isto nao reprova: no marketplace o valor_total do pedido NAO inclui a
-# taxa de entrega (fica so em taxa_entrega), enquanto no balcao e no cardapio proprio o valor_total
-# INCLUI a taxa. O faturamento soma apenas valor_total, entao o mesmo pedido de R$ 51 entra como 51
-# vindo do balcao e como 44 vindo da 99. Quem decide qual e o certo e o dono, porque depende de quem
-# fica com a taxa: na entrega pela loja o dinheiro e dela; na entrega pela 99, nao.
-case "$linha" in *"44.00"*) ok "valor do pedido R\$ 44,00 (itens), taxa a parte";;
-                         *) falha "valor do pedido errado";; esac
-case "$linha" in *"44.00"*) AVISO_TAXA=1;; esac
-case "$linha" in *"7.00"*)         ok "taxa de entrega R\$ 7,00";; *) falha "taxa errada";; esac
+case "$linha" in *"51.00"*) ok "valor do pedido R\$ 51,00 (igual ao orderAmount da 99)";;
+                         *) falha "valor do pedido diferente do que a 99 mandou";; esac
 case "$linha" in *"Rua das Flores"*) ok "endereco";;            *) falha "endereco faltando";; esac
 case "$linha" in *"4455"*)         ok "numero do pedido na 99";; *) falha "numero do pedido faltando";; esac
 case "$linha" in *[Tt]roco*)       ok "troco avisado ao balconista";; *) falha "troco nao aparece";; esac
@@ -176,15 +169,6 @@ retira=$(echo "$relatorio" | grep '^99-TAKEOUT-1:' | cut -d: -f2-)
 case "$entrega" in *confirm*readyForPickup*dispatch*delivered*) ok "entrega: fluxo completo";; *) falha "entrega: fluxo errado ->$entrega";; esac
 case "$retira"  in *confirm*readyForPickup*pickedUp*)           ok "retirada: fecha em pickedUp";; *) falha "retirada: fluxo errado ->$retira";; esac
 case "$retira"  in *dispatch*) falha "retirada NAO pode mandar dispatch";; *) ok "retirada: nenhum dispatch enviado";; esac
-
-if [ "${AVISO_TAXA:-0}" = "1" ]; then
-  titulo "ATENCAO - diferenca entre canais (nao reprova, mas precisa de decisao)"
-  echo "  Pedido da 99 de R\$ 51,00 (R\$ 44 de itens + R\$ 7 de taxa) ficou gravado como"
-  echo "  valor_total = 44,00 e taxa_entrega = 7,00."
-  echo "  No balcao e no cardapio proprio, o mesmo pedido ficaria com valor_total = 51,00."
-  echo "  O faturamento do dia soma SO o valor_total: pedido de marketplace entra R\$ 7 menor."
-  echo "  Decisao do dono: a taxa de entrega conta como faturamento da loja? (muda conforme quem entrega)"
-fi
 
 titulo "RESULTADO"
 if [ "$FALHAS" -eq 0 ]; then

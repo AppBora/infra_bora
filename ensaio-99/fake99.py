@@ -43,8 +43,11 @@ PEDIDOS = {
              "observations": "sem banana"},
             {"name": "Guarana lata", "quantity": 1, "unitPrice": {"value": 6.00}},
         ],
-        "total": {"orderAmount": {"value": 44.00}, "otherFees": {"value": 7.00},
-                  "discount": {"value": 0.00}, "orderTotal": {"value": 51.00}},
+        # Schema oficial v1.7.1: itemsPrice = so os itens; orderAmount = o TOTAL do pedido
+        # (itens + taxas - desconto). A primeira versao daqui inventou um "orderTotal" que nao existe
+        # e poe 44 em orderAmount: eu li o resultado do meu proprio erro como se fosse defeito do Bora.
+        "total": {"itemsPrice": {"value": 44.00}, "otherFees": {"value": 7.00},
+                  "discount": {"value": 0.00}, "orderAmount": {"value": 51.00}},
         "payments": {"prepaid": 0.00, "pending": 51.00,
                      "methods": [{"type": "OFFLINE", "method": "CASH", "value": 51.00,
                                   "changeFor": 60.00}]},
@@ -62,8 +65,8 @@ PEDIDOS = {
         "items": [
             {"name": "Acai 300ml", "quantity": 1, "unitPrice": {"value": 14.00}},
         ],
-        "total": {"orderAmount": {"value": 14.00}, "otherFees": {"value": 0.00},
-                  "discount": {"value": 0.00}, "orderTotal": {"value": 14.00}},
+        "total": {"itemsPrice": {"value": 14.00}, "otherFees": {"value": 0.00},
+                  "discount": {"value": 0.00}, "orderAmount": {"value": 14.00}},
         "payments": {"prepaid": 14.00, "pending": 0.00,
                      "methods": [{"type": "ONLINE", "method": "PIX", "value": 14.00, "prepaid": True}]},
     },

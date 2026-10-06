@@ -29,12 +29,13 @@ destrava — e, quando destravar, continua servindo para não quebrar nada sem p
 2. **`MANTER=1` pulava também a limpeza do começo**, então a rodada reaproveitava os containers da
    anterior e media estado velho. A limpeza do início agora acontece sempre.
 
-## O que ficou em aberto
+## Um erro meu que vale ficar registrado
 
-O ensaio termina com um aviso que **não reprova**, porque é decisão de negócio: no marketplace o
-`valor_total` do pedido não inclui a taxa de entrega (fica só em `taxa_entrega`), enquanto no balcão e
-no cardápio próprio o `valor_total` **inclui**. Como o faturamento soma só o `valor_total`, o mesmo
-pedido de R$ 51 entra como 51 vindo do balcão e como 44 vindo da 99.
+A primeira versao deste ensaio inventou um campo `orderTotal` que **nao existe** no Open Delivery e
+poe os itens secos em `orderAmount`. No schema oficial v1.7.1 e o contrario: `itemsPrice` sao os itens
+e **`orderAmount` e o total do pedido** (itens + taxas - desconto). Com o payload errado, o ensaio
+acusou uma diferenca de R$ 7 no faturamento e eu quase reportei isso como defeito do Bora.
 
-Qual é o certo depende de quem fica com a taxa: na entrega pela loja o dinheiro é dela; na entrega
-pela 99, não.
+O Bora sempre leu `orderAmount`, que e o certo. Quem estava errado era o teste. Se for inventar
+payload, conferir contra `src/test/resources/opendelivery/*.json`, que foram montados a partir do
+schema oficial.
