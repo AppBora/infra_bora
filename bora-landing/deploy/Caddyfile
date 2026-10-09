@@ -1,7 +1,15 @@
 18-230-57-33.nip.io, borahapp.com.br, www.borahapp.com.br {
 	log {
 		output stdout
-		format console
+		# O ?t= do link de "repetir pedido" e uma credencial: quem tem o valor abre o pedido.
+		# Com o formato padrao ele ia inteiro para o log, e log nao e lugar de credencial.
+		# O filtro apaga so esse parametro; o resto da URI continua legivel para diagnostico.
+		format filter {
+			wrap console
+			request>uri query {
+				delete t
+			}
+		}
 	}
 	# Compactar na saida. O cardapio da loja sai com ~510 KB de JSON e o painel carrega varios .js:
 	# tudo isso e texto e encolhe bem. Medido no cardapio da Zira: 510 KB -> 351 KB (32% menos) no
