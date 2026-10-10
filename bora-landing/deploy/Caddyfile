@@ -1,13 +1,19 @@
 18-230-57-33.nip.io, borahapp.com.br, www.borahapp.com.br {
 	log {
 		output stdout
-		# O ?t= do link de "repetir pedido" e uma credencial: quem tem o valor abre o pedido.
-		# Com o formato padrao ele ia inteiro para o log, e log nao e lugar de credencial.
-		# O filtro apaga so esse parametro; o resto da URI continua legivel para diagnostico.
+		# Credencial e dado pessoal nao vao para o log; o resto da URI continua legivel para diagnostico.
+		#   t                 o link de "repetir pedido" — quem tem o valor abre o pedido
+		#   token             o webhook de marketplace aceita ?loja=&token= na URL
+		#   hub.verify_token  a verificacao do webhook da Meta vem na query
+		#   telefone, nome    a consulta de saldo de cashback poe os dois na URL (LGPD)
 		format filter {
 			wrap console
 			request>uri query {
 				delete t
+				delete token
+				delete hub.verify_token
+				delete telefone
+				delete nome
 			}
 		}
 	}
@@ -26,6 +32,23 @@
 			lb_try_interval 500ms
 		}
 	}
+	# Cabecalhos de seguranca. Nao havia nenhum: so o Cache-Control. Faltava sobretudo a CSP, que e a
+	# defesa que impede um XSS futuro de ler o token do painel no localStorage, e o X-Frame-Options,
+	# que impede o painel (com botoes de cancelar e excluir) de ser embutido em outra pagina.
+	#
+	# A CSP e permissiva de proposito onde o codigo de hoje exige: 'unsafe-inline' em script e style
+	# porque varias telas tem <script> e style inline (o configuracoes.html tem 545 linhas de JS
+	# inline). Tirar o 'unsafe-inline' exige antes tirar os scripts inline das telas; com ele a CSP
+	# ainda barra script de OUTRO dominio, que e o vetor que importa aqui.
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "SAMEORIGIN"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'"
+		-Server
+	}
+
 	handle {
 		root * /srv
 		# O painel e atualizado direto por scp: sem isto o navegador do lojista fica
