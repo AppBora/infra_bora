@@ -1,0 +1,2 @@
+15 6 * * * /home/ubuntu/backup-bora.sh >> /home/ubuntu/backups/backup.log 2>&1
+*/5 * * * * /home/ubuntu/vigia-bora.sh
