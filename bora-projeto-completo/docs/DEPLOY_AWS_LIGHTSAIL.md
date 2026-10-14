@@ -1,5 +1,20 @@
 # Bora — Deploy na AWS Lightsail (guia completo)
 
+> ## ⚠️ DOCUMENTO HISTÓRICO — NÃO SIGA ESTE AQUI (conferido em 14/10/2026)
+>
+> Este texto descreve uma arquitetura que **nunca existiu em produção**: Container Service e Bucket/CDN, que nunca foram usados — o Container Service tinha limite 0 na conta.
+>
+> **A produção de verdade é:** uma instância Ubuntu no Lightsail (`bora-app`, 18.230.57.33) com dois
+> containers Docker — `api` (a imagem `bora-api`) e `caddy` (HTTPS automático + serve o frontend de
+> `/home/ubuntu/bora/frontend` + proxy para `api:8080`) — e o PostgreSQL gerenciado do Lightsail.
+>
+> **Onde está o que vale:**
+> - `bora-landing/deploy/LEIAME.md` — o Caddyfile e por que cada linha dele existe
+> - `bora-landing/deploy/deploy-api.sh` — o deploy real, em 9 passos, com backup e rollback
+> - `bora-landing/deploy/servidor/` — os scripts que rodam no servidor e o `docker run` do Caddy
+>
+> Guardado por registrar as decisões da época; não serve de roteiro.
+
 Opção **AWS enxuta** para o MVP: preço fixo e previsível, família AWS, sem montar VPC/ECS na mão.
 Componentes: **Container Service** (API Docker) + **Managed Database** (PostgreSQL) + **Bucket/CDN** (frontend).
 Custo estimado ~R$ 150–230/mês (confirme na página de preços do Lightsail). Cabe no teto de R$ 800.

@@ -1,5 +1,20 @@
 # Bora — Plano de Infra Cloud (enxuta, teto R$ 800/mês)
 
+> ## ⚠️ DOCUMENTO HISTÓRICO — NÃO SIGA ESTE AQUI (conferido em 14/10/2026)
+>
+> Este texto descreve uma arquitetura que **nunca existiu em produção**, e o Terraform que ele planeja nunca foi escrito.
+>
+> **A produção de verdade é:** uma instância Ubuntu no Lightsail (`bora-app`, 18.230.57.33) com dois
+> containers Docker — `api` (a imagem `bora-api`) e `caddy` (HTTPS automático + serve o frontend de
+> `/home/ubuntu/bora/frontend` + proxy para `api:8080`) — e o PostgreSQL gerenciado do Lightsail.
+>
+> **Onde está o que vale:**
+> - `bora-landing/deploy/LEIAME.md` — o Caddyfile e por que cada linha dele existe
+> - `bora-landing/deploy/deploy-api.sh` — o deploy real, em 9 passos, com backup e rollback
+> - `bora-landing/deploy/servidor/` — os scripts que rodam no servidor e o `docker run` do Caddy
+>
+> Guardado por registrar as decisões da época; não serve de roteiro.
+
 > Plano **escrito** (sem código). Decisão pendente do dono: provedor final.
 > Continua valendo o **[STOP — Terraform/infra]** do `PRODUCAO_PRONTIDAO.md`: o IaC só é
 > escrito/aplicado quando o ambiente e as credenciais forem liberados.

@@ -6,6 +6,25 @@
 set -uo pipefail
 
 BASE="${BASE:-http://localhost:8080}"
+
+# Trava contra rodar isto em producao, acrescentada em 14/10/2026.
+#
+# Este script CRIA LOJA DE VERDADE pelo /public/signup e usa a senha padrao. Apontado para
+# borahapp.com.br, ele sujaria a base de clientes com loja de teste -- que e exatamente o problema que
+# a loja 1 "Sorveteria da Rosa" (documento 00000000000100) ja causa nos relatorios e no faturamento.
+#
+# Para rodar contra producao de proposito (nao deveria), exporte PERMITIR_PRODUCAO=1.
+case "$BASE" in
+  *localhost*|*127.0.0.1*|*\[::1\]*) ;;
+  *)
+    if [ "${PERMITIR_PRODUCAO:-}" != "1" ]; then
+      echo "ABORTADO: BASE=$BASE nao e ambiente local." >&2
+      echo "Este script cria loja de verdade pelo /public/signup. Nao rode contra producao." >&2
+      exit 1
+    fi
+    echo "AVISO: rodando contra $BASE por PERMITIR_PRODUCAO=1. Isto vai criar loja de verdade." >&2
+    ;;
+esac
 ADMIN_EMAIL="${ADMIN_EMAIL:-admin@bora.app}"
 ADMIN_SENHA="${ADMIN_SENHA:-bora123}"
 

@@ -43,10 +43,18 @@ fi
 COMMIT="$(git -C "$BACKEND" rev-parse --short HEAD)"
 echo "commit $COMMIT"
 
-dizer "2/8 build da imagem (os testes rodam aqui dentro)"
+dizer "2/9 a data dos Termos no codigo bate com a pagina publicada?"
+# Este teste precisa dos DOIS repositorios e, dentro do build da imagem, so existe o `src`: la ele se
+# pula em silencio desde sempre. Aqui ele roda do checkout completo, que e o unico lugar onde pode
+# valer de verdade. A versao gravada no aceite de cada lojista aponta para ESTE texto -- se a constante
+# e a pagina divergirem, o comprovante aponta para um documento que ninguem sabe qual e.
+( cd "$BACKEND" && mvn -q -o test -Dtest=VersaoDosTermosTest )   || { echo "ABORTADO: a data dos Termos no codigo nao bate com a pagina publicada." >&2; exit 1; }
+echo "ok"
+
+dizer "3/9 build da imagem (os testes rodam aqui dentro)"
 docker build --label "git=$COMMIT" -t "bora-api:$TAG" "$BACKEND"
 
-dizer "3/8 teste de subida contra banco inexistente"
+dizer "4/9 teste de subida contra banco inexistente"
 # A causa raiz tem que ser "Connection refused" e nada mais. Isto pega bean quebrado, consulta JPQL
 # malformada e coluna fora do lugar ANTES de o container de producao parar.
 SAIDA="$(docker run --rm \
@@ -57,23 +65,23 @@ SAIDA="$(docker run --rm \
 [ "$SAIDA" -gt 0 ] || { echo "ABORTADO: a aplicacao nao subiu por outro motivo que nao o banco." >&2; exit 1; }
 echo "ok: a unica causa raiz foi Connection refused"
 
-dizer "4/8 transferencia"
+dizer "5/9 transferencia"
 docker save "bora-api:$TAG" | gzip -1 > "$TGZ"
 scp -i "$KEY" "$TGZ" "$SRV:/tmp/"
 ssh -i "$KEY" "$SRV" "gunzip -c $TGZ | docker load && rm -f $TGZ"
 rm -f "$TGZ"
 
-dizer "5/8 a imagem que chegou e a mesma?"
+dizer "6/9 a imagem que chegou e a mesma?"
 # O ID da imagem muda na transferencia; a ULTIMA camada, que carrega o app.jar, nao.
 CAMADA_LOCAL="$(docker inspect "bora-api:$TAG" --format '{{json .RootFS.Layers}}' | tr ',' '\n' | tail -1 | tr -d '"]')"
 CAMADA_REMOTA="$(ssh -i "$KEY" "$SRV" "docker inspect bora-api:$TAG --format '{{json .RootFS.Layers}}'" | tr ',' '\n' | tail -1 | tr -d '"]')"
 [ "$CAMADA_LOCAL" = "$CAMADA_REMOTA" ] || { echo "ABORTADO: a camada do app.jar difere." >&2; exit 1; }
 echo "ok: $CAMADA_LOCAL"
 
-dizer "6/8 BACKUP antes de trocar"
+dizer "7/9 BACKUP antes de trocar"
 ssh -i "$KEY" "$SRV" '/home/ubuntu/backup-bora.sh && ls -t ~/backups/*.dump | head -1'
 
-dizer "7/8 troca do container, guardando o anterior"
+dizer "8/9 troca do container, guardando o anterior"
 ssh -i "$KEY" "$SRV" "bash -s" <<SCRIPT
 set -e
 docker tag bora-api:latest bora-api:anterior 2>/dev/null || true
@@ -86,7 +94,7 @@ docker run -d --name api --restart unless-stopped --network bora \
   bora-api:latest
 SCRIPT
 
-dizer "8/8 esperando ficar sadio (rollback se nao ficar)"
+dizer "9/9 esperando ficar sadio (rollback se nao ficar)"
 if ssh -i "$KEY" "$SRV" 'for i in $(seq 1 40); do
       docker exec api curl -fs localhost:8080/actuator/health 2>/dev/null | grep -q UP && exit 0
       sleep 3

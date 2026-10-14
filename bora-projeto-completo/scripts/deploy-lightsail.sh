@@ -1,5 +1,35 @@
 #!/usr/bin/env bash
 # ============================================================================
+# ⚠️ OBSOLETO E TRAVADO EM 14/10/2026 — NAO RODE ISTO
+#
+# Este script cria um Lightsail Container Service (~US$ 10/mes) e um bucket com
+# CORS=* , e implanta a API neles. A producao NUNCA usou esse caminho: o
+# Container Service tinha limite 0 na conta. O que existe e uma instancia
+# Ubuntu com os containers `api` e `caddy`.
+#
+# Rodar isto hoje faria duas coisas ruins: criaria recurso pago em paralelo ao
+# que esta no ar, e implantaria uma API com CORS aberto.
+#
+# O deploy de verdade e: bora-landing/deploy/deploy-api.sh
+#
+# Guardado porque registra a tentativa da epoca. Para reativar, apague o
+# bloco de trava abaixo -- e leia o deploy-api.sh antes.
+# ============================================================================
+cat >&2 <<'AVISO'
+Este script esta OBSOLETO e travado.
+
+Ele cria um Lightsail Container Service pago e um bucket com CORS aberto, em
+paralelo a producao de verdade -- que e uma instancia Ubuntu com os containers
+`api` e `caddy`.
+
+Use: bora-landing/deploy/deploy-api.sh vNNN
+AVISO
+exit 1
+
+# ---------------------------------------------------------------------------
+# (conteudo original preservado abaixo, sem efeito)
+# ---------------------------------------------------------------------------
+# ============================================================================
 # Bora — Deploy na AWS Lightsail (API em container + PostgreSQL gerenciado)
 # Rode no Git Bash, com: AWS CLI v2 + plugin lightsailctl + Docker instalados.
 # Pré-requisito: `aws configure` já feito (usuário IAM, região sa-east-1).
