@@ -1,0 +1,435 @@
+# Varredura da aplicação inteira — 18/10/2026
+
+Nove agentes sobre todo o sistema: 177 arquivos Java, 50 migrations, 34 telas, 39 scripts do painel,
+os scripts de deploy e o servidor. Cerca de 70 achados brutos.
+
+**Como ler este arquivo.** Cada item traz, no fim, de onde vem a certeza:
+
+- **MEDIDO POR MIM** — eu rodei e vi acontecer. É fato. (Mas veja o 0.1: um destes era medição pela
+  metade. Quando a cadeia tem mais de um pedaço, meça o pedaço que importa, não o primeiro.)
+- **MEDIDO PELO AGENTE** — o agente rodou código e colou a saída. Alta confiança, ainda não reconferi.
+- **LEITURA** — está escrito no código. Confiança média: agente erra, e já errou duas vezes nesta leva.
+- **SUSPEITA** — ninguém provou. Trate como pergunta, não como defeito.
+
+Nada abaixo foi consertado, salvo onde está escrito **JÁ CONSERTADO**.
+
+---
+
+## 0. O que eu medi na produção, e vale como fato
+
+### 0.1 O freio contra força bruta — ERRO MEU, CORRIGIDO EM 19/10
+
+**Eu afirmei aqui que o freio não existia. Estava errado, e o erro foi meu.**
+
+O que eu medi em 18/10: mandei uma chamada ao `/actuator/health` com `X-Forwarded-For: 203.0.113.99`
+inventado e vi o valor **no log do Caddy**. Daí eu **concluí, sem medir**, que o Caddy repassava esse
+valor para a aplicação — e escrevi isso como se tivesse medido.
+
+O que eu medi em 19/10, de verdade: subi um `caddy:2.11.4` (a mesma versão da produção) com
+`reverse_proxy` e sem `trusted_proxies`, e li o que a aplicação recebe:
+
+```
+curl -H "X-Forwarded-For: 1.2.3.4"               -> app recebeu '172.18.0.1'
+curl -H "X-Forwarded-For: 203.0.113.99, 9.9.9.9" -> app recebeu '172.18.0.1'
+```
+
+O Caddy **descarta** o que o cliente manda e escreve só o IP que viu no socket. A lista chega com um
+item, e ele é confiável. **O freio sempre funcionou** — a trava de 5 senhas erradas em 15 minutos e a
+de 10 pedidos por minuto do cardápio estão de pé.
+
+A mudança de código (ler o último item em vez do primeiro) **ficou**, mas como defesa, não como
+conserto: com um item só, os dois são o mesmo. Ela passa a valer no dia em que alguém puser
+`trusted_proxies` no Caddyfile, um CDN na frente, ou trocar o proxy. Os testes e o comentário no
+código foram reescritos para dizer isso, em vez de alegar uma falha que não existe.
+
+**A lição, que vale para o resto deste arquivo:** "o cabeçalho chegou ao proxy" não é "o cabeçalho
+chegou à aplicação". Medir metade do caminho e narrar o caminho inteiro é exatamente o jeito de
+produzir um achado falso com cara de fato.
+
+### 0.2 A assinatura da Zirá foi deletada no Asaas — AÇÃO DO DONO, COM DATA
+
+```
+sub_cm8016j2p9r674d3 → status INACTIVE · deleted TRUE · valor 298,00
+cobranças: 1  (pay_aj14zjq8wbcfqhfx · R$ 199 · RECEIVED_IN_CASH em 15/10)
+```
+
+No nosso banco: `CANCELADA`, `acesso_ate = 26/10/2026`. O corte está ligado
+(`BORA_COBRANCA_CORTE_POR_ASSINATURA=true`). **A loja sai do ar em 26/10.** Os R$ 398 estão
+registrados (duas linhas de R$ 199). Ela pagou e vai ser cortada.
+
+Como morreu, não sei. Duas possibilidades, as duas no código: alguém clicou "Ativar assinatura"
+(que cancela a antiga no Asaas antes de criar a nova — ver 3.1 e 3.2), ou alguém apagou no painel do
+Asaas. **MEDIDO POR MIM.**
+
+### 0.3 Os 2% do PIX não são cobrados de ninguém
+
+`ASAAS_TAXA_PERCENTUAL=0` no servidor, e o split só é aplicado quando a taxa é maior que zero.
+A Zirá tem `split_percentual = 0,50` na coluna dela, que não chega a valer. **MEDIDO POR MIM.**
+
+### 0.4 Dois alarmes falsos que eu derrubei
+
+- **Token do webhook do Asaas**: dois agentes marcaram como risco. Em produção ele **existe**
+  (32 caracteres). Não se aplica.
+- **Fuso horário**: vários achados diziam "a imagem roda em UTC". **Está errado, e o erro era meu** —
+  eu repeti isso em mensagens e num commit. O `Dockerfile:30` define
+  `JAVA_TOOL_OPTIONS="-Duser.timezone=America/Sao_Paulo"`. A API decide datas em horário de Brasília.
+  O que roda em UTC é só o **build** da imagem, onde os testes acontecem. Todos os achados de fuso
+  em código de produção caem.
+
+---
+
+## 1. Dinheiro errado na cara de quem opera, hoje
+
+### 1.1 PDV mostra um total e grava outro quando usa cashback — **FECHADO (v118, 19/10)**
+O caixa marca "usar cashback", a linha **Total** continua no preço cheio, e o servidor desconta.
+O cliente paga o cheio **e** perde o saldo; a gaveta fica com mais do que o sistema diz.
+`assets/js/pdv.js:57-60` (não refaz o total) · `:167-173` (não há listener no `usarCashback`) ·
+`:147` (manda ao servidor) · servidor desconta em `PedidoService.java:233-242`.
+A tela irmã `novo-pedido.js:161-171` faz a conta certa. **MEDIDO PELO AGENTE** (rodou no harness:
+tela R$ 30,00, servidor gravaria R$ 24,00).
+
+### 1.2 O mesmo no cardápio público
+`assets/js/cardapio.js:281-291` não inclui cashback no total; os listeners de `:457-458` não cobrem
+o `ckUsarCashback`. No PIX o QR sai certo e se corrige; no "na entrega" o cliente separa o dinheiro
+errado. **LEITURA.**
+
+### 1.3 Dashboard conta PIX não pago como faturamento; o Caixa não
+O número grande da primeira tela inclui checkout abandonado. `dashboard.js:18` (`isVenda` não olha
+`aguardandoPagamento`), `:106-108`, `:58`, `:75`. O caixa faz certo em `caixa.js:47`.
+**MEDIDO PELO AGENTE** (mesmos dois cards do `caixa.test.mjs`: dashboard R$ 80, caixa R$ 30).
+
+### 1.4 "Excluir pedido" não devolve cashback nem estoque
+É o botão oferecido para "pedido de teste ou lançado errado" — justo o caso em que tudo tem que
+voltar. Apaga pedido, itens e histórico; não chama `fidelidade.estornar` nem `devolucao.devolver`.
+Pior: apaga os itens primeiro, então depois nem dá para recalcular.
+`PedidoService.java:536-546` · a lixeira aparece em todo card para GERENTE/ADMIN (`pedidos.js:135`).
+**LEITURA.**
+
+### 1.5 Saldo de cashback é lido-somado-gravado em Java, sem trava
+Dois checkouts do mesmo cliente ao mesmo tempo gastam o mesmo saldo duas vezes. É o defeito do
+estoque que já foi consertado, agora no cashback. `FidelidadeService.java:168-177` e `:242-253` ·
+`ClienteRepository` não tem nenhum `@Modifying` · `Cliente` não tem `@Version`.
+O jeito certo já existe no projeto: `ProdutoRepository.java:31-37`. **LEITURA.**
+
+---
+
+## 2. Estoque
+
+### 2.1 Pedido de marketplace não baixa estoque nenhum — **FECHADO (v119, 20/10)**
+iFood, 99 e Rappi: o canal que mais vende é o único que não mexe na prateleira. O custo do item
+também fica em branco, então CMV e margem ignoram toda venda de marketplace.
+`PedidoService.java:313-325` — o item nasce só com descrição, quantidade, preço e subtotal.
+Raiz: `dto/InboundOrder.java:48` não tem `produtoId`. O gancho vem no payload e é jogado fora: o
+iFood manda `externalCode` ("7470") e a 99 também ("PIZZA-CAL"). **LEITURA** (dois agentes, separados,
+chegaram ao mesmo ponto).
+
+**MEDIDO POR MIM na produção em 20/10**, antes de consertar: dos **15** itens de pedido de
+marketplace gravados, **14 estão sem `produto_id` e sem `custo_unitario`**. São 7 pedidos de iFood, o
+último em 30/09 — a janela da homologação, não venda de cliente. O conserto chega antes do volume.
+
+**O que o agente não viu, e mudava o conserto:** casar pelo nome não funcionaria. O
+`MarketplaceNormalizer` monta o campo `nome` para a TELA, colando complemento e observação
+(`"Açaí 500ml (+ Granola) — obs: sem cebola"`). Isso não bate com `produto.nome` em nenhum item com
+adicional — numa açaiteria, quase todo item. Foi preciso levar um `nomeLimpo` separado no DTO.
+
+**Como ficou** (backend `78d154d`, frontend `3309d68`, no ar em v119):
+`produto.codigo_externo` (V51, índice único parcial por loja) · `resolverProduto` casa pelo código,
+depois pelo nome limpo sem acento/caixa/espaço, **exato** — nome ambíguo não casa, porque baixar o
+estoque do produto errado é pior que não baixar nenhum · casou: grava `produto_id`, consome a ficha
+e usa o custo dela, senão baixa o produto · **não casou: o pedido entra igual e sai um WARN** — comida
+vendida nunca pode ser recusada · Produtos ganhou o campo "Código no iFood / 99", com 409 e o nome do
+produto dono quando o código repete.
+Testes: `EstoqueDoMarketplaceTest` (13) e `CodigoDoMarketplaceNaoRepeteTest` (7); backend 429 verdes,
+frontend 53. As 51 migrações aplicadas num Postgres 16 limpo e o índice conferido nos três casos.
+
+### 2.2 Nada checa estoque antes de vender
+O saldo vai a negativo sem limite. Uma chamada do cardápio pode levar um produto a −4950
+(50 itens × 99). `ProdutoRepository.java:32-34` e `InsumoRepository.java:19-21` não têm
+`and estoque >= :qtd`. Varredura do backend por checagem de esgotado: **uma** ocorrência, e é
+tradução de texto de erro da 99. **LEITURA.**
+
+### 2.3 Salvar um produto sobrescreve o estoque com o número velho da tela
+O lojista abre Produtos às 18h, a loja vende 12 durante a noite, ele corrige só o preço às 21h — e as
+12 baixas somem. Sem log, sem aviso.
+`assets/js/produtos.js:41-47` (o payload sempre inclui `estoque`) · `:74` (preenche do array
+carregado uma vez) · `ProdutoService.java:57` (`p.estoque = dados.estoque` sem condição — compare com
+a linha 59, onde a foto é protegida). Mesma coisa no insumo. **LEITURA.**
+
+### 2.4 Estoque e Contagem fazem "ler, somar e gravar" no navegador
+O `+1` do ajuste rápido é "grava 31" com base no que a tela leu antes. Na Contagem é por desenho: o
+lojista conta 20 minutos e aplica — tudo que vendeu nesse tempo some.
+`estoque.js:9-13` · `contagem.js:31-37`. **LEITURA.**
+
+### 2.5 Excluir um insumo deixa a ficha fantasma e o produto para de baixar — calado
+`InsumoService.java:47-49` apaga só o insumo; `produto_insumo` não tem chave estrangeira. Depois,
+`consumirFicha` devolve **ZERO** em vez de `null` (`:96-108`), e como os dois canais fazem
+`if (custoFicha == null) baixarEstoque(...)`, a baixa do produto **não roda** — e o item é gravado
+com `consumiuFicha = true`, mentindo. **LEITURA.**
+
+### 2.6 Complemento nunca baixa estoque — não existe onde
+`ComplementoItem` tem `id, lojaId, grupoId, nome, preco`. Sem campo de estoque, sem ligação com
+insumo (`V20__complementos.sql`). Numa açaiteria metade do valor está nos adicionais. Não é um `if`
+esquecido: o modelo não comporta. **LEITURA — e é decisão de produto, não bug.**
+
+### 2.7 PIX pago depois do cancelamento não rebaixa o estoque
+O caminho trata o caso e até reconsome o cashback de propósito (`PublicController.java:736`), mas não
+refaz a baixa de estoque. Se o lojista preparar o pedido (e vai, o dinheiro está na conta), a comida
+sai e o estoque segue contando. **LEITURA.**
+
+---
+
+## 3. Cobrança da plataforma
+
+### 3.1 Clicar "Ativar assinatura" de novo apaga a fatura atrasada
+`AssinaturaService.java:66-103`: só sai cedo se o status for ATIVA. Com PENDENTE, INADIMPLENTE ou
+CANCELADA, **cancela a assinatura antiga no Asaas** e cria outra com vencimento em `hoje + 7`.
+Teste grátis infinito, e o caminho está aberto justamente para quem está bloqueado
+(`BloqueioPorAssinaturaFilter.java:200-202` libera `/api/assinatura`). **CONFERIDO POR MIM na leitura.**
+
+### 3.2 Cancela no Asaas, falha ao criar a nova, e a loja fica sem cobrança
+Mesmo método: cancela primeiro, cria depois, tudo numa transação. Se a criação falhar, o nosso banco
+faz rollback e volta a apontar para a assinatura antiga — que **lá fora já morreu**. O painel diz que
+está tudo certo. **É o estado exato em que a Zirá está hoje** (ver 0.2). **CONFERIDO POR MIM.**
+
+### 3.3 Estorno e chargeback não mexem no acesso
+`AssinaturaService.java:173-177` trata estorno antes de tudo e sai da função. A assinatura continua
+ATIVA e `acesso_ate` continua NULL. Paga, usa, pede estorno, recebe de volta e **fica com acesso sem
+prazo para sempre**. Dá para repetir todo mês. **CONFERIDO POR MIM.**
+
+### 3.4 Dois pagamentos manuais no mesmo dia: o segundo some
+Sem cobrança aberta no Asaas, a chave do registro é `"manual:" + lojaId + ":" + dia`, e
+`registrarPagamento` descarta id repetido em silêncio. A tela diz "Pagamento registrado".
+`AssinaturaService.java:282` e `:308`. **Os R$ 398 da Zirá são duas mensalidades.** **CONFERIDO POR MIM.**
+
+### 3.5 Carência de 10 dias não vale para quem nunca pagou
+`AssinaturaService.java:196-200`: a carência só é dada quando `acesso_ate` está NULL. Loja nova nasce
+com os 7 dias de cortesia preenchidos, então `PAYMENT_OVERDUE` **não dá carência nenhuma**. O teste
+que garante a carência monta a loja com `acesso_ate` nulo — estado que o sistema nunca cria.
+**LEITURA** (é o tipo de teste verde sobre premissa que não acontece).
+
+### 3.6 Estorno parcial apaga a mensalidade inteira do faturamento
+`estornadoEm` é tudo-ou-nada e nunca é limpo. Um estorno de R$ 10 tira os R$ 199 do mês. E
+`PAYMENT_CHARGEBACK_REQUESTED` é só um **pedido** — se a plataforma ganhar a disputa, o dinheiro some
+do faturamento para sempre. `PlataformaController.java:923-928`. **LEITURA.**
+
+### 3.7 Subconta vira ATIVO com a conta bancária ainda pendente
+`AsaasSubcontaService.java:408-414`: quando o Asaas manda o resumo `general`, decide só por ele e
+nunca olha `bankAccountInfo`. O comentário do próprio método diz que oferecer PIX com a conta em
+análise "deixaria o cliente pagando para uma conta que nao pode sacar". É o estado da loja 18 hoje.
+**LEITURA.**
+
+### 3.8 Módulo IA fica ligado de graça quando o Asaas recusa
+`PlataformaController.java:698-699` grava `moduloIa = true` **antes** de tentar a cobrança. Se a
+sincronização falhar, o recurso é liberado e a mensalidade continua no valor antigo. Não há retry,
+nem fila, nem rotina que compare `assinatura.valor` com `loja.precoComModulos()`. R$ 99/mês. **LEITURA.**
+
+### 3.9 Split só sai pela subconta, e a tela diz que sai de todo mundo
+`PixService.java:167` exige `viaSubconta`. Loja que recebe pela chave legada nunca paga os 2%.
+E `PUT /lojas/{id}/split` responde `efetivo: "2%"` sem olhar se a loja tem subconta
+(`PlataformaController.java:764`). Some-se a isso o 0.3 acima. **LEITURA.**
+
+---
+
+## 4. Banco de dados
+
+> O agente aplicou as **50 migrations num Postgres de verdade** (zero erros, 29 tabelas, 72 índices) e
+> carregou **800 mil pedidos** para medir com `EXPLAIN ANALYZE`. Os números abaixo são dele, medidos.
+
+### 4.1 O painel faz 3 varreduras da loja inteira a cada 6 segundos
+`PedidoService.java:553-559` — as três contas não têm corte de data. Com 26 mil pedidos: **615 ms e
+~325 MB de leitura por atualização**, por loja aberta. Dois índices resolvem: medido, **615 ms → 0,4 ms**.
+**MEDIDO PELO AGENTE.**
+
+### 4.2 `endereco_entrega` é varchar(255) e recebe o endereço que precisou de 500
+O **mesmo valor** do marketplace vai para dois lugares no mesmo método: `PedidoService.java:456`
+corta em 500 (coluna de 500); `:329` grava sem corte numa coluna de 255. A V37 largou
+`cliente.endereco` para 500 justamente por causa desse endereço. O INSERT é recusado e **o pedido do
+marketplace inteiro se perde**. `ddl-auto: validate` não pega tamanho.
+**MEDIDO PELO AGENTE** (`ERROR: value too long for type character varying(255)`).
+
+### 4.3 Excluir produto com complementos dá erro 500
+`complemento_grupo` tem FK para produto sem `ON DELETE`, e `ProdutoService.java:64-66` é um delete
+seco. Pega justamente os produtos para os quais os complementos existem. **MEDIDO PELO AGENTE.**
+
+### 4.4 Observação longa no pagamento manual quebra o registro
+`pagamento_assinatura.descricao` é varchar(200), já nasce com o nome da loja, e a observação é
+**concatenada** sem validar tamanho. É a função que você ainda precisa usar. **MEDIDO PELO AGENTE.**
+
+### 4.5 Erro do marketplace sem corte em `ultimo_erro varchar(500)`
+`IfoodClient.java:277` e `:486` gravam sem cortar. O pior: as duas linhas estão **dentro do
+tratamento de erro** — se o UPDATE estoura, a falha nunca é registrada e a tela mostra a loja como se
+nada tivesse acontecido. **MEDIDO PELO AGENTE** (o estouro) · **SUSPEITA** (se o iFood manda mensagem
+desse tamanho).
+
+### 4.6 Índice duplicado e três índices que ninguém usa
+`idx_pedido_item_pedido` (V7) e `idx_pedido_item_loja` (V15) são o **mesmo índice**, 24 MB cada com
+800 mil itens, mantidos em todo insert. Sem uso: `idx_pedido_bairro_entrega` (V48),
+`idx_loja_nao_excluida` (V30), `ix_pagamento_assinatura_loja` (V41). **MEDIDO PELO AGENTE.**
+
+### 4.7 Outros
+- O índice do acerto desperdiça a coluna do meio porque a consulta usa `lower(trim(entregador))`:
+  381 ms para achar 338 linhas.
+- `select loja_id, max(criado_em) group by loja_id` do painel da plataforma: **Seq Scan, 408 ms**.
+- N+1 no balancete (3 consultas por loja) e no desempenho (5 por loja).
+- Apagar cliente deixa pedido órfão (dívida já assumida em comentário).
+
+---
+
+## 5. Marketplaces
+
+- **5.1** Integração do iFood que cai em ERRO **nunca volta sozinha** — passa a ser consultada a cada
+  10 min em vez de 30 s, e a loja some do aplicativo. A 99 tem a cura; o iFood não.
+  `IfoodClient.java:276,485` vs `OpenDeliveryClient.java:254-258`. **LEITURA.**
+- **5.2** O status que a loja muda aqui pode nunca chegar lá, e ninguém é avisado. O `boolean` de
+  retorno é descartado (`IntegracaoService.java:285`). Na 99 a ordem é obrigatória, então um passo
+  perdido trava todos os seguintes. **LEITURA.**
+- **5.3** Aceite que falhou e a loja tocou no card: nunca mais é reenviado
+  (`MarketplacePoller.java:248`), e o aviso some em 30 segundos. **LEITURA.**
+- **5.4** Renovação do token: o iFood mata o anterior antes de a gente gravar o novo
+  (`IfoodClient.java:272-283`). Falha no meio = loja reautoriza do zero, sem ninguém detectar. **LEITURA.**
+- **5.5** O poller grava a linha inteira e desfaz o que o lojista acabou de salvar. **LEITURA.**
+- **5.6** O que o iFood muda lá fora não chega aqui — só cancelamento. Pedido entregue pelo
+  entregador do iFood fica congelado no painel para sempre. **LEITURA.**
+- **5.7** Pedido com `isTest: true` entra como venda de verdade (`isTest` não aparece em nenhum .java),
+  e o "Simular pedido" cria pedido que **não dá para cancelar**. **LEITURA.**
+- **5.8** Taxa do marketplace entra como receita da loja mesmo quando o marketplace fica com ela.
+  **LEITURA** no código · **SUSPEITA** no tamanho.
+- **5.9** WhatsApp: a assinatura prova que veio da Meta, não de qual loja. Quebra na **segunda** loja
+  que ligar o robô. **LEITURA.**
+
+---
+
+## 6. Fluxo do pedido
+
+- **6.1** Pedido PIX **entregue** vira CANCELADO sozinho 30 min depois, sem nada no histórico. O
+  cliente recebe "pedido cancelado" depois de ter recebido a comida. `CobradorDePixService.java:146-168`
+  não olha o status. **LEITURA.**
+- **6.2** O endereço do pedido e o "é retirada" **nunca chegam na tela**: `PedidoCard` não tem as três
+  colunas da V48. O motoboy lê o endereço do cadastro — exatamente o que a V48 foi criada para
+  resolver. E o painel nunca manda `tipoEntrega`: **todo pedido de balcão nasce ENTREGA**. **LEITURA.**
+- **6.3** Pedido PIX não pago marcado como entregue entra no acerto do motoboy. **LEITURA.**
+- **6.4** Entrega sem motoboy escolhido sai do acerto para sempre, sem aviso. A KDS e o quadro deixam
+  avançar até ENTREGUE e não têm seletor. **LEITURA.**
+- **6.5** Qualquer operador troca o motoboy de um pedido já entregue, com texto livre, sem papel
+  exigido e sem histórico (`PedidoService.java:478-483`). **LEITURA.**
+- **6.6** A máquina de status aceita qualquer pulo e qualquer volta. Uma aba velha re-clicando o botão
+  manda "está sendo preparado" depois do pedido ter saído. **LEITURA.**
+- **6.7** "Recebeu dinheiro" do acerto é R$ 0,00 para todo pedido do cardápio — o cardápio não
+  pergunta dinheiro ou cartão, grava "Na entrega", e o acerto procura a palavra "DINHEIRO". **LEITURA.**
+- **6.8** O motivo do cancelamento que a equipe digita vai **inteiro** para o cliente, no WhatsApp e na
+  tela de acompanhar. O prompt não avisa isso. **LEITURA.**
+- **6.9** Retirada despachada na KDS: o cliente que está no balcão recebe "saiu para entrega".
+- **6.10** Cadastrar cliente no painel não procura pelo telefone: nasce o segundo cadastro e o
+  cashback racha. Não há índice único em `(loja_id, telefone)`. **LEITURA.**
+
+---
+
+## 7. Telas
+
+- **7.1** **A cozinha não vê a observação do pedido.** O dado chega no navegador; o cartão do KDS não
+  o desenha (`kds.js:16-30`). "Sem cebola" não chega em quem monta. **LEITURA.**
+- **7.2** **Cache**: 26 das 34 páginas pedem `app.js?v=20260930`, e o arquivo mudou em 18/10. Três
+  arquivos são pedidos com **duas versões diferentes** ao mesmo tempo. **LEITURA.**
+- **7.3** Dashboard engole queda de rede: números congelados, sem a faixa de "sem conexão"
+  (`dashboard.js:140`). Pedidos e KDS fazem certo. **LEITURA.**
+- **7.4** "Despachar rota" falha em silêncio — `catch (e) {}` vazio, e despacha o bairro inteiro sem
+  confirmação (`entregas.js:18-21`). **LEITURA.**
+- **7.5** PDV: complemento que não carrega grava lista vazia no cache e o produto passa a vender pelo
+  preço base até recarregar a página (`pdv.js:86-92`). **LEITURA.**
+- **7.6** Importar cardápio multiplica o preço por 100 quando vem com ponto: "12.50" vira 1250
+  (`produtos.js:146`). **LEITURA.**
+- **7.7** Produto e entregador desativados **voltam a ligar** quando alguém edita (`ativo: true` fixo
+  no payload), e não existe como desativar pelo painel. **LEITURA.**
+- **7.8** A promoção morre no 20º uso (limite fixo no código) e não há como encerrá-la — o endpoint
+  existe, a tela não usa. **LEITURA.**
+- **7.9** Celular: 11 telas sobrescrevem o empilhamento do CSS com estilo em linha; Entregas monta
+  tabela de 6 colunas sem contêiner de rolagem; o CSS não tem nenhuma regra abaixo de 700px. **LEITURA.**
+- **7.10** Imprimir caixa e recibo do motoboy não fazem nada com pop-up bloqueado — a função
+  compartilhada já trata isso, essas duas não. **LEITURA.**
+- **7.11** Listas vazias virando tela em branco (Ajustes, últimos pedidos do Dashboard). **LEITURA.**
+- **7.12** Não dá para corrigir o cadastro de um cliente: só existe excluir, e excluir leva o cashback
+  e o histórico junto, sem avisar. O endpoint de editar existe. **LEITURA.**
+
+**Cobertura de teste das telas:** as 34 têm cobertura estática (sintaxe, arquivo que existe, ordem do
+`api.js`, `requireAuth`). Teste de **comportamento** existe para **uma**: `caixa.html`. As que mexem em
+dinheiro e não têm nada: `pdv`, `produtos`, `novo-pedido`, `cardapio`, `acerto-entregadores`.
+
+---
+
+## 8. Segurança
+
+- **8.1** O freio — **JÁ CONSERTADO**, ver 0.1.
+- **8.2** **Rebaixar alguém não tira o poder por 24h.** O papel sai do token, nunca do banco
+  (`JwtAuthFilter.java:78`). O filtro **reconsulta** o banco para `ativo` e para o vínculo com a loja,
+  e o papel ficou de fora. Um administrador demitido ainda troca a senha de todo mundo — inclusive de
+  quem o rebaixou — e recupera o acesso. Contorno que já funciona hoje: **desativar** em vez de
+  rebaixar. **LEITURA.**
+- **8.3** O balconista vê o faturamento da loja no Dashboard (`/api/vendas/termometro` sem
+  `requirePapel`), e o custo de produtos e insumos em quatro endpoints. As telas irmãs exigem papel.
+  **LEITURA.**
+- **8.4** `config_plataforma.valor` **não passa pelo cifrador** — o `client_secret` do iFood e da 99 da
+  plataforma está em texto puro no banco e nos 30 dumps da pasta sincronizada. Vale **mesmo com**
+  `BORA_SEGREDO_COLUNAS` ligada. `entity/ConfigPlataforma.java:22-23`. **LEITURA.**
+- **8.5** CORS com `*` e `allowCredentials: true` (`config/WebConfig.java:22-27`). Limitado porque a
+  sessão é Bearer em localStorage, não cookie. **LEITURA** · depende de `BORA_CORS_ORIGINS` no
+  servidor, que eu não li.
+- **8.6** Um estranho escreve no cadastro de cliente da loja pelo cardápio público (endereço em
+  branco). Não dá para **ler** dado de cliente por aí. **LEITURA.**
+- **8.7** Logo e banner de loja suspensa continuam no ar — o único endpoint público que não chama
+  `lojaAtiva`. **LEITURA.**
+- **8.8** Token do webhook comparado com `equals` (vazamento por tempo). O projeto já faz certo em
+  dois outros lugares. Prioridade baixa. **LEITURA.**
+
+**O que foi procurado e NÃO existe:** vazamento entre lojas. O agente varreu os 29 repositórios método
+por método e os 70 `findById` de controller e service. Todo acesso a dado de loja é filtrado por
+`loja_id`. **Esse é o achado mais importante do relatório de segurança, e é uma boa notícia.**
+
+---
+
+## 9. Operação e deploy
+
+- **9.1** **5 rotinas agendadas e 4 threads** (`application.yml:10`). A quinta fica na fila — e a que
+  pode ficar é o `MarketplacePoller`, sem o qual **o restaurante some do iFood**. **LEITURA** (a conta
+  das 5 e das 4 é fato; o atraso real não foi medido).
+- **9.2** **O deploy pode deixar o site no chão sem rollback.** Se o `docker run` do passo 8 falhar, o
+  `set -e` mata o script antes do passo 9 e não existe mais container chamado `api`. E o vigia faz
+  `docker restart api`, que falha, e ele apaga o marcador de falha de todo jeito — alterna para sempre
+  sem consertar. **LEITURA.**
+- **9.3** `recuperarClientes` não tem teto quando o WhatsApp não responde: o contador só sobe no ramo
+  de sucesso. Com 2.000 clientes e timeout, ~7 horas — **dentro de uma transação** quando chamado pelo
+  painel. **LEITURA.**
+- **9.4** `reconciliarSubcontas` conversa com o Asaas **dentro** de uma transação e grava no meio,
+  travando a linha da loja. É o mesmo defeito já consertado no cobrador de PIX. **LEITURA.**
+- **9.5** `importarCardapio` segura uma conexão do pool (de 20) por até 64 s falando com a Anthropic.
+  **LEITURA.**
+- **9.6** PIX pago para um `paymentId` desconhecido: 200 e **nenhum log**. Dinheiro na conta, nenhum
+  pedido, nenhum rastro. **LEITURA.**
+- **9.7** O vigia reinicia a API quando o problema é o **banco** (o health agrega o indicador do RDS),
+  e o deploy faz rollback de código bom pelo mesmo motivo. **LEITURA** · **SUSPEITA** sobre o health
+  agregar mesmo.
+- **9.8** **Um dump cortado passa pelas duas conferências e é anotado como "ok".** A assinatura `PGDMP`
+  está no começo do arquivo; o que falta é o fim. O que fecharia: `pg_restore --list`. **LEITURA.**
+- **9.9** No pior caso se perdem **~28 horas** (dump às 06:15, cópia para fora às 10:00). A última
+  restauração testada foi em 29/09, na mão. **MEDIDO PELO AGENTE** (nos horários do `copias.log`).
+- **9.10** Os 30 dumps em `backups-bora\` têm o banco inteiro — telefone, endereço, CPF — numa pasta
+  sincronizada com a nuvem. No servidor nascem `600` de propósito; a proteção não atravessa a cópia.
+- **9.11** A trava que impede duas renovações de token simultâneas é **dentro da JVM**. Quem subir uma
+  segunda instância derruba a autorização do iFood de todas as lojas. O `application.yml:27` planeja
+  essa segunda instância. **LEITURA.**
+
+**O que está bom e foi verificado:** todo cliente HTTP tem tempo limite (5 fábricas, 6 consumidores,
+varredura completa); log sem dado pessoal nem segredo; log com teto de 100 MB; desligamento gracioso
+coerente de ponta a ponta; os passos 1 a 6 do deploy; a cópia do backup para fora funciona (19
+execuções, nenhuma falha); o Caddy cobre a janela do deploy.
+
+---
+
+## 10. Decisões que são do dono, não minhas
+
+1. **A Zirá, antes de 26/10.** Refazer a assinatura é ação na conta financeira.
+2. **Os 2% do PIX.** Se era para cobrar, não está cobrando desde sempre.
+3. **Integrações é do gerente ou só do administrador?** O `PERMISSOES.md` diz administrador; o código
+   deixa o gerente. Hoje o menu segue o código.
+4. **Complemento com estoque** — hoje o modelo não comporta. É construir, não consertar.
+5. **Base do split**: hoje incide sobre o pedido inteiro, frete incluído, e não incide sobre o
+   cashback. Qual é a regra certa?
