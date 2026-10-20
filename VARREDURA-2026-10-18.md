@@ -142,11 +142,49 @@ produto dono quando o código repete.
 Testes: `EstoqueDoMarketplaceTest` (13) e `CodigoDoMarketplaceNaoRepeteTest` (7); backend 429 verdes,
 frontend 53. As 51 migrações aplicadas num Postgres 16 limpo e o índice conferido nos três casos.
 
-### 2.2 Nada checa estoque antes de vender
+### 2.2 Nada checa estoque antes de vender — **FECHADO (v120, 20/10)**
 O saldo vai a negativo sem limite. Uma chamada do cardápio pode levar um produto a −4950
 (50 itens × 99). `ProdutoRepository.java:32-34` e `InsumoRepository.java:19-21` não têm
 `and estoque >= :qtd`. Varredura do backend por checagem de esgotado: **uma** ocorrência, e é
 tradução de texto de erro da 99. **LEITURA.**
+
+**MEDIDO POR MIM na produção em 20/10**, antes de consertar: **nenhum** dos 123 produtos controla
+estoque (todos com `estoque` nulo), e os únicos insumos vivem na **loja 1**, a de demonstração, onde
+`Polpa de Acai Organico` está em **−11,5** por teste de QA. **Zero** itens vendidos com ficha. Ou
+seja: o defeito nunca machucou loja de verdade, porque ninguém ligou controle de estoque ainda. Mas o
+manual do lojista manda cadastrar estoque, e o problema nasce no dia em que ele obedecer.
+
+**A regra não é a mesma nos três canais**, e o que decide é **quem está com o produto na mão**:
+- **cardápio público** — o cliente não tem nada na mão: **recusa**, 409 nomeando o produto. Era por
+  aqui que vinha o −4950.
+- **balcão** — o operador está com o açaí na mão: **deixa vender** e avisa. Travar a venda com o
+  cliente na frente é pior que o saldo negativo, que pelo menos denuncia a contagem errada.
+- **marketplace** — já aceito no iFood, com o entregador a caminho: **nunca recusa**, e avisa.
+
+**Como ficou** (backend `cd209ae`, frontend `da4e36b`, no ar em v120): `baixarEstoqueSeTiver` e
+`consumirSeTiver` com a cláusula **no banco** — duas vendas simultâneas leriam o mesmo saldo e as duas
+passariam · estoque **nulo devolve 1**, de propósito, senão o cardápio inteiro pararia de vender ·
+`consumirSeTiver` e `mexerNoEstoque` separados, porque devolução de cancelamento nunca pode ser
+recusada por falta de saldo · o endpoint do pedido do cardápio virou **`@Transactional`**, que é
+pré-requisito: sem isso, recusar o terceiro item deixava pedido órfão e o estoque dos dois primeiros
+já baixado · o menu marca **esgotado antes**, para o cliente não montar o carrinho e levar a notícia
+no fim · o nome do **insumo** fica no log do lojista e não chega ao cliente.
+
+**Provado no ar**, sem escrever nada: no cardápio da loja 1, `Acai 500ml Atualizado` (ficha ligada ao
+insumo negativo) volta `esgotado: true`; `Produto com Ficha QA` (4800 g para uma ficha de 100 g) volta
+`false`. Na loja 18, os 33 produtos trazem o campo e **nenhum** vem `true` — correto, porque nenhum
+controla estoque.
+
+**ACHADO SOBRE O PRÓPRIO CONSERTO:** apaguei a cláusula SQL das duas consultas e a suíte de 451
+passou **verde** — só o IT acusou, e os `*IT` são excluídos do `mvn test` (pom.xml:34) e do build da
+imagem do deploy. A trava mais importante não tinha proteção no caminho que o deploy percorre. Por
+isso o `CadaCanalDecideSozinhoSobreEstoqueTest` também lê a consulta no fonte. As 7 mutações que
+tentei são todas pegas agora.
+
+**O QUE FICOU DE FORA, e é do dono decidir:** o aviso do balcão vai só para o **log**. Quem opera a
+loja não lê log, então na prática ele não vê. Posso fazer o aviso aparecer na tela depois da venda
+("Açaí 500ml ficou com estoque negativo") — é mais trabalho e muda a resposta da API. E o item 2.3
+abaixo continua aberto: salvar um produto ainda sobrescreve o estoque.
 
 ### 2.3 Salvar um produto sobrescreve o estoque com o número velho da tela
 O lojista abre Produtos às 18h, a loja vende 12 durante a noite, ele corrige só o preço às 21h — e as
