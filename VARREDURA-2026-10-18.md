@@ -93,10 +93,52 @@ tela R$ 30,00, servidor gravaria R$ 24,00).
 o `ckUsarCashback`. No PIX o QR sai certo e se corrige; no "na entrega" o cliente separa o dinheiro
 errado. **LEITURA.**
 
-### 1.3 Dashboard conta PIX não pago como faturamento; o Caixa não
+### 1.3 Dashboard conta PIX não pago como faturamento; o Caixa não — **FECHADO (20/10)**
 O número grande da primeira tela inclui checkout abandonado. `dashboard.js:18` (`isVenda` não olha
 `aguardandoPagamento`), `:106-108`, `:58`, `:75`. O caixa faz certo em `caixa.js:47`.
 **MEDIDO PELO AGENTE** (mesmos dois cards do `caixa.test.mjs`: dashboard R$ 80, caixa R$ 30).
+
+**REPRODUZI POR MIM**, subindo as duas telas com os mesmos pedidos: R$ 30 pago + R$ 50 abandonado no
+checkout dava **R$ 80 no Dashboard e R$ 30 no Caixa**. Confirmado.
+
+**O agente não citou o `canais.js:17`**, que tem a mesma regra errada. Achei procurando a regra
+espalhada, e o efeito dele é pior: é a tela que decide **qual canal vale a pena**, e contar checkout
+abandonado inflava o cardápio próprio justamente contra o marketplace, que nunca tem PIX pendente.
+
+**MEDIDO NA PRODUÇÃO, e isso corrige o tamanho do problema:** **zero** pedidos com PIX pendente agora,
+e só **1 PIX já foi pago** em toda a base (R$ 26,90). A divergência era real no código, mas só
+aparecia nos **30 minutos** entre o checkout abandonado e o cancelamento automático do
+`CobradorDePixService` — por isso ninguém viu. E aparecia justamente **durante o serviço**, quando o
+lojista olha o Dashboard de passagem. Com o PIX da Zirá no ar (v116), ia começar a acontecer.
+
+**O conserto não foi copiar a condição certa para as outras duas — foi tirar a condição das telas.**
+`boraEhVenda(p)` e `boraEsperandoPix(p)` vivem em `app.js` · as três telas de dinheiro usam a mesma
+função · o Dashboard passa a **mostrar** quanto está esperando PIX, em vez de só exibir um número
+menor (esse dinheiro não está perdido, está em trânsito — mesmo padrão do Caixa e do Relatórios) · o
+aviso fica escondido quando não há pendência.
+
+O servidor já estava certo nos três lugares (`somaReceita`, `contaPedidosValidos`,
+`RelatorioService`), então **nada mudou no backend** e não houve deploy de API.
+
+Testes: `o-que-conta-como-venda.test.mjs` (12) e `dashboard-e-caixa-fecham-entre-si.test.mjs` (8),
+que sobe as duas telas e **compara os números**. O harness ganhou o `helpersDoApp()`, que carrega as
+funções **de verdade** do `app.js` em vez de dublês — um dublê faria o teste medir a regra do dublê
+enquanto a tela roda com a do arquivo, que é exatamente o defeito deste item. Frontend: 92 verdes. As
+7 mutações que tentei são todas pegas. Commit `2d5f59a`.
+
+### 1.3b Os meus próprios backups de deploy eram servidos publicamente — **LIMPO (20/10)**
+Achado por mim ao conferir o deploy. O meu procedimento de deploy do frontend copia
+`arquivo.js` → `.antes-arquivo.js` **dentro da pasta que o Caddy serve**. Medido: o Caddy serve
+arquivos com ponto, então `https://borahapp.com.br/assets/js/.antes-app.js` devolvia **200** — eram
+**13** cópias do código antigo em URL adivinhável.
+
+**Não é vazamento de segredo** (é JavaScript de painel, que já é público), mas é código velho servido
+de endereço estável, e a sujeira era minha, dos deploys de hoje. Movi os 13 para
+`/home/ubuntu/backups-frontend/20261020/` — **movi, não apaguei**: a URL pública agora dá 404, os
+arquivos continuam lá, e o painel segue de pé. O rollback de verdade é o git, que tem toda versão
+commitada.
+
+**A corrigir no procedimento:** o backup do deploy do frontend tem que nascer fora da pasta servida.
 
 ### 1.4 "Excluir pedido" não devolve cashback nem estoque — **FECHADO (v122, 20/10)**
 É o botão oferecido para "pedido de teste ou lançado errado" — justo o caso em que tudo tem que
