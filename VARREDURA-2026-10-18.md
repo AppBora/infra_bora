@@ -186,17 +186,63 @@ loja não lê log, então na prática ele não vê. Posso fazer o aviso aparecer
 ("Açaí 500ml ficou com estoque negativo") — é mais trabalho e muda a resposta da API. E o item 2.3
 abaixo continua aberto: salvar um produto ainda sobrescreve o estoque.
 
-### 2.3 Salvar um produto sobrescreve o estoque com o número velho da tela
+### 2.3 Salvar um produto sobrescreve o estoque com o número velho da tela — **FECHADO (v121, 20/10)**
 O lojista abre Produtos às 18h, a loja vende 12 durante a noite, ele corrige só o preço às 21h — e as
 12 baixas somem. Sem log, sem aviso.
 `assets/js/produtos.js:41-47` (o payload sempre inclui `estoque`) · `:74` (preenche do array
 carregado uma vez) · `ProdutoService.java:57` (`p.estoque = dados.estoque` sem condição — compare com
 a linha 59, onde a foto é protegida). Mesma coisa no insumo. **LEITURA.**
 
-### 2.4 Estoque e Contagem fazem "ler, somar e gravar" no navegador
+**MEDIDO POR MIM, e é mais largo que o relatado.** O mesmo cano tem dois sentidos:
+
+1. O que o agente viu: o formulário de Produtos manda `estoque` sempre, com o número carregado na
+   abertura da tela.
+2. **O que o agente não podia ver, porque eu criei hoje:** as telas de **Estoque** e **Contagem**
+   ajustam estoque mandando o **cadastro inteiro** de volta pelo mesmo `PUT /api/produtos/{id}`. O
+   cadastro que elas conhecem não tem todos os campos — nenhuma das duas manda `codigoExterno`. Como
+   o `atualizar` gravava esse campo sem condição, **cada ajuste de estoque apagaria o código do
+   marketplace que entrou na v119**, e com ele a baixa de estoque dos pedidos de iFood/99. Um conserto
+   meu quebrando outro conserto meu, no mesmo dia.
+
+**Por que separei em vez de proteger campo por campo:** eram duas operações passando pela mesma
+requisição — "editar o cadastro" e "dizer quanto tem na prateleira". Enquanto compartilharem o cano,
+qualquer tela com cadastro incompleto apaga o que não conhece, e o próximo campo que alguém adicionar
+cai no mesmo buraco. Separando, o cadastro **não tem como** mexer no estoque.
+
+**Como ficou** (backend `ee325da`, frontend `9798b4f`, no ar em v121):
+`PUT /api/produtos/{id}/estoque` e `PUT /api/insumos/{id}/estoque`, com `DEFINIR` (valor contado;
+nulo = para de controlar) ou `AJUSTAR` (soma no banco, recusa ficar negativo) · `definirEstoque` mexe
+em **uma** coluna, porque um `save()` da entidade grava a linha toda · `atualizar` não toca mais em
+estoque, e a **criação** continua aceitando a quantidade inicial · `DEFINIR` sempre vence, mesmo com
+venda no meio: o lojista andou na prateleira e contou · `atualizarProduto` foi **removido** do
+`api.js` — enquanto o atalho existir, alguém usa de novo.
+
+**Provado no ar:** o jar que está rodando tem o DTO e os dois endpoints; os 5 arquivos JS servidos
+têm as funções novas e **zero** ocorrências do atalho antigo; sem erro no log.
+
+Testes: `SalvarCadastroNaoApagaEstoqueTest` (17), `EstoqueNaoPerdeBaixaIT` +11,
+`estoque-nao-volta-pelo-cadastro.test.mjs` (9). Backend 470 + 62 de integração, frontend 67.
+De novo as 2 mutações de SQL passaram verdes na suíte e só o IT acusou — por isso o teste também lê a
+`@Query` no fonte. As 6 mutações que tentei são todas pegas.
+
+### 2.4 Estoque e Contagem fazem "ler, somar e gravar" no navegador — **FECHADO EM PARTE (v121)**
 O `+1` do ajuste rápido é "grava 31" com base no que a tela leu antes. Na Contagem é por desenho: o
 lojista conta 20 minutos e aplica — tudo que vendeu nesse tempo some.
 `estoque.js:9-13` · `contagem.js:31-37`. **LEITURA.**
+
+**O que fechou junto com o 2.3:** o `+` e o `−` do ajuste rápido agora mandam o **delta** e a conta é
+do banco (`somarAoEstoque`). Dois cliques rápidos contam os dois, e o número da lista não entra na
+conta.
+
+**O que NÃO é defeito e fica como está, por decisão:** o valor absoluto da Contagem e o campo
+"definir" **vencem de propósito**, mesmo que tenha havido venda entre a leitura e o clique. O lojista
+andou na prateleira e contou — o número dele é a verdade. Chamar isso de defeito seria inverter o
+sentido de uma contagem física.
+
+**O que sobrou, pequeno:** a Contagem decide *quais* produtos mudaram comparando o valor digitado com
+o `p.estoque` da lista carregada. Se o valor digitado coincidir com o número velho e o real tiver
+mudado, aquele produto é pulado. Não perde dado — só deixa de corrigir um item. **MEDIDO POR MIM na
+leitura do código, não visto acontecer.**
 
 ### 2.5 Excluir um insumo deixa a ficha fantasma e o produto para de baixar — calado
 `InsumoService.java:47-49` apaga só o insumo; `produto_insumo` não tem chave estrangeira. Depois,
