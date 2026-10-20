@@ -354,16 +354,58 @@ sai e o estoque segue contando. **LEITURA.**
 
 ## 3. Cobrança da plataforma
 
-### 3.1 Clicar "Ativar assinatura" de novo apaga a fatura atrasada
+### 3.1 Clicar "Ativar assinatura" de novo apaga a fatura atrasada — **FECHADO (v123, 20/10)**
 `AssinaturaService.java:66-103`: só sai cedo se o status for ATIVA. Com PENDENTE, INADIMPLENTE ou
 CANCELADA, **cancela a assinatura antiga no Asaas** e cria outra com vencimento em `hoje + 7`.
 Teste grátis infinito, e o caminho está aberto justamente para quem está bloqueado
 (`BloqueioPorAssinaturaFilter.java:200-202` libera `/api/assinatura`). **CONFERIDO POR MIM na leitura.**
 
-### 3.2 Cancela no Asaas, falha ao criar a nova, e a loja fica sem cobrança
+### 3.2 Cancela no Asaas, falha ao criar a nova, e a loja fica sem cobrança — **FECHADO (v123, 20/10)**
 Mesmo método: cancela primeiro, cria depois, tudo numa transação. Se a criação falhar, o nosso banco
 faz rollback e volta a apontar para a assinatura antiga — que **lá fora já morreu**. O painel diz que
 está tudo certo. **É o estado exato em que a Zirá está hoje** (ver 0.2). **CONFERIDO POR MIM.**
+
+**MEDIDO NA PRODUÇÃO em 20/10:** a loja 18 (Zirá) está **CANCELADA** no nosso banco, com id de
+assinatura, e a assinatura está `deleted: true` no Asaas. É o estado 3.2. As lojas **17, 19 e 20 não
+têm assinatura nenhuma** — nunca assinaram.
+
+**A regra agora** (os dois itens eram o mesmo método):
+- **ATIVA ou PENDENTE** → devolve a que existe, sem tocar no Asaas e sem nem consultar a rede.
+  Clicar de novo não cria cobrança nem move vencimento. PENDENTE entra aqui porque a assinatura e a
+  primeira fatura já existem; recriar dava mais 7 dias.
+- **INADIMPLENTE com a assinatura VIVA** → **recusa (409)**, e a mensagem diz **como pagar**. Recusar
+  sem dar caminho deixaria o lojista bloqueado sem ação possível — o único botão que ele tinha era
+  justamente o que apagava a dívida.
+- **Assinatura que não existe mais no Asaas** → cria outra. Sem isto a Zirá ficaria **sem nenhuma
+  forma de voltar a pagar**.
+- **Asaas indisponível** → 503, nada é alterado.
+- A **cortesia de 7 dias vale uma vez**, na primeira assinatura. Reassinando, o vencimento é amanhã.
+- A ordem virou **cria, depois cancela**. Entre "cobrado em dobro" e "sem cobrança nenhuma", dobro é
+  melhor: dobro é visível e dá para estornar, zero é invisível. E o id órfão fica **gravado** (V52),
+  não numa linha de log que rotaciona.
+
+O `estadoDaAssinatura` é **tri-estado** de propósito: VIVA, NAO_EXISTE, INDISPONIVEL. "Não consegui
+falar com o Asaas" **não é** "a assinatura não existe", e confundir os dois é exatamente o defeito
+3.2.
+
+A tela de Planos ganhou **"Pagar a fatura"**, com o link que o servidor busca no Asaas, o valor e o
+vencimento — e avisa quando há cobrança em duplicidade.
+
+**ACHADO MEDINDO A PRODUÇÃO, num conserto meu:** como a assinatura da Zirá está deletada, o meu código
+mandaria cancelar o que já morreu, o cancelamento falharia, e ele anunciaria **cobrança em
+duplicidade que não existe**. Alarme falso é pior que silêncio, porque ensina a ignorar o alarme.
+Agora só cancela o que está **vivo**, e o Asaas é consultado uma vez só. **Eu tinha escrito um teste
+aceitando o comportamento errado**; ele virou o contrário.
+
+Testes: `ReativarAssinaturaNaoApagaFaturaTest` (19) e `EstadoDaAssinaturaNoAsaasTest` (14), este
+contra um `HttpServer` de verdade — os dois ramos de maior consequência (erro de rede e
+`deleted: true`) **sobreviveram às primeiras mutações** porque o `AsaasClient` estava dublado.
+Backend 517 + 67 de integração, frontend 100. As 52 migrações aplicadas num Postgres 16 limpo, e a
+V52 confirmada na produção. As 12 mutações que tentei são todas pegas. Commits `992cb5f` e `a977b5b`.
+
+**O QUE ISSO NÃO RESOLVE, e continua sendo do dono:** a Zirá precisa que alguém **clique** em
+reativar para a cobrança dela voltar a existir. O conserto garante que esse clique agora funcione
+(cria assinatura nova, vencimento amanhã, sem apagar nada) — mas o clique é dela ou seu. Ver 0.2.
 
 ### 3.3 Estorno e chargeback não mexem no acesso
 `AssinaturaService.java:173-177` trata estorno antes de tudo e sai da função. A assinatura continua
