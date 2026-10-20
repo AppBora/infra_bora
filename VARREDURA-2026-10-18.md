@@ -98,12 +98,60 @@ O número grande da primeira tela inclui checkout abandonado. `dashboard.js:18` 
 `aguardandoPagamento`), `:106-108`, `:58`, `:75`. O caixa faz certo em `caixa.js:47`.
 **MEDIDO PELO AGENTE** (mesmos dois cards do `caixa.test.mjs`: dashboard R$ 80, caixa R$ 30).
 
-### 1.4 "Excluir pedido" não devolve cashback nem estoque
+### 1.4 "Excluir pedido" não devolve cashback nem estoque — **FECHADO (v122, 20/10)**
 É o botão oferecido para "pedido de teste ou lançado errado" — justo o caso em que tudo tem que
 voltar. Apaga pedido, itens e histórico; não chama `fidelidade.estornar` nem `devolucao.devolver`.
 Pior: apaga os itens primeiro, então depois nem dá para recalcular.
 `PedidoService.java:536-546` · a lixeira aparece em todo card para GERENTE/ADMIN (`pedidos.js:135`).
 **LEITURA.**
+
+**MEDIDO POR MIM na produção, e o defeito DISPAROU.** O único rastro que o excluir não apagava é o
+contador do cliente: dois clientes da **loja 1** (a de demonstração) têm `qtd_pedidos` maior que a
+contagem real — **4 pedidos foram excluídos depois de contar**. Ambos chamados "Pedido de teste de
+integracao", então foi QA, não loja de verdade. **Nenhum cliente real perdeu dinheiro.** Os dois
+contadores continuam errados na base da loja 1; é limpeza de dado de teste, não conserto de código.
+
+**A armadilha do conserto ingênuo, que eu quase caí:** chamar o estorno sempre troca um defeito por
+outro. O caminho natural é **cancelar o pedido de teste e depois apagar** — e no cancelamento o
+estorno já rodou. Devolver de novo somaria estoque e cashback **em dobro**. Esse defeito dá de graça
+em vez de tirar, então ninguém reclama e ninguém descobre.
+
+**Como ficou** (backend `905ebaf`, frontend `4846c69`, no ar em v122): devolve **antes** de apagar,
+passando o status **que o pedido tinha** — o estágio é que decide o que volta, e pedido ENTREGUE
+devolve só o cashback, porque a comida foi embora · pedido **já cancelado** não devolve de novo, mas
+continua sendo apagado por completo · PIX gerado e não pago conta como venda **não** contabilizada ·
+a exclusão virou `apagarDaLoja(id, lojaId)`, uma consulta, porque o estorno limpa o contexto do
+Hibernate e `delete(entidade)` num objeto desanexado faz **merge** antes de apagar — funcionava por
+acidente · o aviso da tela passa a dizer que o dinheiro volta, e diz a coisa certa no pedido já
+cancelado.
+
+Testes: `ExcluirPedidoDevolveOQueConsumiuTest` (11), `ApagarPedidoNaoVazaEntreLojasIT` (5),
+`excluir-pedido-avisa.test.mjs` (5). Backend 484 + 67 de integração, frontend 72. As 7 mutações que
+tentei são todas pegas.
+
+### 1.4b Nenhum teste do caminho do deploy protegia as consultas SQL — **FECHADO (v122)**
+**MEDIDO POR MIM, três vezes no mesmo dia.** Mutações dentro de uma `@Query` passavam com a suíte
+inteira verde. A pior: trocar `and p.lojaId = :lojaId` por **`or`** na exclusão de pedido **apaga
+todos os pedidos da loja** a cada clique na lixeira — e 481 testes passavam. Só o teste de integração
+acusava, e os `*IT` são excluídos do `mvn test` (`pom.xml:34`) **e do build da imagem do deploy**,
+porque precisam de um Postgres no ar.
+
+Consertar caso a caso não resolvia: o próximo `@Modifying` cairia no mesmo buraco. O
+`TodaConsultaQueEscreveFiltraPorLojaTest` lê **todas** as consultas de escrita do projeto e cobra o
+filtro de loja ligado por `and`. Tem um teste extra que confere se ele está realmente achando as
+consultas — sem isso, um regex quebrado faria os outros dois passarem medindo nada.
+
+### 1.4c Duas consultas de escrita sem filtro de loja — **SEM BRECHA ABERTA, mas registrado**
+Achei ao escrever o teste acima. `PedidoRepository.amarrarAoAcerto` e `PromocaoRepository.somarUmUso`
+escrevem no banco sem cláusula de loja.
+
+**Não é brecha:** medi os chamadores, e os ids vêm de leituras já filtradas —
+`entregasParaAcerto(lojaId, ...)` em `AcertoEntregadorService:71` e `resolver(lojaId, codigo, total)`
+em `DescontoService:56`. Nenhuma das duas aceita um id que não tenha passado pela loja.
+
+**O que falta é defesa em profundidade:** se amanhã alguém chamar esses métodos por outro caminho,
+nada no SQL impede. Corrigir exige mudar as assinaturas e os chamadores, então estão na lista de
+exceções do teste, cada uma com o porquê escrito. **Não fiz** — é decisão do dono.
 
 ### 1.5 Saldo de cashback é lido-somado-gravado em Java, sem trava
 Dois checkouts do mesmo cliente ao mesmo tempo gastam o mesmo saldo duas vezes. É o defeito do
