@@ -583,12 +583,46 @@ E `PUT /lojas/{id}/split` responde `efetivo: "2%"` sem olhar se a loja tem subco
 ~325 MB de leitura por atualização**, por loja aberta. Dois índices resolvem: medido, **615 ms → 0,4 ms**.
 **MEDIDO PELO AGENTE.**
 
-### 4.2 `endereco_entrega` é varchar(255) e recebe o endereço que precisou de 500
+### 4.2 `endereco_entrega` é varchar(255) e recebe o endereço que precisou de 500 — **FECHADO (v126, 21/10)**
 O **mesmo valor** do marketplace vai para dois lugares no mesmo método: `PedidoService.java:456`
 corta em 500 (coluna de 500); `:329` grava sem corte numa coluna de 255. A V37 largou
 `cliente.endereco` para 500 justamente por causa desse endereço. O INSERT é recusado e **o pedido do
 marketplace inteiro se perde**. `ddl-auto: validate` não pega tamanho.
 **MEDIDO PELO AGENTE** (`ERROR: value too long for type character varying(255)`).
+
+**CONFERIDO POR MIM na produção, e ERAM TRÊS, não um.** Medi cada gravação do payload externo, uma por
+uma. As larguras reais eram: `endereco_entrega` **255** contra `cliente.endereco` **500**;
+`bairro_entrega` **100** e `id_externo` **120**, as duas **também sem corte**. O `upsertCliente`
+cortava tudo. O agente citou só o endereço.
+
+**NUNCA DISPAROU:** nenhum pedido tem `endereco_entrega` preenchido e o maior endereço de cliente da
+base tem **43** caracteres. É preventivo, e chega antes do volume de marketplace.
+
+**Como ficou** (backend `20c6e39`, no ar em v126, V53 confirmada na produção):
+- **V53** iguala `pedido.endereco_entrega` a `cliente.endereco` (500) e `id_externo` a
+  `cliente.id_externo` (160) — a assimetria era gratuita;
+- os três passam a **cortar**, e quem corta **avisa no log** com o pedido, o campo, o tamanho original
+  e o **texto completo** (a única cópia do que o marketplace mandou);
+- **cortar e não recusar**, porque endereço cortado em 500 ainda dá para entregar e pedido que não
+  existe no painel, não;
+- as larguras viraram constantes em `LarguraDeColuna`, num lugar só.
+
+**O teste que fecha a classe:** o `LarguraDasColunasBateComOBancoIT` compara **cada** constante com a
+largura **real** do banco. Migração que mude a largura sem atualizar a constante reprova, e o
+contrário também. É a única forma de o descasamento aparecer antes da produção — **nem o Hibernate nem
+teste com mock enxergam largura**. Ele também trava que `pedido_item.descricao` continue `TEXT`: ela
+leva nome + complementos + observação desde a v119, e a maior da produção já tem **327** caracteres,
+acima de qualquer `varchar(255)`.
+
+**Dois tropeços meus:** a mutação "o corte para de avisar" passou **verde** na primeira rodada — o
+conserto cortava calado, e perder o fim de um endereço faz o entregador descobrir na rua; e o meu
+`larguraNoBanco()` estourou com `NullPointerException` justamente no caso que o teste existe para
+cobrir (coluna `TEXT` devolve largura **nula**, e `Stream.findFirst()` não aceita elemento nulo).
+
+Testes: `EnderecoLongoNaoPerdeOPedidoTest` (13) e `LarguraDasColunasBateComOBancoIT` (5). Backend
+**574** + **72** de integração. As 53 migrações aplicadas num Postgres 16 limpo, e a conversão em
+produção não perdeu nada (32 pedidos, 8 com id externo, intactos). As 7 mutações que tentei são todas
+pegas.
 
 ### 4.3 Excluir produto com complementos dá erro 500
 `complemento_grupo` tem FK para produto sem `ON DELETE`, e `ProdutoService.java:64-66` é um delete
