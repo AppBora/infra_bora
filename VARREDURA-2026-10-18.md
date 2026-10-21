@@ -736,11 +736,38 @@ dinheiro e não têm nada: `pdv`, `produtos`, `novo-pedido`, `cardapio`, `acerto
 ## 8. Segurança
 
 - **8.1** O freio — **JÁ CONSERTADO**, ver 0.1.
-- **8.2** **Rebaixar alguém não tira o poder por 24h.** O papel sai do token, nunca do banco
-  (`JwtAuthFilter.java:78`). O filtro **reconsulta** o banco para `ativo` e para o vínculo com a loja,
-  e o papel ficou de fora. Um administrador demitido ainda troca a senha de todo mundo — inclusive de
-  quem o rebaixou — e recupera o acesso. Contorno que já funciona hoje: **desativar** em vez de
-  rebaixar. **LEITURA.**
+- **8.2** **Rebaixar alguém não tira o poder por 24h** — **FECHADO (v127, 21/10)**. O papel saía do
+  token, nunca do banco (`JwtAuthFilter.java:78`). O filtro **reconsultava** o banco para `ativo` e
+  para o vínculo com a loja, e o papel ficou de fora. Um administrador demitido seguia trocando a
+  senha de todo mundo — inclusive de quem o rebaixou — e recuperando o acesso. Contorno de então:
+  **desativar** em vez de rebaixar. **LEITURA.**
+
+  **O conserto é de uma linha e custa ZERO consulta:** o registro do usuário já estava carregado ali.
+  Na verdade **economiza uma** — havia dois `findById` do mesmo registro na mesma requisição (um para
+  `ativo`, outro para a loja principal).
+
+  **Medi as três coisas que poderiam quebrar antes de mexer:** `usuario_loja` **não tem papel
+  próprio** (conferido na entidade), então o papel do usuário vale em qualquer loja da rede; **todo**
+  token sai de `JwtService.gerar(Usuario)`, que lê `u.getPapel()`, então ler do banco é só a versão
+  mais atual da **mesma** informação, nunca uma divergência de desenho; e `papel` é **NOT NULL** com
+  padrão OPERADOR, com os 13 usuários da produção todos com papel.
+
+  O `daPlataforma` também passou a vir do banco: administrador da plataforma rebaixado tem que passar
+  a valer como usuário de loja na requisição seguinte, e aí as checagens de suspensão e de vínculo
+  valem para ele. E papel nulo passa a **não autenticar** — falhar fechado é o certo, e sem isso o
+  `requirePapel` daria um 403 confuso em vez de recusar a sessão.
+
+  Testes: `RebaixarTiraOPoderNaHoraTest` (15), com `JwtService` **de verdade** — o token é assinado e
+  lido como em produção. Cobrem rebaixar, promover, o admin da plataforma rebaixado, e tudo que **não
+  podia mudar**: desativado, usuário apagado, loja suspensa, vínculo revogado, token de outra chave, e
+  o suporte alcançando loja suspensa. Backend **589** verdes. As 5 mutações que tentei são todas
+  pegas. Commit `df7154d`.
+
+  **O que provei na produção e o que não:** sem token → 401, token mal formado → 401, assinatura falsa
+  → 401, **nenhum 500** e nenhum erro no log; o conserto conferido dentro do jar. O caso **positivo**
+  (token válido autentica) está provado nos 15 testes contra o filtro real, **não** na produção — o log
+  do Caddy não mostra nenhuma requisição `/api/` desde a troca, porque ninguém está com o painel
+  aberto, e eu não crio sessão de ninguém. **Vale o dono abrir o painel uma vez para confirmar.**
 - **8.3** O balconista vê o faturamento da loja no Dashboard (`/api/vendas/termometro` sem
   `requirePapel`), e o custo de produtos e insumos em quatro endpoints. As telas irmãs exigem papel.
   **LEITURA.**
