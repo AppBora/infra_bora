@@ -88,10 +88,12 @@ O cliente paga o cheio **e** perde o saldo; a gaveta fica com mais do que o sist
 A tela irmã `novo-pedido.js:161-171` faz a conta certa. **MEDIDO PELO AGENTE** (rodou no harness:
 tela R$ 30,00, servidor gravaria R$ 24,00).
 
-### 1.2 O mesmo no cardápio público
-`assets/js/cardapio.js:281-291` não inclui cashback no total; os listeners de `:457-458` não cobrem
-o `ckUsarCashback`. No PIX o QR sai certo e se corrige; no "na entrega" o cliente separa o dinheiro
-errado. **LEITURA.**
+### 1.2 O mesmo no cardápio público — **FECHADO (21/10)**
+Era verdade. `atualizarEntrega` agora desconta o cashback na conta da tela e mostra a linha
+"Cashback" nela, e o `ckUsarCashback` ganhou listener. O cálculo é o espelho do servidor, inclusive
+o teto: o resgate nunca zera a conta, para o pedido não ficar com total R$ 0,00 (o servidor guarda
+`base - 0,01`). 8 testes novos. No ar em 21/10 (`cardapio.js` + `cardapio.html`, md5 conferido no
+servidor e pelo Caddy).
 
 ### 1.3 Dashboard conta PIX não pago como faturamento; o Caixa não — **FECHADO (20/10)**
 O número grande da primeira tela inclui checkout abandonado. `dashboard.js:18` (`isVenda` não olha
@@ -195,11 +197,25 @@ em `DescontoService:56`. Nenhuma das duas aceita um id que não tenha passado pe
 nada no SQL impede. Corrigir exige mudar as assinaturas e os chamadores, então estão na lista de
 exceções do teste, cada uma com o porquê escrito. **Não fiz** — é decisão do dono.
 
-### 1.5 Saldo de cashback é lido-somado-gravado em Java, sem trava
-Dois checkouts do mesmo cliente ao mesmo tempo gastam o mesmo saldo duas vezes. É o defeito do
-estoque que já foi consertado, agora no cashback. `FidelidadeService.java:168-177` e `:242-253` ·
-`ClienteRepository` não tem nenhum `@Modifying` · `Cliente` não tem `@Version`.
-O jeito certo já existe no projeto: `ProdutoRepository.java:31-37`. **LEITURA.**
+### 1.5 Saldo de cashback é lido-somado-gravado em Java, sem trava — **FECHADO (v129, 21/10)**
+Era verdade. Toda mexida no saldo saiu do Java e virou SQL, no mesmo molde do estoque:
+`registrarVenda`, `debitarSeTiver`, `creditar` e `desfazerVenda`. As duas que **gastam** carregam
+`and coalesce(cashback, 0) >= :usado` — é o banco que recusa gastar o que não tem.
+
+Quem gasta e não consegue recebe **409 "o seu saldo de cashback mudou enquanto você fechava o
+pedido"**, e isso é deliberado: o desconto já saiu do total que o cliente vai pagar quando a linha
+roda, então gravar o pedido daria desconto que ninguém pagou. Os dois chamadores estão em transação,
+então o pedido inteiro é desfeito. Com resgate zero (webhook de pagamento, pedido de marketplace)
+nunca estoura.
+
+Três assimetrias de propósito, cada uma com teste: **devolver** nunca é recusado (foi a venda que
+não aconteceu), o **estorno** nunca estoura (senão o lojista não conseguiria cancelar pedido nenhum),
+e o `desfazerVenda` usa `greatest(0, ...)` nas três colunas que diminui — se a loja mudou o
+percentual entre a venda e o cancelamento, a conta pode dar negativo, e saldo negativo virava
+desconto impossível na próxima compra.
+
+16 testes contra Postgres de verdade (`SaldoDeCashbackEhAtomicoIT`), inclusive duas transações
+simultâneas disputando o mesmo saldo.
 
 ---
 
@@ -334,21 +350,71 @@ o `p.estoque` da lista carregada. Se o valor digitado coincidir com o número ve
 mudado, aquele produto é pulado. Não perde dado — só deixa de corrigir um item. **MEDIDO POR MIM na
 leitura do código, não visto acontecer.**
 
-### 2.5 Excluir um insumo deixa a ficha fantasma e o produto para de baixar — calado
-`InsumoService.java:47-49` apaga só o insumo; `produto_insumo` não tem chave estrangeira. Depois,
-`consumirFicha` devolve **ZERO** em vez de `null` (`:96-108`), e como os dois canais fazem
-`if (custoFicha == null) baixarEstoque(...)`, a baixa do produto **não roda** — e o item é gravado
-com `consumiuFicha = true`, mentindo. **LEITURA.**
+### 2.5 Excluir um insumo deixa a ficha fantasma e o produto para de baixar — **FECHADO (v129, 21/10)**
+Era verdade, e os dois lados foram fechados:
 
-### 2.6 Complemento nunca baixa estoque — não existe onde
+**Não deixa mais criar fantasma.** Excluir um insumo que está em alguma ficha é **recusado**, e a
+mensagem diz **em quais produtos** ele está — é a informação que falta para decidir, senão o lojista
+fica adivinhando qual receita mexer. Insumo que não está em ficha nenhuma continua sendo excluído.
+
+**E a fantasma que já existe para de mentir.** Ficha com **todos** os insumos apagados devolve
+`null`, não zero: o produto passa a se comportar como produto **sem** ficha — baixa o próprio
+estoque, grava `consumiuFicha = false`, e o cancelamento devolve a unidade certa. Ficha
+**parcialmente** fantasma consome o que existe (aí `consumiuFicha = true` é verdade) e **avisa no
+log**, porque o custo fica menor do que deveria.
+
+**Medido na produção em 21/10:** existe uma ficha fantasma hoje — loja 1 (Sorveteria da Rosa),
+produto "Acai 500ml Atualizado", linha para o insumo 2, que não existe. É o caso parcial: a outra
+linha (insumo 1) está viva. O estoque está correto; o que está errado é o **custo** desse produto,
+que ignora 0,2 de um insumo apagado — em 26 vendas já registradas. O insumo não existe mais, então
+o custo antigo é irrecuperável. **Item do dono:** tirar essa linha da ficha do produto no painel,
+ou pôr no lugar o insumo que faz as vezes dela.
+
+### 2.6 Complemento nunca baixa estoque — não existe onde — **DECISÃO DO DONO, com proposta**
 `ComplementoItem` tem `id, lojaId, grupoId, nome, preco`. Sem campo de estoque, sem ligação com
 insumo (`V20__complementos.sql`). Numa açaiteria metade do valor está nos adicionais. Não é um `if`
-esquecido: o modelo não comporta. **LEITURA — e é decisão de produto, não bug.**
+esquecido: o modelo não comporta. **Reconferido em 21/10: segue exato.**
 
-### 2.7 PIX pago depois do cancelamento não rebaixa o estoque
-O caminho trata o caso e até reconsome o cashback de propósito (`PublicController.java:736`), mas não
-refaz a baixa de estoque. Se o lojista preparar o pedido (e vai, o dinheiro está na conta), a comida
-sai e o estoque segue contando. **LEITURA.**
+Não fiz, porque não é defeito — é recurso que não existe, e o jeito de fazer muda o que o lojista
+cadastra. As três saídas, da mais barata para a mais completa:
+
+1. **Ligar complemento a insumo** (o que eu faria). Uma coluna `insumo_id` e uma `quantidade` no
+   `complemento_item`: "Leite Ninho (adicional)" aponta para o insumo "Leite Ninho", 0,030 kg. O
+   consumo passa pelo `consumirFicha`, que já existe, já é atômico e já recusa venda sem estoque.
+   O lojista cadastra o insumo uma vez e usa na ficha dos produtos **e** nos adicionais. Mexe em
+   uma migração, no cadastro de complemento e no checkout.
+2. **Estoque próprio no complemento.** Uma coluna `estoque`. Mais simples de entender, mas cria um
+   segundo lugar para contar a mesma granola, e nenhum dos dois fecha com o outro.
+3. **Deixar como está** e aceitar que adicional não entra no estoque nem no custo. É o de hoje.
+
+O que eu preciso saber: **a Zirá e a Sorveteria querem controlar estoque de adicional?** Se a
+resposta for sim, eu faço a 1.
+
+### 2.7 PIX pago depois do cancelamento não rebaixa o estoque — **FECHADO (v129, 21/10)**
+Era verdade, mas **medir mostrou que o conserto óbvio estava errado** e que o estrago era maior do
+que a varredura dizia.
+
+Rebaixar o estoque sozinho deixaria o pedido em `CANCELADO`, e o `alterarStatus` recusa sair de
+estado final: o lojista que quisesse preparar teria que lançar **outro** pedido — que baixa o
+estoque por conta própria. Rebaixar ali tiraria em dobro. E o dano real não era o estoque: **o
+cliente pagava e a cozinha nunca via o pedido.** A única pista era um texto na aba de cancelados.
+
+Então o pedido **reabre**: volta a `RECEBIDO`, aparece no quadro, o estoque sai aqui, e o histórico
+fica na observação que a cozinha lê no card ("REABERTO: o PIX foi pago depois do cancelamento"). Se
+o lojista não puder atender, ele cancela de novo — e o cancelamento devolve estoque e cashback pelos
+caminhos que já existem. O `rebaixarDeNovo` é o espelho exato do `devolver`, inclusive na marca
+`consumiuFicha`, e nunca recusa por falta de estoque: a venda está paga.
+
+Nunca aconteceu na produção (medido: zero pedidos com "pago APÓS o cancelamento"), então é
+preventivo.
+
+**E apareceu um terceiro defeito ao escrever os testes:** a tela de acompanhamento dizia "pago"
+comparando o **texto** do `formaPagamento` com `"PIX (pago)"`. Pago depois do cancelamento o texto é
+outro — então a tela do cliente, que pergunta a cada 5 segundos (`cardapio.js:447`), **nunca**
+confirmava. Dinheiro na conta, pedido na cozinha, e o cliente olhando "aguardando pagamento". Agora
+lê `pagoEm`, que no `Pedido` é gravado só pelos dois caminhos de PIX pago (medido). Esse texto não é
+novo; o que mudou é que agora o pedido reabre, e deixar o cliente no escuro passou a ser o erro mais
+visível dos três.
 
 ---
 
