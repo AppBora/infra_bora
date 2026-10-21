@@ -407,10 +407,57 @@ V52 confirmada na produção. As 12 mutações que tentei são todas pegas. Comm
 reativar para a cobrança dela voltar a existir. O conserto garante que esse clique agora funcione
 (cria assinatura nova, vencimento amanhã, sem apagar nada) — mas o clique é dela ou seu. Ver 0.2.
 
-### 3.3 Estorno e chargeback não mexem no acesso
+### 3.3 Estorno e chargeback não mexem no acesso — **FECHADO NO CÓDIGO (v124, 21/10); FALTA UM CLIQUE NO ASAAS**
 `AssinaturaService.java:173-177` trata estorno antes de tudo e sai da função. A assinatura continua
 ATIVA e `acesso_ate` continua NULL. Paga, usa, pede estorno, recebe de volta e **fica com acesso sem
 prazo para sempre**. Dá para repetir todo mês. **CONFERIDO POR MIM.**
+
+**MEDIDO NA PRODUÇÃO em 21/10:** o corte está **LIGADO** (`BORA_COBRANCA_CORTE_POR_ASSINATURA=true`,
+confirmado no log da subida) e a carência é de 10 dias — então `acesso_ate` realmente derruba a loja.
+Quem lê isso é `Loja.acessoVencido()`, usado em três lugares: `BloqueioPorAssinaturaFilter:66`,
+`PublicController:810` e `RegraDeAcesso:70`.
+
+**FUI NA DOCUMENTAÇÃO em vez de deduzir.** O Asaas tem **oito** eventos de estorno e contestação
+(docs.asaas.com/docs/payment-events, conferido em 21/10); o código tratava **três**, e tratava os três
+igual. Não são a mesma coisa:
+
+| evento | o que faz agora |
+|---|---|
+| `PAYMENT_REFUNDED` | **corta** (INADIMPLENTE + carência) |
+| `PAYMENT_CHARGEBACK_REQUESTED` | **corta** |
+| `PAYMENT_RECEIVED_IN_CASH_UNDONE` | **corta** — e não era tratado nem para o faturamento; é o espelho do pagamento manual da v115 |
+| `PAYMENT_PARTIALLY_REFUNDED` | **não corta**, e não tira a mensalidade inteira do faturamento (ver 3.6) |
+| `PAYMENT_REFUND_IN_PROGRESS` | **não corta**: é intenção, e o `REFUND_DENIED` existe porque pode não sair |
+| `PAYMENT_REFUND_DENIED` | nada: o dinheiro fica |
+| `PAYMENT_CHARGEBACK_DISPUTE` | nada: o chargeback já cortou, e reprocessar reiniciaria a carência |
+| `PAYMENT_AWAITING_CHARGEBACK_REVERSAL` | **devolve o acesso** e a mensalidade: a disputa foi ganha |
+
+Sem o último, o conserto trocaria "não cortar quem deve" por "cortar quem não deve". A carência é
+definida **uma vez**, e sem saber de qual loja é o dinheiro **não corta ninguém**.
+
+Testes: `EstornoCortaOAcessoTest` (21), dois deles travando a lista de eventos contra a documentação.
+Backend 538 + 67 de integração. As 10 mutações que tentei são todas pegas — **duas sobreviveram
+primeiro, e os dois testes fracos eram meus**: a disputa caindo no `marcarEstorno` passava verde, e o
+teste do "sem loja não corta ninguém" só dublava a loja 18, então um mutante que chutasse `lojaId = 1`
+passava. Commit `985e404`.
+
+### 3.3b O webhook do Asaas não está assinado nos eventos de estorno — **AÇÃO DO DONO**
+**MEDIDO POR MIM em 21/10**, lendo a conta (só leitura). A conta tem dois webhooks:
+
+- **`Bora producao`** → `PAYMENT_CONFIRMED`, `PAYMENT_DELETED`, `PAYMENT_OVERDUE`, `PAYMENT_RECEIVED`
+- **`BoraHapp PIX - loja 1`** → `PAYMENT_CONFIRMED`, `PAYMENT_RECEIVED`
+
+**Nenhum dos 8 eventos de estorno está assinado. E nenhum evento de assinatura (`SUBSCRIPTION_*`)
+também.** Duas consequências, e as duas importam:
+
+1. **O defeito 3.3 nunca disparou de verdade** — ninguém ganhou acesso de graça por estorno, porque o
+   aviso de estorno nunca chegou. O conserto é necessário, mas é **preventivo**.
+2. **O conserto fica inerte até alguém marcar esses eventos no painel do Asaas.** O mesmo vale para o
+   tratamento de `SUBSCRIPTION_DELETED`, que já existia e também nunca foi exercitado — o que explica
+   parte de por que a situação da Zirá passou em branco.
+
+Marcar os eventos é **mudar a configuração da conta de cobrança do dono**, então **não fiz**. Posso
+fazer pela API quando ele autorizar, ou ele marca no painel do Asaas em Integrações → Webhooks.
 
 ### 3.4 Dois pagamentos manuais no mesmo dia: o segundo some
 Sem cobrança aberta no Asaas, a chave do registro é `"manual:" + lojaId + ":" + dia`, e
