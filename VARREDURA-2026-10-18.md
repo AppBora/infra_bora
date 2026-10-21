@@ -370,25 +370,58 @@ que ignora 0,2 de um insumo apagado — em 26 vendas já registradas. O insumo n
 o custo antigo é irrecuperável. **Item do dono:** tirar essa linha da ficha do produto no painel,
 ou pôr no lugar o insumo que faz as vezes dela.
 
-### 2.6 Complemento nunca baixa estoque — não existe onde — **DECISÃO DO DONO, com proposta**
-`ComplementoItem` tem `id, lojaId, grupoId, nome, preco`. Sem campo de estoque, sem ligação com
-insumo (`V20__complementos.sql`). Numa açaiteria metade do valor está nos adicionais. Não é um `if`
-esquecido: o modelo não comporta. **Reconferido em 21/10: segue exato.**
+### 2.6 Complemento nunca baixa estoque — **FECHADO (v130, 21/10) — era decisão, e o dono decidiu**
+Não era defeito: `complemento_item` tinha só `(id, loja_id, grupo_id, nome, preco)` — sem campo de
+estoque e sem ligação com insumo. Numa açaiteria metade do valor da venda está nos adicionais, e nada
+disso saía do estoque nem entrava no custo. O modelo não comportava, então o caminho mudava o que o
+lojista cadastra, e a escolha era dele.
 
-Não fiz, porque não é defeito — é recurso que não existe, e o jeito de fazer muda o que o lojista
-cadastra. As três saídas, da mais barata para a mais completa:
+**Das três saídas que eu trouxe, ele escolheu ligar o adicional ao INSUMO** (e não dar estoque próprio
+ao adicional). O motivo da escolha importa para quem mexer nisto depois: a mesma granola está na
+ficha técnica dos produtos **e** nos adicionais. Dois lugares para contar a mesma granola nunca fecham
+entre si — e pelo insumo o consumo reaproveita o caminho que já existe, já é atômico no banco e já
+recusa venda sem estoque.
 
-1. **Ligar complemento a insumo** (o que eu faria). Uma coluna `insumo_id` e uma `quantidade` no
-   `complemento_item`: "Leite Ninho (adicional)" aponta para o insumo "Leite Ninho", 0,030 kg. O
-   consumo passa pelo `consumirFicha`, que já existe, já é atômico e já recusa venda sem estoque.
-   O lojista cadastra o insumo uma vez e usa na ficha dos produtos **e** nos adicionais. Mexe em
-   uma migração, no cadastro de complemento e no checkout.
-2. **Estoque próprio no complemento.** Uma coluna `estoque`. Mais simples de entender, mas cria um
-   segundo lugar para contar a mesma granola, e nenhum dos dois fecha com o outro.
-3. **Deixar como está** e aceitar que adicional não entra no estoque nem no custo. É o de hoje.
+**O que está no ar:**
 
-O que eu preciso saber: **a Zirá e a Sorveteria querem controlar estoque de adicional?** Se a
-resposta for sim, eu faço a 1.
+- **V55**: `insumo_id` e `quantidade numeric(14,4)` no `complemento_item`, com **chave estrangeira**.
+  A FK é deliberada e é a diferença em relação a `produto_insumo`, que não tem nenhuma — e foi
+  exatamente isso que produziu a ficha fantasma do item 2.5. O serviço recusa primeiro, com a
+  mensagem boa; a FK é a rede embaixo. Conferido na produção: a migração rodou, a FK existe, e os
+  **1202 adicionais que já existiam estão com insumo nulo** — nada mudou para eles.
+- **Os dois campos andam juntos.** Sem um deles, os dois ficam nulos, que é o padrão "adicional que
+  não mexe no estoque" e é o comportamento de tudo que foi cadastrado antes.
+- **Cardápio público consome RECUSANDO**, e a mensagem fala do adicional: *"O adicional 'Granola'
+  acabou. Tire ele do pedido ou escolha outro."* Dizer "o produto esgotou" mandaria o cliente embora
+  de uma venda que ainda dá para fazer sem o extra — o açaí tem.
+- **Balcão consome SEM recusar**: o operador está com o copo na mão. Mas o saldo negativo fica
+  escrito no log, que era o que faltava no item 2.2.
+- **Cancelar devolve**, com a lista **gravada no item** — não relida do cadastro. Os adicionais são
+  apagados e recriados a cada gravação do produto, com ids novos; reler pelo id devolveria o insumo
+  de **outro** adicional. Devolver granola na conta do leite em pó é pior que não devolver: os dois
+  números ficam errados e nada denuncia. A regra de *quando* devolver é a mesma do insumo da ficha:
+  depois que a cozinha começou, a granola foi para o copo.
+- **Reabrir** (item 2.7) consome de novo, e não recusa: a venda está paga.
+- **Excluir insumo usado por adicional é recusado**, dizendo quais adicionais usam.
+- **O custo do adicional soma no custo do item**, mas custo nulo continua nulo: nulo quer dizer
+  "não cadastrado", e não "de graça", e é nesse campo que se olha quando a margem não fecha.
+- **Na tela**, a unidade do insumo aparece ao lado da quantidade — sem ela o lojista digita 30 pensando
+  em gramas num insumo cadastrado em quilo, e o estoque derrete 1000x mais rápido. E a tela **avisa**
+  quando o insumo foi escolhido e a quantidade ficou vazia, que é o erro mais silencioso dali: salva,
+  diz "✅ Salvo!", e não baixa nada.
+
+**Achado por mutação, e é o terceiro do dia no mesmo tema:** apagar o insumo do `new Escolhido` do
+`ComplementoService` passou com **99 testes verdes**, incluindo todos os que eu tinha acabado de
+escrever para o adicional. Os dois canais **mockam** o `aplicar`, então nenhum teste exercitava o
+método real — com essa mutação nada consumiria insumo de adicional nunca, e a suíte ficaria verde.
+Medindo, a lacuna era maior e anterior a mim: **o `aplicar` não tinha teste nenhum** — nem do
+acréscimo de preço, nem do mínimo/máximo, nem da recusa de complemento de outro produto, que é a
+linha que impede o pedido de chegar com o adicional "de graça" direto no corpo da requisição.
+
+65 testes novos (702 no `mvn test`, 102 nos ITs, 129 no frontend), **20 de 20 mutações mortas**.
+
+**Item do dono:** cadastrar o insumo nos adicionais que controlam estoque (Produtos → 🧩
+Complementos). Até ele fazer isso, nada muda — adicional sem insumo segue como sempre.
 
 ### 2.7 PIX pago depois do cancelamento não rebaixa o estoque — **FECHADO (v129, 21/10)**
 Era verdade, mas **medir mostrou que o conserto óbvio estava errado** e que o estrago era maior do
