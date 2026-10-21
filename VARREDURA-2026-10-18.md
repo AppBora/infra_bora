@@ -578,10 +578,60 @@ E `PUT /lojas/{id}/split` responde `efetivo: "2%"` sem olhar se a loja tem subco
 > O agente aplicou as **50 migrations num Postgres de verdade** (zero erros, 29 tabelas, 72 índices) e
 > carregou **800 mil pedidos** para medir com `EXPLAIN ANALYZE`. Os números abaixo são dele, medidos.
 
-### 4.1 O painel faz 3 varreduras da loja inteira a cada 6 segundos
+### 4.1 O painel faz 3 varreduras da loja inteira a cada 6 segundos — **FECHADO (v128, 21/10)**
 `PedidoService.java:553-559` — as três contas não têm corte de data. Com 26 mil pedidos: **615 ms e
 ~325 MB de leitura por atualização**, por loja aberta. Dois índices resolvem: medido, **615 ms → 0,4 ms**.
 **MEDIDO PELO AGENTE.**
+
+**MEDI EU MESMO**, num Postgres 16 com 26 mil pedidos e distribuição realista (quase tudo encerrado,
+um punhado ativo agora):
+
+| consulta | quem chama | antes | depois |
+|---|---|---|---|
+| contagem "em preparo" | Dashboard, 8 s | 8,6 ms | 0,40 ms |
+| contagem "saiu para entrega" | Dashboard, 8 s | 9,9 ms | 0,27 ms |
+| contagem "entregues na última hora" | Dashboard, 8 s | 8,0 ms | 0,32 ms |
+| os pedidos **abertos** de qualquer dia | **KDS, 6 s** | 9,3 ms | 0,35 ms |
+
+As três do Dashboard viram **Index Only Scan** (não tocam na tabela): o total por atualização cai de
+**26,5 ms para 1,0 ms**. Custo: **616 kB** de índice numa tabela de 14 MB.
+
+O agente mediu 615 ms; eu medi 41 ms com a distribuição dele e 26,5 ms com uma realista. Mesma forma,
+magnitude diferente — meu container é local e com cache quente, e o disco do Lightsail é mais lento.
+
+**TRÊS COISAS QUE O ITEM NÃO DIZIA, e que medir mostrou:**
+1. A terceira contagem **já tinha** corte de data; o que faltava era índice.
+2. A varredura de **6 segundos não é a do Dashboard** (que é de 8 s) e sim a do **KDS**, que usa
+   **outra** consulta — e ela **não** seria resolvida pelos dois índices.
+3. Essa consulta do KDS era `status NOT IN (encerrados)`, uma **negação**, e nenhum btree serve
+   negação.
+
+Um índice parcial `where status not in (...)` servia o KDS em 0,23 ms **com valores literais** — mas o
+Postgres **não consegue provar** que `status not in ($1,$2)`, como o Hibernate manda, implica aquele
+predicado quando o plano é genérico: medido, **15,9 ms**. Em vez de depender dessa heurística, a
+consulta virou **lista positiva** (`status in (ABERTOS)`), servida pelo índice comum **sempre** —
+conferido em 6 execuções seguidas, inclusive depois do limite em que o Postgres troca para plano
+genérico.
+
+**O preço dessa troca, e o enum tem SETE valores:** a negação pegava status novo de graça, a lista
+positiva não. Eu quase deixei o **`CONFIRMADO`** de fora — o status que o marketplace usa entre o
+aceite e o preparo — e pedido nesse estado **desapareceria da vista da cozinha**, calado. O
+`AbertosMaisEncerradosCobremTudoTest` reprova se os dois conjuntos deixarem de cobrir o enum inteiro,
+e o `QuadroNaoCarregaBaseInteiraTest` cobra que o quadro peça **todos** os abertos (estreitar a lista
+passava verde antes).
+
+**No ar:** V54 aplicada, os dois índices existem na produção (16 kB cada). O plano de hoje para a
+consulta do KDS é **Seq Scan em 0,049 ms** — e está **correto**: com 32 linhas, varrer é mais rápido
+que indexar. Os índices entram em ação conforme a tabela crescer. **O ganho hoje é zero, de propósito.**
+
+Testes: `AbertosMaisEncerradosCobremTudoTest` (6) e `OLacoDoPainelUsaIndiceIT` (8) — este carrega 6 mil
+pedidos e **lê o plano** do Postgres, porque índice é promessa, não garantia: quem decide usar é o
+planejador, e índice entregue e ignorado é pior que nenhum. Backend **596** + **80** de integração. As
+4 mutações que tentei são todas pegas. Commit `7d6ac7f`.
+
+**Dois tropeços meus no próprio teste:** a carga cobria 4 dias, "hoje" era 13% da tabela, e o
+planejador varria de **propósito** — o teste reprovava por um motivo que não era o defeito; e o
+`prepare` não passa pelo `createNativeQuery` do Hibernate, precisou de JDBC cru.
 
 ### 4.2 `endereco_entrega` é varchar(255) e recebe o endereço que precisou de 500 — **FECHADO (v126, 21/10)**
 O **mesmo valor** do marketplace vai para dois lugares no mesmo método: `PedidoService.java:456`
