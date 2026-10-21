@@ -491,10 +491,58 @@ decisão, com outra consequência: passaria a cortar loja cuja assinatura seja c
 está nesse estado. Preciso primeiro conferir como o Asaas expõe a assinatura de evento de assinatura
 (o endpoint `/webhooks` não mostra nenhuma).
 
-### 3.4 Dois pagamentos manuais no mesmo dia: o segundo some
+### 3.4 Dois pagamentos manuais no mesmo dia: o segundo some — **FECHADO (v125, 21/10)**
 Sem cobrança aberta no Asaas, a chave do registro é `"manual:" + lojaId + ":" + dia`, e
 `registrarPagamento` descarta id repetido em silêncio. A tela diz "Pagamento registrado".
 `AssinaturaService.java:282` e `:308`. **Os R$ 398 da Zirá são duas mensalidades.** **CONFERIDO POR MIM.**
+
+**MEDIDO NA PRODUÇÃO em 21/10, e isso CORRIGE o que o item sugeria.** A loja 18 tem **dois** registros
+de R$ 199 no mesmo dia (15/10), somando os R$ 398 — **nada se perdeu**:
+
+| chave | valor | dia |
+|---|---|---|
+| `manual:18:2026-10-15` | R$ 199 | 15/10 |
+| `pay_aj14zjq8wbcfqhfx` | R$ 199 | 15/10 |
+
+Foi **sorte**: um dos dois achou cobrança aberta no Asaas e ficou com o id de lá, então as chaves não
+colidiram. **Hoje a assinatura dela está deletada no Asaas** — não há cobrança aberta, e o próximo par
+de registros no mesmo dia colidiria. O conserto chegou antes.
+
+**Os dois erros opostos.** Chave única resolve a perda, mas abre a porta para o clique duplo contar
+duas vezes — e contar receita que não entrou é tão ruim quanto perder a que entrou. Pelo dado não há
+como distinguir, então **quem decide é o dono**:
+- mesmo dia e **mesmo valor** → recusa com 409 e pede confirmação explícita;
+- mesmo dia e **valor diferente** → são dois pagamentos, registra sem perguntar;
+- confirmado → registra com chave própria, e nada é descartado em silêncio.
+
+A chave virou `manual:18:2026-10-15:1`, `:2`, `:3` — **legível de propósito**: quem conferir o
+faturamento à mão enxerga a loja, o dia e qual registro daquele dia. Um UUID resolveria a colisão e
+tornaria a conferência impossível. Fechado também o outro caminho para a mesma perda: id do Asaas que
+já está no nosso faturamento agora cai na chave manual em vez de descartar.
+
+**DOIS DEFEITOS MEUS, achados pelos próprios testes:** o `chaveManualLivre` tinha um retorno
+antecipado que devolvia `:1` **sempre** — reintroduzindo o descarte silencioso; e meu dublê contava o
+`save` de atualização (o da observação) como registro novo, então um pagamento parecia dois.
+
+**A mutação "o controller ignora a confirmação" passou com os 28 testes de serviço VERDES**, e o
+efeito era o pior possível: o dono confirma e o servidor devolve 409 para sempre, sem como registrar
+o segundo pagamento. **Teste de serviço não cobre fiação de controller.** Daí o
+`ConfirmacaoDoSegundoPagamentoChegaAoServicoTest`.
+
+Testes: `DoisPagamentosNoMesmoDiaTest` (15), `ConfirmacaoDoSegundoPagamentoChegaAoServicoTest` (7),
+`script-dentro-do-html.test.mjs` (6). Backend **561**, frontend **106**. As 7 mutações que tentei são
+todas pegas. Commits `ed32c4f` e `989a738`.
+
+### 3.4b O script dentro das páginas HTML não tinha teste nenhum — **FECHADO (21/10)**
+A suíte do frontend cobria só `assets/js/*.js`. O **`configuracoes.html`** tem centenas de linhas de
+script inline — o painel da plataforma inteiro: suspender loja, entrar como suporte, registrar
+pagamento recebido — e **nada olhava para ele**. Eu mesmo quebrei uma string ali (um `
+` que virou
+quebra de linha de verdade) e só descobri conferindo à mão.
+
+O `script-dentro-do-html.test.mjs` compila o script inline de **toda** página, e tem um teste que
+confere se ele está realmente achando os scripts — sem isso, um regex quebrado faria o resto passar
+medindo nada.
 
 ### 3.5 Carência de 10 dias não vale para quem nunca pagou
 `AssinaturaService.java:196-200`: a carência só é dada quando `acesso_ate` está NULL. Loja nova nasce
