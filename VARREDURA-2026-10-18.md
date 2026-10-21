@@ -407,7 +407,7 @@ V52 confirmada na produção. As 12 mutações que tentei são todas pegas. Comm
 reativar para a cobrança dela voltar a existir. O conserto garante que esse clique agora funcione
 (cria assinatura nova, vencimento amanhã, sem apagar nada) — mas o clique é dela ou seu. Ver 0.2.
 
-### 3.3 Estorno e chargeback não mexem no acesso — **FECHADO NO CÓDIGO (v124, 21/10); FALTA UM CLIQUE NO ASAAS**
+### 3.3 Estorno e chargeback não mexem no acesso — **FECHADO (v124, 21/10)**
 `AssinaturaService.java:173-177` trata estorno antes de tudo e sai da função. A assinatura continua
 ATIVA e `acesso_ate` continua NULL. Paga, usa, pede estorno, recebe de volta e **fica com acesso sem
 prazo para sempre**. Dá para repetir todo mês. **CONFERIDO POR MIM.**
@@ -441,7 +441,7 @@ primeiro, e os dois testes fracos eram meus**: a disputa caindo no `marcarEstorn
 teste do "sem loja não corta ninguém" só dublava a loja 18, então um mutante que chutasse `lojaId = 1`
 passava. Commit `985e404`.
 
-### 3.3b O webhook do Asaas não está assinado nos eventos de estorno — **AÇÃO DO DONO**
+### 3.3b O webhook do Asaas não estava assinado nos eventos de estorno — **RESOLVIDO (21/10, autorizado pelo dono)**
 **MEDIDO POR MIM em 21/10**, lendo a conta (só leitura). A conta tem dois webhooks:
 
 - **`Bora producao`** → `PAYMENT_CONFIRMED`, `PAYMENT_DELETED`, `PAYMENT_OVERDUE`, `PAYMENT_RECEIVED`
@@ -456,8 +456,40 @@ também.** Duas consequências, e as duas importam:
    tratamento de `SUBSCRIPTION_DELETED`, que já existia e também nunca foi exercitado — o que explica
    parte de por que a situação da Zirá passou em branco.
 
-Marcar os eventos é **mudar a configuração da conta de cobrança do dono**, então **não fiz**. Posso
-fazer pela API quando ele autorizar, ou ele marca no painel do Asaas em Integrações → Webhooks.
+Marcar os eventos é **mudar a configuração da conta de cobrança do dono** — ele **autorizou** em
+21/10 e eu fiz pela API.
+
+**Como foi feito, e o risco que precisou ser contornado.** A API devolve `hasAuthToken: true` mas
+**não devolve o token**, e a documentação não diz se o `PUT` substitui o objeto inteiro. Se o token
+fosse apagado, a nossa aplicação passaria a responder **401** a todo aviso — e com
+`sendType: SEQUENTIALLY` a fila inteira trava e **nenhum pagamento é registrado**. Como o token está
+no `api.env`, reenviei-o explicitamente no `PUT`: fica seguro nas duas hipóteses.
+
+Antes de escrever, guardei o estado em `~/backups-asaas/webhooks-antes-20261021.json` no servidor.
+
+**Resultado, conferido depois:** `Bora producao` foi de **4 para 12** eventos, com os **8** de estorno
+presentes, **nenhum evento perdido**, e `url`, `email`, `enabled`, `sendType`, `apiVersion`,
+`hasAuthToken`, `interrupted` e `penalizedRequestsCount` **idênticos** aos de antes.
+
+O webhook **`BoraHapp PIX - loja 1` ficou intacto de propósito**: ele aponta para
+`/public/pix-webhook/1`, que trata pagamento de **pedido de cliente**, não a cobrança da plataforma.
+
+**Provado no ar, sem efeito em nada:**
+- aviso com o token certo → **200** `{"received":true}`; com token errado → **401** (a tranca é real,
+  e o token que o Asaas guarda é o que a aplicação espera)
+- um `PAYMENT_REFUNDED` de cobrança inexistente → **200**, com os dois avisos certos no log
+  ("não está no nosso faturamento" e "não achei a loja; o ACESSO NÃO FOI CORTADO") e **nenhuma loja
+  tocada**. Isso importa porque, com fila sequencial, uma exceção no caminho novo travaria todos os
+  avisos de pagamento
+- conferido no banco depois: as 5 lojas com o mesmo `acesso_ate` e os 2 pagamentos com **zero**
+  estornos
+
+**O que FICOU de fora, e continua sendo decisão do dono:** nenhum evento de **assinatura**
+(`SUBSCRIPTION_*`) está assinado, então o tratamento de `SUBSCRIPTION_DELETED` — que já existia e
+corta o acesso quando a assinatura é cancelada — continua **inerte**. Não marquei porque é outra
+decisão, com outra consequência: passaria a cortar loja cuja assinatura seja cancelada, e a da Zirá
+está nesse estado. Preciso primeiro conferir como o Asaas expõe a assinatura de evento de assinatura
+(o endpoint `/webhooks` não mostra nenhuma).
 
 ### 3.4 Dois pagamentos manuais no mesmo dia: o segundo some
 Sem cobrança aberta no Asaas, a chave do registro é `"manual:" + lojaId + ":" + dia`, e
