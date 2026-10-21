@@ -773,31 +773,123 @@ Testes: `EnderecoLongoNaoPerdeOPedidoTest` (13) e `LarguraDasColunasBateComOBanc
 produção não perdeu nada (32 pedidos, 8 com id externo, intactos). As 7 mutações que tentei são todas
 pegas.
 
-### 4.3 Excluir produto com complementos dá erro 500
-`complemento_grupo` tem FK para produto sem `ON DELETE`, e `ProdutoService.java:64-66` é um delete
-seco. Pega justamente os produtos para os quais os complementos existem. **MEDIDO PELO AGENTE.**
+### 4.3 Excluir produto com complementos dá erro 500 — **FECHADO (v131, 21/10)**
+Era verdade, e **conferi na produção**: `complemento_grupo_produto_id_fkey` é a única chave
+estrangeira que aponta para produto, com `confdeltype = 'a'` (NO ACTION). Apagar produto que tem
+adicional cadastrado dava **500** — e pega justamente os que mais vendem numa açaiteria.
 
-### 4.4 Observação longa no pagamento manual quebra o registro
-`pagamento_assinatura.descricao` é varchar(200), já nasce com o nome da loja, e a observação é
-**concatenada** sem validar tamanho. É a função que você ainda precisa usar. **MEDIDO PELO AGENTE.**
+**A outra metade, que a varredura não citou:** `produto_insumo` é o contrário — *não tem* chave
+estrangeira. O delete seco passava e deixava as linhas da ficha técnica apontando para um produto que
+não existe. É a ficha fantasma do item 2.5, pelo outro lado.
 
-### 4.5 Erro do marketplace sem corte em `ultimo_erro varchar(500)`
-`IfoodClient.java:277` e `:486` gravam sem cortar. O pior: as duas linhas estão **dentro do
-tratamento de erro** — se o UPDATE estoura, a falha nunca é registrada e a tela mostra a loja como se
-nada tivesse acontecido. **MEDIDO PELO AGENTE** (o estouro) · **SUSPEITA** (se o iFood manda mensagem
-desse tamanho).
+Apagar produto agora leva junto os complementos (opções antes dos grupos) e a ficha técnica, em
+transação. **O histórico não é tocado, e isso foi medido:** `pedido_item` não tem FK para produto e o
+relatório por produto agrupa pela `descricao` gravada no item, não pelo nome do cadastro. Pedido
+antigo continua no relatório com o nome que o produto tinha no dia da venda — por isso apagar não
+precisa ser recusado.
 
-### 4.6 Índice duplicado e três índices que ninguém usa
-`idx_pedido_item_pedido` (V7) e `idx_pedido_item_loja` (V15) são o **mesmo índice**, 24 MB cada com
-800 mil itens, mantidos em todo insert. Sem uso: `idx_pedido_bairro_entrega` (V48),
-`idx_loja_nao_excluida` (V30), `ix_pagamento_assinatura_loja` (V41). **MEDIDO PELO AGENTE.**
+O IT começa provando a **premissa**: ele apaga do jeito antigo e exige que o banco recuse. Sem isso,
+o resto poderia estar passando porque a chave estrangeira não existe mais.
 
-### 4.7 Outros
-- O índice do acerto desperdiça a coluna do meio porque a consulta usa `lower(trim(entregador))`:
-  381 ms para achar 338 linhas.
-- `select loja_id, max(criado_em) group by loja_id` do painel da plataforma: **Seq Scan, 408 ms**.
-- N+1 no balancete (3 consultas por loja) e no desempenho (5 por loja).
-- Apagar cliente deixa pedido órfão (dívida já assumida em comentário).
+### 4.4 Observação longa no pagamento manual quebra o registro — **FECHADO (v131, 21/10)**
+Era verdade, e **a consequência é pior do que a varredura diz**. O método é `@Transactional`: o
+Postgres recusando o UPDATE não corta o texto, **desfaz o registro inteiro do pagamento**. Você
+digitaria uma observação um pouco mais longa, veria um erro, e o dinheiro que acabou de receber não
+entraria no faturamento da plataforma. É a função que você usa para dar baixa no que recebe fora do
+Asaas.
+
+A conta: `loja.nome` é varchar(160) e a descrição é varchar(200). O nome sozinho pode ocupar 160 dos
+200, sobrando 37 para a observação.
+
+**Quem perde espaço é a observação, não o nome.** O nome identifica esse dinheiro no faturamento; a
+observação é contexto extra e fica com o que sobrar. Sem espaço nenhum, o nome fica sozinho e a
+observação inteira vai para o log — melhor um registro certo com a nota no log que nota completa e
+pagamento nenhum.
+
+### 4.5 Erro do marketplace sem corte em `ultimo_erro varchar(500)` — **FECHADO (v131, 21/10)**
+**Medindo, a varredura errou o número.** Dos **cinco** lugares que gravam a coluna, só **um** estava
+de fato sem limite: `IfoodClient:277`, na renovação do token, com o `e.getMessage()` cru. O `:486`
+que ela também acusou passa por um corte em 400 mais uma mensagem curta — cabe em 457 dos 500. Os
+outros três cabiam por corte em 400 ou por serem texto fixo.
+
+**Mas a parte grave da varredura está certa, e vale para todos os cinco:** a gravação acontece
+*dentro do tratamento de erro*. Se ela estoura, a falha nunca é registrada e a tela de Integrações
+mostra a loja como se nada tivesse acontecido — o pior lugar possível para um estouro. "Seguro por
+sorte" não é seguro, então os cinco passam pelo cortador agora, incluindo o do `MarketplacePoller`,
+onde o id do pedido vem de fora e não tem tamanho garantido.
+
+O cortador é o mesmo da v126 (`LarguraDeColuna`), que o `LarguraDasColunasBateComOBancoIT` compara
+com a largura **real** do banco — as duas colunas novas entraram nessa conferência.
+
+### 4.6 Índice duplicado e três índices que ninguém usa — **FECHADO (v131, 21/10), com correção**
+**Os números desta linha não são da produção.** Ela tem 5 lojas, 32 pedidos e **46 itens de pedido**,
+e os índices de `pedido_item` têm **16 kB** — não "24 MB cada com 800 mil itens". E "ninguém usa" veio
+do contador `idx_scan`: nessa escala o Postgres faz varredura sequencial e **está certo**, então zero
+uso não diz nada sobre o índice — diz que a tabela é pequena. Jogar fora por esse motivo seria tirar
+justamente o índice que vai fazer falta quando houver dado.
+
+**A regra que eu apliquei: sai o índice que NENHUMA forma de consulta do código pode usar.**
+
+| Índice | Decisão | Por quê |
+| --- | --- | --- |
+| `idx_pedido_item_loja` (V15) | **saiu** | definição idêntica à do `idx_pedido_item_pedido` (V7): `(loja_id, pedido_id)`. É o mesmo índice escrito duas vezes — não depende de escala nem de contador. |
+| `idx_loja_nao_excluida` (V30) | **saiu** | índice pela **chave primária** com filtro parcial. Busca por id já usa a pkey, e nenhum SQL filtra `excluida_em` — o `arquivada()` é método Java, decidido depois de carregar a loja. |
+| `idx_pedido_bairro_entrega` (V48) | **saiu** | o agrupamento por bairro acontece **no navegador** (`entregas.js:62`), sobre a lista que a tela já carregou. Nenhum SQL filtra nem agrupa pela coluna. |
+| `ix_pagamento_assinatura_loja` (V41) | **virou `(loja_id, pago_em)`** | **não era inútil, era incompleto.** A única consulta que filtra essa tabela por loja filtra também a data (a que distingue clique duplo de segundo pagamento de verdade). Só `(loja_id)` fazia o banco ler todas as mensalidades da loja e filtrar a data depois. |
+| `idx_pedido_aguardando`, `idx_pedido_entregue_em`, `idx_pedido_loja_status`, `idx_pedido_loja_cliente` | **ficaram** | zero uso hoje, mas cada um casa com uma consulta real (PIX pendente, janela de entrega, quadro por status, último pedido do cliente). |
+
+Conferido na produção depois do deploy: os cinco que tinham que sair saíram, os oito que tinham que
+ficar ou entrar estão lá com a definição certa.
+
+### 4.7 Outros — **FECHADO (v131, 21/10)**
+Os tempos desta linha (381 ms, 408 ms) também não são da produção — vieram de uma carga do agente que
+eu não tenho como conferir. Montei a minha dentro do `IndicesQueServemIT` (4 mil pedidos espalhados
+por ~166 dias) e medi com `EXPLAIN ANALYZE` no Postgres de verdade. As quatro dívidas eram reais:
+
+- **O índice do acerto desperdiçava a coluna do meio.** As duas consultas comparam
+  `lower(trim(entregador))`, e função sobre a coluna impede o uso do índice naquela posição — o banco
+  usava só o prefixo `loja_id` e filtrava o resto linha por linha. Virou índice de **expressão**, na
+  mesma forma que as consultas escrevem, e **parcial** em `acerto_id is null`, que é a condição das
+  duas e a mais seletiva que existe aqui. O IT exige que o plano use o índice **e** que a expressão
+  indexada seja a que a consulta compara: se alguém mudar a consulta, o plano voltaria a varrer em
+  silêncio.
+- **O último pedido por loja era um `group by` da tabela inteira** para desenhar uma coluna da tela.
+  Virou subconsulta por loja — poucas lojas, cada `max` uma busca no índice. **Eu ia criar um índice
+  `(loja_id, criado_em)` aqui**, e medir os índices da produção mostrou que ele já existe
+  (`idx_pedido_loja`): o que faltava era a **consulta**, não o índice. Criar teria sido exatamente o
+  defeito do 4.6 que esta mesma migração conserta.
+- **O balancete fazia 3 consultas por loja.** Numa rede de 30 lojas, 90 consultas para desenhar uma
+  tabela. Virou uma, agrupada. O que o IT prova não é a velocidade: é que os **números não mudaram** —
+  receita, válidos e cancelados, comparados um a um com as três consultas antigas sobre o mesmo
+  cenário. Número que muda sozinho é pior que consulta lenta.
+- **Apagar cliente deixava pedido apontando para o nada.** Agora desamarra o vínculo na mesma
+  transação, e o log diz quantos pedidos continuaram no histórico. O histórico fica: a venda
+  aconteceu, entrou no faturamento, e o pedido guarda telefone e endereço próprios (V48).
+
+**O N+1 do "desempenho" (5 consultas por loja) NÃO foi feito.** É o `AgenteRedeService`, e lá o laço
+não é só de consultas: ele carrega os pedidos e os itens de cada loja para calcular ruptura de
+estoque e cancelamentos em memória. Transformar em consulta agregada é reescrever o cálculo, não
+trocar uma consulta — e mexer em cálculo sem ter o número de antes para comparar é como eu mudaria o
+painel sem perceber. Fica registrado como item separado.
+
+---
+
+## 4.8 O defeito que EU criei hoje, achado ao medir o 4.7 — **FECHADO (v131, 21/10)**
+Medindo o pedido órfão, apareceu uma interação com o meu próprio conserto do item 1.5, de poucas
+horas antes.
+
+Quando o saldo de cashback virou SQL, **"zero linha mexida" passou a cobrir duas coisas diferentes**:
+saldo que não cobre (disputa de verdade, que tem que recusar o pedido) e **cliente que não existe
+mais** (não há o que debitar). Antes do 1.5 era um `findByIdAndLojaId(...).ifPresent(...)` — cliente
+apagado era silêncio. Depois, passou a estourar **409**.
+
+O caminho que isso quebra é de dinheiro: um **PIX pago depois do cancelamento**, num pedido que usou
+cashback, de um cliente que o lojista apagou no meio, devolvia 409 ao webhook do Asaas — e o Asaas
+reenvia enquanto não recebe 200. **O pagamento nunca seria registrado.**
+
+Consertado nas duas pontas: o serviço pergunta se o cliente existe (uma consulta a mais, **só quando
+a primeira falha**, e há teste cobrando isso), e apagar cliente passou a desamarrar os pedidos. As
+duas são necessárias — a do serviço cobre os pedidos que já estão órfãos na base.
 
 ---
 
