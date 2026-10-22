@@ -81,8 +81,40 @@ echo "ok: $CAMADA_LOCAL"
 dizer "7/9 BACKUP antes de trocar"
 ssh -i "$KEY" "$SRV" '/home/ubuntu/backup-bora.sh && ls -t ~/backups/*.dump | head -1'
 
+# ITEM 9.2 DA VARREDURA: o passo 8 nao tinha rollback.
+#
+# Ele ja paravam e RENOMEIA o container antigo antes de subir o novo. Se o `docker run` falhasse --
+# imagem ruim, env-file faltando, porta ocupada --, o `set -e` matava o script ANTES do passo 9, e nao
+# existia mais container chamado `api`: o site ficava no chao, e o rollback que o passo 9 tem nunca
+# era alcancado. O proprio cabecalho deste script dizia que era isso que ele queria evitar.
+#
+# Agora os dois passos usam o MESMO rollback, e ele e uma funcao.
+rollback() {
+  echo "ROLLBACK: devolvendo a versao anterior." >&2
+  ssh -i "$KEY" "$SRV" 'docker logs --tail 40 api 2>&1 | tail -40' >&2 || true
+  # Cada passo com `|| true`: se o container novo nem existe (falha no passo 8), o `rm -f` falha e o
+  # que importa -- devolver o antigo -- nao pode ser abortado por causa disso.
+  ssh -i "$KEY" "$SRV" '
+    docker rm -f api >/dev/null 2>&1 || true
+    docker rename api-anterior api 2>/dev/null || true
+    docker start api >/dev/null 2>&1 || true
+    docker tag bora-api:anterior bora-api:latest 2>/dev/null || true'
+  # Nao anuncia sucesso sem olhar: rollback que falha calado e pior que o deploy que falhou.
+  if ssh -i "$KEY" "$SRV" 'for i in $(seq 1 20); do
+        docker exec api curl -fs localhost:8080/actuator/health 2>/dev/null | grep -q UP && exit 0
+        sleep 3
+      done; exit 1'; then
+    echo "rollback feito: a versao anterior esta de volta e SADIA." >&2
+  else
+    echo "!!! O ROLLBACK NAO FICOU SADIO. O SITE PODE ESTAR FORA DO AR. Entre no servidor:" >&2
+    echo "    ssh -i $KEY $SRV 'docker ps -a; docker logs --tail 50 api'" >&2
+    ssh -i "$KEY" "$SRV" 'docker ps -a --format "{{.Names}}  {{.Status}}"' >&2 || true
+  fi
+  exit 1
+}
+
 dizer "8/9 troca do container, guardando o anterior"
-ssh -i "$KEY" "$SRV" "bash -s" <<SCRIPT
+if ! ssh -i "$KEY" "$SRV" "bash -s" <<SCRIPT
 set -e
 docker tag bora-api:latest bora-api:anterior 2>/dev/null || true
 docker tag bora-api:$TAG bora-api:latest
@@ -93,6 +125,10 @@ docker run -d --name api --restart unless-stopped --network bora \
   --log-opt max-size=20m --log-opt max-file=5 \
   bora-api:latest
 SCRIPT
+then
+  echo "A troca do container FALHOU (o container novo nao subiu)." >&2
+  rollback
+fi
 
 dizer "9/9 esperando ficar sadio (rollback se nao ficar)"
 if ssh -i "$KEY" "$SRV" 'for i in $(seq 1 40); do
@@ -103,13 +139,6 @@ if ssh -i "$KEY" "$SRV" 'for i in $(seq 1 40); do
   echo "NO AR: $TAG (commit $COMMIT)"
   ssh -i "$KEY" "$SRV" 'docker ps --format "{{.Names}}  {{.Status}}"'
 else
-  echo "A versao nova nao ficou sadia. ROLLBACK." >&2
-  ssh -i "$KEY" "$SRV" 'docker logs --tail 40 api 2>&1 | tail -40' >&2 || true
-  ssh -i "$KEY" "$SRV" 'set -e
-    docker rm -f api
-    docker rename api-anterior api
-    docker start api
-    docker tag bora-api:anterior bora-api:latest'
-  echo "rollback feito: a versao anterior esta de volta" >&2
-  exit 1
+  echo "A versao nova nao ficou sadia." >&2
+  rollback
 fi
