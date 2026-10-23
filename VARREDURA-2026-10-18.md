@@ -895,25 +895,79 @@ duas são necessárias — a do serviço cobre os pedidos que já estão órfão
 
 ## 5. Marketplaces
 
-- **5.1** Integração do iFood que cai em ERRO **nunca volta sozinha** — passa a ser consultada a cada
-  10 min em vez de 30 s, e a loja some do aplicativo. A 99 tem a cura; o iFood não.
-  `IfoodClient.java:276,485` vs `OpenDeliveryClient.java:254-258`. **LEITURA.**
-- **5.2** O status que a loja muda aqui pode nunca chegar lá, e ninguém é avisado. O `boolean` de
-  retorno é descartado (`IntegracaoService.java:285`). Na 99 a ordem é obrigatória, então um passo
-  perdido trava todos os seguintes. **LEITURA.**
-- **5.3** Aceite que falhou e a loja tocou no card: nunca mais é reenviado
-  (`MarketplacePoller.java:248`), e o aviso some em 30 segundos. **LEITURA.**
-- **5.4** Renovação do token: o iFood mata o anterior antes de a gente gravar o novo
-  (`IfoodClient.java:272-283`). Falha no meio = loja reautoriza do zero, sem ninguém detectar. **LEITURA.**
+- **5.1** Integração do iFood que cai em ERRO **nunca volta sozinha** — **FECHADO (22/10)**. O
+  polling bem-sucedido limpava a mensagem de erro e deixava o **status** em `"ERRO"`
+  (`IfoodClient.java:328-330`). Quem está em ERRO não passa pelo `prontaParaSincronizar()`: é tentada
+  só pelo caminho espaçado, uma vez a cada 10 minutos (`IntegracaoCanal.ESPERA_APOS_ERRO_MIN`). Então
+  **uma** falha qualquer — o iFood fora do ar por um minuto — prendia a loja no ciclo de 10 minutos
+  **para sempre**, mesmo com o polling voltando a funcionar na tentativa seguinte. E o polling é o
+  batimento que mantém a loja **online** no aplicativo: 30 s → 10 min é o restaurante aparecendo e
+  desaparecendo do app. A 99 (`OpenDeliveryClient`) já fazia o reset desde o início.
+  Testes: `IfoodSaiDoErroSozinhoTest` (8), contra um iFood falso de verdade (`HttpServer` local), e o
+  que eles travam não é o texto do status — é **por qual porta o ciclo a enxerga depois**
+  (`prontaParaSincronizar()` / `mereceNovaTentativa()`). **LEITURA.**
+- **5.2** O status que a loja muda aqui pode nunca chegar lá — **FECHADO (22/10)**. O `boolean` de
+  retorno era descartado (`IntegracaoService.java:294`). Na 99 a ordem é obrigatória, então um passo
+  perdido trava todos os seguintes: o pedido congela lá dentro enquanto aqui aparece como entregue, e
+  o cliente vê "em preparo" depois de ter recebido a comida.
+  Agora grava no `ultimo_erro` da integração — que é o que a tela de Integrações mostra — dizendo
+  qual status, de qual pedido e de qual marketplace, mais a consequência ("lá dentro ele continua no
+  status anterior"). **Não estoura** (o status já mudou aqui; parar a cozinha por causa de um aviso
+  recusado trocaria um problema de informação por um de operação) e **não marca a integração como
+  ERRO** — isso a jogaria na fila de 10 minutos do 5.1, transformando um problema pequeno num grande.
+  Testes: `OstatusQueOmarketplaceRecusouApareceTest` (9). **LEITURA.**
+- **5.3** Aceite que falhou e a loja tocou no card — **JÁ ESTAVA CONSERTADO** antes desta varredura, e
+  a varredura não viu. `reenviarAceiteSeFaltou` + a coluna `pedido.aceite_enviado_em` (V48) existem, e
+  `AceiteQueFalhaNaoSePerdeTest` cobre os dois lados. **Nada a fazer.**
+- **5.4** Renovação do token: o iFood mata o anterior antes de a gente gravar o novo —
+  **FECHADO (22/10)**, no que dava para fechar. O estado **não tem conserto**: se a gravação falhar, o
+  token novo se perde e o antigo já está morto. O que mudou é a mensagem — antes isto subia como erro
+  genérico de banco, agora diz exatamente o que aconteceu e que a loja precisa **reautorizar o iFood
+  em Integrações**, e a integração consta como ERRO. Detalhe que custou: o `falha(..., i)` normal
+  gravaria no banco **dentro do catch** de um `repo.save` que acabou de estourar — a segunda exceção
+  substituiria a mensagem útil pelo erro de banco cru, que é exatamente a reclamação do item. Por isso
+  passa `null`, e há teste cobrando que o repo é chamado **uma** vez. **LEITURA.**
 - **5.5** O poller grava a linha inteira e desfaz o que o lojista acabou de salvar. **LEITURA.**
+  **ABERTO.**
 - **5.6** O que o iFood muda lá fora não chega aqui — só cancelamento. Pedido entregue pelo
-  entregador do iFood fica congelado no painel para sempre. **LEITURA.**
-- **5.7** Pedido com `isTest: true` entra como venda de verdade (`isTest` não aparece em nenhum .java),
-  e o "Simular pedido" cria pedido que **não dá para cancelar**. **LEITURA.**
+  entregador do iFood fica congelado no painel para sempre. **LEITURA.** **ABERTO.**
+- **5.7** Pedido com `isTest: true` entrava como venda de verdade — **MARCADO (22/10)**, não excluído.
+  `isTest` não aparecia em nenhum `.java` (conferido em 22/10/2026): pedido de teste baixava estoque,
+  somava no faturamento e entrava no CMV. E pedido de teste acontece justamente na **homologação**, que
+  é quando o lojista está começando e olhando os números pela primeira vez.
+  Agora ele entra com `*** PEDIDO DE TESTE DO <CANAL> -- NAO PREPARE, E CANCELE DEPOIS DE VALIDAR ***`
+  na **frente** da observação (sem apagar a do cliente), e com linha no log de auditoria. Lê `isTest`,
+  `test` e `testOrder`, booleano ou texto. **Não recusa o pedido**, de propósito: a homologação do
+  iFood exige que a integração aceite e faça o pedido de teste andar.
+  **O que NÃO foi feito, e é decisão sua:** ele **continua contando no faturamento**. Tirar exige
+  coluna nova em `pedido` (o cálculo de receita não olha a origem: filtra por status e por PIX
+  pendente, nada mais). Marcar é reversível; mexer na sua conta sem você saber, não.
+  Testes: `PedidoDeTesteEntraMarcadoTest` (8), incluindo o risco do outro lado — marcar venda de
+  verdade como teste faria a loja **cancelar um pedido pago**, que é pior que o defeito original.
 - **5.8** Taxa do marketplace entra como receita da loja mesmo quando o marketplace fica com ela.
-  **LEITURA** no código · **SUSPEITA** no tamanho.
-- **5.9** WhatsApp: a assinatura prova que veio da Meta, não de qual loja. Quebra na **segunda** loja
-  que ligar o robô. **LEITURA.**
+  **LEITURA** no código · **SUSPEITA** no tamanho. **ABERTO.**
+- **5.9** WhatsApp — **a varredura errou a conclusão, e o furo real era outro. FECHADO (22/10).**
+  A varredura dizia que o App Secret único "quebra na **segunda** loja que ligar o robô".
+  **Não quebra:** o `lojaId` vem do caminho da URL (`/public/whatsapp-webhook/{lojaId}`), não da
+  assinatura, então cada loja tem o seu endereço e as duas funcionam. O App Secret é da plataforma de
+  propósito — é um aplicativo Meta só, com os números das lojas dentro. Há teste disso agora, para a
+  conclusão errada não voltar.
+  **O furo que existia de verdade:** a assinatura prova que o corpo veio da Meta, e mais nada — ela
+  não amarra o corpo à loja do endereço. Um corpo **legítimo** da loja A, reenviado para o endereço da
+  loja B, era aceito como evento da B: o robô responderia ao cliente da A com o nome e o cardápio da
+  B, pelo número comercial da B. Quem tem o corpo assinado é qualquer um no caminho que o tenha visto
+  uma vez, e o id da loja está na URL pública do cardápio.
+  O conserto compara o `value.metadata.phone_number_id` que a Meta manda com o `clientId` da
+  integração (que é onde o Phone Number ID da loja já estava guardado). Evento sem metadata **passa** —
+  ainda existem avisos sem ela, e recusar o que não se entende deixaria o robô mudo, que atinge todo
+  cliente de boa-fé. Testes: `OavisoDoWhatsAppEhDoNumeroDaLojaTest` (8).
+
+**Rodada de mutação do bloco 5:** 17 mutantes, **17 mortos**. Um sobreviveu na primeira passada e
+valeu a pena: eu havia testado "corpo torto" com o `entry` errado, e aí o caminho principal estoura no
+mesmo lugar — o `catch` de fora devolve 200 de qualquer jeito, e trocar o `catch` de dentro por um
+`throw` não mudava **nada de observável**. Só com o `metadata` torto (e o resto do corpo bom) o
+caminho principal funciona e dá para medir a diferença: com o conserto o cliente é respondido, com o
+mutante o robô emudece. O teste foi reescrito.
 
 ---
 
