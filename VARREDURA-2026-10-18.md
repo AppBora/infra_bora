@@ -1074,21 +1074,51 @@ mutante o robô emudece. O teste foi reescrito.
   arquivos são pedidos com **duas versões diferentes** ao mesmo tempo. **LEITURA.**
 - **7.3** Dashboard engole queda de rede: números congelados, sem a faixa de "sem conexão"
   (`dashboard.js:140`). Pedidos e KDS fazem certo. **LEITURA.**
-- **7.4** "Despachar rota" falha em silêncio — `catch (e) {}` vazio, e despacha o bairro inteiro sem
-  confirmação (`entregas.js:18-21`). **LEITURA.**
+- **7.4** "Despachar rota" falha em silêncio — **JÁ ESTAVA FECHADO** em onda anterior, conferido no
+  código em 23/10: há confirmação antes (dizendo que cada despacho avisa o cliente no WhatsApp) e as
+  falhas são coletadas por pedido, com aviso de quantos saíram e quais não. **Nada a fazer.**
 - **7.5** PDV: complemento que não carrega grava lista vazia no cache e o produto passa a vender pelo
   preço base até recarregar a página (`pdv.js:86-92`). **LEITURA.**
 - **7.6** Importar cardápio multiplica o preço por 100 quando vem com ponto: "12.50" vira 1250
   (`produtos.js:146`). **LEITURA.**
 - **7.7** Produto e entregador desativados **voltam a ligar** quando alguém edita (`ativo: true` fixo
   no payload), e não existe como desativar pelo painel. **LEITURA.**
-- **7.8** A promoção morre no 20º uso (limite fixo no código) e não há como encerrá-la — o endpoint
-  existe, a tela não usa. **LEITURA.**
-- **7.9** Celular: 11 telas sobrescrevem o empilhamento do CSS com estilo em linha; Entregas monta
-  tabela de 6 colunas sem contêiner de rolagem; o CSS não tem nenhuma regra abaixo de 700px. **LEITURA.**
+- **7.8** A promoção morre no 20º uso e não há como encerrá-la — **FECHADO (23/10)**. Duas coisas no
+  mesmo lugar. O `limiteUsos: 20` era **fixo no código da tela**, sem campo e sem aviso: loja que faz
+  50 pedidos numa noite via o cupom parar de valer no meio e não tinha como descobrir por quê. Agora
+  há campo — vazio ou zero = **sem limite**, que é o que o servidor já entendia nos dois lugares onde
+  confere — e a lista diz quantos usos **faltam**, em vermelho quando restam 3 ou menos.
+
+  E o `PATCH /api/promocoes/{id}/encerrar` existia no servidor **desde o início** sem nenhuma tela
+  chamar: promoção só terminava vencendo ou batendo o limite. Agora tem botão, com pergunta antes —
+  quem está com o código na mão perde o desconto na hora, e não dá para reabrir pela tela. Testes:
+  `promocao-nao-morre-no-vigesimo-uso` (9). **LEITURA.**
+- **7.9** Celular — **FECHADO (23/10), e medido no navegador de verdade**, em 375x812.
+
+  **ANTES**, em `relatorios.html`: a página ficava com **495px** de largura dentro de uma tela de 375.
+  Quatro grades declaradas em `style="..."` ignoravam o empilhamento da folha — uma seguia com 2
+  colunas (163,6 + 163,6) e dois blocos tinham 458 e 479px, mais largos que o telefone.
+  **DEPOIS**: página 375 = janela 375 nas **14** telas que têm grade em linha (eram 11 na varredura;
+  contei 14), e as grades viraram uma coluna de 347,2px.
+
+  **A causa, e por que o conserto é o que é:** estilo em linha vence qualquer regra de folha,
+  **inclusive dentro de media query** — o bloco de 900px que já existia nunca valeu nessas telas. E o
+  menor ponto de quebra era 900px: abaixo dele, ou seja em **todo celular** (360 a 430px), não havia
+  regra nenhuma. A única coisa que vence estilo em linha é `!important`, e é por isso que a ausência
+  dele ali não seria detalhe de estilo: a regra existiria e não faria nada, parecendo consertada.
+  Reescrever as 14 telas tirando o estilo de dentro do HTML seria mais arriscado e não mudaria nada
+  para quem usa.
+
+  Tabela larga agora rola **dentro do cartão** em vez de empurrar a página (Entregas monta 6 colunas),
+  e botão ganhou área de toque de 44px. Testes: `o-painel-cabe-no-celular` (8) — estruturais, e eu sei
+  o que isso não prova: eles não medem pixel, porque medir pixel exige navegador e não há um na suíte.
+  O que provam é a **relação**: toda tela com grade em linha está coberta por uma regra que vence
+  estilo em linha, no ponto de quebra do telefone. **LEITURA.**
 - **7.10** Imprimir caixa e recibo do motoboy não fazem nada com pop-up bloqueado — a função
   compartilhada já trata isso, essas duas não. **LEITURA.**
-- **7.11** Listas vazias virando tela em branco (Ajustes, últimos pedidos do Dashboard). **LEITURA.**
+- **7.11** Listas vazias virando tela em branco — **JÁ ESTAVA FECHADO** em onda anterior, conferido
+  no código em 23/10: as quatro listas de Ajustes e os últimos pedidos do Dashboard têm texto de lista
+  vazia, e o Dashboard carrega o comentário do próprio item. **Nada a fazer.**
 - **7.12** Não dá para corrigir o cadastro de um cliente: só existe excluir, e excluir leva o cashback
   e o histórico junto, sem avisar. O endpoint de editar existe. **LEITURA.**
 
@@ -1215,34 +1245,131 @@ por método e os 70 `findById` de controller e service. Todo acesso a dado de lo
 
 ## 9. Operação e deploy
 
-- **9.1** **5 rotinas agendadas e 4 threads** (`application.yml:10`). A quinta fica na fila — e a que
-  pode ficar é o `MarketplacePoller`, sem o qual **o restaurante some do iFood**. **LEITURA** (a conta
-  das 5 e das 4 é fato; o atraso real não foi medido).
+- **9.1** 5 rotinas agendadas e 4 threads — **FECHADO na onda 3** (commit `d4bde25`): são 6 rotinas e
+  **8** threads. As duas de sobra são para a próxima, porque thread parada não custa nada e rotina na
+  fila custa a loja fora do aplicativo. **LEITURA.**
 - **9.2** **O deploy pode deixar o site no chão sem rollback.** Se o `docker run` do passo 8 falhar, o
   `set -e` mata o script antes do passo 9 e não existe mais container chamado `api`. E o vigia faz
   `docker restart api`, que falha, e ele apaga o marcador de falha de todo jeito — alterna para sempre
   sem consertar. **LEITURA.**
-- **9.3** `recuperarClientes` não tem teto quando o WhatsApp não responde: o contador só sobe no ramo
-  de sucesso. Com 2.000 clientes e timeout, ~7 horas — **dentro de uma transação** quando chamado pelo
-  painel. **LEITURA.**
-- **9.4** `reconciliarSubcontas` conversa com o Asaas **dentro** de uma transação e grava no meio,
-  travando a linha da loja. É o mesmo defeito já consertado no cobrador de PIX. **LEITURA.**
-- **9.5** `importarCardapio` segura uma conexão do pool (de 20) por até 64 s falando com a Anthropic.
-  **LEITURA.**
-- **9.6** PIX pago para um `paymentId` desconhecido: 200 e **nenhum log**. Dinheiro na conta, nenhum
-  pedido, nenhum rastro. **LEITURA.**
-- **9.7** O vigia reinicia a API quando o problema é o **banco** (o health agrega o indicador do RDS),
-  e o deploy faz rollback de código bom pelo mesmo motivo. **LEITURA** · **SUSPEITA** sobre o health
-  agregar mesmo.
+- **9.3, 9.4 e 9.5** são o **mesmo defeito em três lugares** — **FECHADOS (23/10)**:
+  `@Transactional` em volta de um método que faz chamada HTTP. A transação — e a conexão do pool, que
+  tem 20 — fica presa pelo tempo de resposta de outra empresa, e o PostgreSQL não limpa versões
+  antigas das linhas tocadas enquanto ela viver.
+
+  **9.3** tinha ainda um segundo defeito no mesmo laço, e é o pior dos três: o `break` olhava
+  `enviados`, que só subia no ramo de **sucesso**. Com o WhatsApp fora do ar, nenhum envio dava certo,
+  o contador ficava em zero, o `break` nunca disparava e o laço percorria a **base inteira** — um
+  tempo limite de HTTP por cliente. Agora o teto conta **tentativa**: falha também gasta cota, e é
+  isso que faz o laço terminar. Sem transação em volta, cada envio gravado fica gravado — se a 40ª
+  falhar, as 39 que **saíram de verdade** não podem ser desfeitas, porque já aconteceram no mundo.
+
+  **9.4** falava com o Asaas uma vez por loja, com gravação no meio, travando a linha da loja.
+  **9.5** segurava a conexão por até 64 s falando com a Anthropic; agora a IA responde **fora** da
+  transação e só a gravação dos produtos entra numa, curta — a atomicidade do "ou entra o cardápio
+  inteiro, ou não entra nada" fica preservada.
+
+  **E o teste achou um QUARTO caso que a varredura não listou:** ele não trava só os três, varre o
+  projeto procurando o padrão — e encontrou `AsaasSubcontaService.status()`, a tela de Integrações,
+  que segurava uma conexão do pool a **cada abertura**, com a linha da loja travada esperando o Asaas.
+  Testes: `ChamadaDeForaNaoMoraDentroDaTransacaoTest` (7). **LEITURA.**
+- **9.6** PIX pago para um `paymentId` desconhecido — **FECHADO (23/10)**. Era um `ifPresent` seco:
+  pagamento confirmado para um id que não casa com pedido nenhum devolvia 200 e **não deixava rastro
+  em lugar nenhum**. O dinheiro entrou na conta do lojista, não há pedido, e ninguém tem como ligar
+  uma coisa na outra depois. Acontece de verdade: pedido apagado, cobrança criada e o pedido perdido
+  antes de gravar, cliente pagando um link antigo.
+
+  Agora há linha de auditoria com a loja, o id do pagamento, o evento e o **valor** — é o que permite
+  conciliar na mão. Continua devolvendo **200 de propósito**: o Asaas reenvia o que não recebe 200, e
+  reenviar não vai fazer o pedido aparecer. Testes: 3 casos novos em
+  `PedidoReabreNoWebhookDoPixTest`, incluindo o risco do outro lado — avisar em **todo** pagamento
+  faria o log de auditoria virar ruído, e aí o caso que importa se perde no meio. **LEITURA.**
+- **9.7** O vigia reinicia a API quando o problema é o banco — **FECHADO (23/10)**, e a **SUSPEITA
+  virou medição**: um teste contra a aplicação de verdade pergunta ao registro de indicadores do
+  Spring e confirma que o `/actuator/health` **inclui o componente `db`**. Em produção o endpoint não
+  mostra detalhes (e não vai mostrar), então essa era a única forma honesta de saber.
+
+  Entrou o grupo **`viva`** (só o `ping`): o vigia pergunta pelo **processo**, que é a única pergunta
+  que justifica um reinício — reiniciar não conserta banco, e a cada reinício as requisições em voo
+  morrem. O `/actuator/health` cheio continua existindo e continua sendo o que o **deploy** olha, onde
+  agregar o banco está certo: versão que não fala com o banco não serve.
+
+  Mais duas coisas no vigia: se a API responder **dentro** do container e não de fora, ele **não**
+  reinicia — o problema é o Caddy, o DNS ou a rede. E quando o processo volta mas o health cheio
+  continua DOWN, ele escreve que o que está fora é **depois** da API, em vez de dar o caso por
+  resolvido. O deploy passou a imprimir um diagnóstico antes do rollback dizendo se o processo subiu:
+  sem isso, RDS fora do ar aparecia como "a versão nova não ficou sadia" e mandava procurar defeito em
+  código bom. Testes: `OvigiaOlhaOprocessoNaoObancoIT` (5). **LEITURA.**
 - **9.8** **Um dump cortado passa pelas duas conferências e é anotado como "ok".** A assinatura `PGDMP`
   está no começo do arquivo; o que falta é o fim. O que fecharia: `pg_restore --list`. **LEITURA.**
-- **9.9** No pior caso se perdem **~28 horas** (dump às 06:15, cópia para fora às 10:00). A última
-  restauração testada foi em 29/09, na mão. **MEDIDO PELO AGENTE** (nos horários do `copias.log`).
-- **9.10** Os 30 dumps em `backups-bora\` têm o banco inteiro — telefone, endereço, CPF — numa pasta
-  sincronizada com a nuvem. No servidor nascem `600` de propósito; a proteção não atravessa a cópia.
-- **9.11** A trava que impede duas renovações de token simultâneas é **dentro da JVM**. Quem subir uma
-  segunda instância derruba a autorização do iFood de todas as lojas. O `application.yml:27` planeja
-  essa segunda instância. **LEITURA.**
+- **9.9** Janela de perda e restauração nunca testada — **a metade que é minha está FECHADA (23/10)**.
+
+  **O ensaio de restauração virou rotina.** Backup que ninguém restaura é esperança, e restaurar uma
+  vez em setembro não diz nada sobre o dump de hoje. O `ensaio-de-restauracao.sh` restaura o dump mais
+  novo num Postgres descartável e **conta as linhas** das tabelas que importam, mais a versão do
+  schema — dump que restaura vazio não é backup. Rodado contra a produção hoje: **5 lojas, 13
+  usuários, 125 produtos, 32 pedidos, schema V57**. Roda aos domingos, longe dos horários de dump para
+  nunca pegar arquivo pela metade. Nada toca o banco de produção: o destino é um container novo, com
+  senha local, apagado no fim inclusive se der erro.
+
+  **A janela caiu de 24h para ~6h**: o dump passou a ser de 6 em 6 horas. Medido antes de mexer:
+  3,3 MB por dump, 14 dias de retenção, 56 arquivos, ~185 MB num disco com **48 GB livres**.
+
+  **O que continua sendo seu:** não existe cópia para **fora** feita pelo servidor — `BORA_BACKUP_S3`
+  não está definida, e o próprio backup avisa isso em voz alta a cada execução. A segunda perna hoje é
+  a cópia para o seu computador. Um bucket S3 e um usuário IAM são da sua conta AWS.
+- **9.10** Dumps com dado pessoal em pasta sincronizada — **FECHADO para o que vem (23/10); o que já
+  está lá é sua decisão.** Medido: **53** dumps (a varredura dizia 30), **171 MB**, dentro de
+  `C:\Users\user\OneDrive\Desktop\Bora\backups-bora` — cada um com o banco inteiro, telefone,
+  endereço e CPF de todo cliente de todas as lojas. No servidor nascem `600` de propósito; a proteção
+  não atravessa a cópia.
+
+  O destino agora é `C:\bora-backups`, pasta local, fora de qualquer sincronização — a função de
+  "segunda perna" continua valendo, só não está mais na nuvem de terceiro. **Os 53 arquivos antigos
+  continuam no OneDrive:** mover ou apagar dado de cliente já copiado é sua decisão, e o log de cada
+  cópia volta a avisar enquanto houver algum lá.
+
+  Duas coisas a mais que apareceram medindo: o script de cópia morava **dentro da pasta ignorada pelo
+  git**, então a única cópia dele estava fora de controle de versão — e é um script de operação; foi
+  para `bora-landing/deploy` e a tarefa agendada do Windows foi reapontada. E a conferência dele usava
+  a assinatura `PGDMP`, que **não prova nada** sobre o arquivo estar inteiro (item 9.8); agora o
+  tamanho é comparado com o do servidor.
+
+  **A boa notícia que também medi:** `backups-bora/` **está** no `.gitignore` e o git rastreia **zero**
+  dumps — nunca houve vazamento por esse caminho.
+- **9.11** A trava da renovação de token é dentro da JVM — **FECHADO (23/10)**. O `synchronized`
+  continua, e resolve de graça a disputa entre as 8 threads do poller e as requisições do painel
+  dentro **deste** processo. O que ele não resolve é uma **segunda instância**, e o `application.yml`
+  planeja uma.
+
+  No iFood isso é grave de um jeito específico: ele **invalida o refresh token anterior** quando emite
+  o novo. Duas instâncias renovando ao mesmo tempo matam o token uma da outra, e a loja precisa
+  reautorizar do zero — **todas as lojas de uma vez**, porque todas renovam no mesmo ciclo, de forma
+  silenciosa, e só aparece quando os pedidos param de chegar.
+
+  A V59 traz um **arrendamento de 2 minutos** no banco: quem consegue gravar a marca renova; quem não
+  consegue espera, relê a linha e usa o token que o outro gravou. É arrendamento e não
+  `select for update` de propósito — a renovação fala com o iFood, e segurar lock de banco durante
+  chamada HTTP é exatamente o defeito dos itens 9.3, 9.4 e 9.5.
+
+  **O que medir corrigiu no diagnóstico:** na 99 (Open Delivery) o risco **não existe** — lá o token
+  sai de `client_credentials`, que não invalida o anterior, e o cliente nem guarda refresh token. Por
+  isso o arrendamento está só no iFood. Testes: `OtokenNaoEreNovadoEmDobroTest` (7). **LEITURA.**
+
+**Blocos 7 e 9 fechados** em 23/10/2026 — **com isto, a varredura inteira está fechada.**
+
+**Rodada de mutação da onda 8:** 29 mutantes (22 de código, 7 de tela), **28 mortos**. O que sobreviveu
+era **código redundante meu**: uma guarda de string vazia no limite da promoção que o `parseInt` já
+cobria — tirei a linha em vez de deixar o que nenhum mutante consegue quebrar. **Uma lacuna
+registrada:** não há mutante para a asserção de atomicidade do `importarCardapio`, porque tirar o
+`tx.execute` exige mexer nos dois extremos do lambda e o arpão aplica uma troca só; a primeira
+tentativa não compilou e apareceu como "morto" — e mutante que não compila não prova nada.
+
+**O arpão ganhou a guarda que faltava:** ele agora **recusa mutante de inserção**. Esse tipo deixou
+arquivo de produção mutado **quatro vezes** nesta sessão, sempre pelo mesmo motivo — o texto original
+continua dentro do mutado, e a restauração não reconhece que houve mutação. Agora falha na hora de
+aplicar, não depois. (Na mesma rodada ele recusou um mutante meu pelo novo critério, meia hora depois
+de eu o ensinar.)
 
 **O que está bom e foi verificado:** todo cliente HTTP tem tempo limite (5 fábricas, 6 consumidores,
 varredura completa); log sem dado pessoal nem segredo; log com teto de 100 MB; desligamento gracioso
