@@ -70,14 +70,38 @@ chown ubuntu:ubuntu "$DEST"/*.dump 2>/dev/null || true
 # Com BORA_BACKUP_S3 definido (ex.: s3://meu-bucket/bora), a copia acontece e o resultado fica no log.
 # Sem ela, o script DIZ que nao copiou, em vez de ficar calado: backup que parece existir e pior que
 # backup que se sabe que falta.
+#
+# ---------------------------------------------------------------- medido em 23/10/2026
+#
+# Duas coisas que so apareceram quando eu fui conferir, em vez de supor:
+#
+#   1. NAO HA `aws` instalado nesta maquina. A linha de antes era `aws s3 cp ...`, entao mesmo com a
+#      variavel definida a copia falharia -- e com `set -e` e `exit 1`, o backup inteiro passaria a
+#      reprovar todo dia. Agora roda pelo container oficial da AWS, igual a tudo o mais aqui.
+#
+#   2. A instancia JA TEM um papel IAM (`AmazonLightsailInstanceRole`) e ele JA devolve credencial
+#      temporaria. O que falta e so a PERMISSAO de S3 nele: um `aws s3 ls` volta
+#      "AccessDenied ... no identity-based policy allows s3:ListAllMyBuckets".
+#
+# Isso muda o que falta fazer, e para melhor: NAO e preciso criar chave de acesso nenhuma. Basta um
+# bucket em sa-east-1 e uma politica de escrita no papel que ja existe. Sem chave criada, sem chave
+# guardada, sem chave para vazar -- a credencial e temporaria e a propria AWS a rotaciona.
+#
+# `--network host` e para o container alcancar o 169.254.169.254, que e de onde o papel vem.
 if [ -n "${BORA_BACKUP_S3:-}" ]; then
-  if aws s3 cp "$ARQ" "$BORA_BACKUP_S3/" --storage-class STANDARD_IA >/dev/null 2>&1; then
+  if docker run --rm --network host -e AWS_REGION="${AWS_REGION:-sa-east-1}" \
+       -v "$DEST":/bkp amazon/aws-cli:latest \
+       s3 cp "/bkp/$NOME" "$BORA_BACKUP_S3/" --storage-class STANDARD_IA >/dev/null 2>&1; then
     echo "$(date -Is) copia para fora ok: $BORA_BACKUP_S3/$NOME"
   else
-    echo "$(date -Is) COPIA PARA FORA FALHOU ($BORA_BACKUP_S3). O backup existe SO neste disco." >&2
+    echo "$(date -Is) COPIA PARA FORA FALHOU ($BORA_BACKUP_S3). O dump local esta BOM e conferido --" \
+         "o que falhou foi so a copia. Confira se o papel da instancia tem permissao de escrita no" \
+         "bucket: 'docker run --rm --network host -e AWS_REGION=sa-east-1 amazon/aws-cli:latest" \
+         "s3 ls $BORA_BACKUP_S3/' diz o motivo." >&2
     exit 1
   fi
 else
   echo "$(date -Is) ATENCAO: sem copia para fora (BORA_BACKUP_S3 nao definido). Os backups estao SO" \
-       "no disco desta instancia -- se ela se perder, vao junto."
+       "no disco desta instancia -- se ela se perder, vao junto. O papel IAM da instancia ja existe;" \
+       "falta um bucket e uma politica de escrita nele. Nenhuma chave precisa ser criada."
 fi
