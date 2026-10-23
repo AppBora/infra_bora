@@ -927,10 +927,51 @@ duas são necessárias — a do serviço cobre os pedidos que já estão órfão
   gravaria no banco **dentro do catch** de um `repo.save` que acabou de estourar — a segunda exceção
   substituiria a mensagem útil pelo erro de banco cru, que é exatamente a reclamação do item. Por isso
   passa `null`, e há teste cobrando que o repo é chamado **uma** vez. **LEITURA.**
-- **5.5** O poller grava a linha inteira e desfaz o que o lojista acabou de salvar. **LEITURA.**
-  **ABERTO.**
-- **5.6** O que o iFood muda lá fora não chega aqui — só cancelamento. Pedido entregue pelo
-  entregador do iFood fica congelado no painel para sempre. **LEITURA.** **ABERTO.**
+- **5.5** O poller grava a linha inteira e desfaz o que o lojista acabou de salvar —
+  **FECHADO (22/10)**. O ciclo carrega as integrações no início (`findByAtivoTrue`, **fora** de
+  transação) e gravava `repo.save(i)` até **25 segundos** depois: a linha **inteira**, com os valores
+  velhos de todas as colunas. O que o lojista salvasse nesse meio tempo era desfeito sem aviso —
+  desligar a integração, tirar o aceite automático, colar uma credencial nova. Ele salvava, via
+  "salvo" na tela, e o valor voltava sozinho no ciclo seguinte: é o tipo de defeito que faz o lojista
+  achar que o sistema "não salva" e parar de mexer.
+
+  Agora cada escrita toca **só as colunas de quem escreve**: `marcarPollingOk`,
+  `marcarPollingFalhou`, `marcarErro`, `marcarAviso` e `contarPedidoRecebido`, todas filtrando por
+  loja também — id trocado por engano vira UPDATE de **zero linhas** em vez de escrever na integração
+  de outra loja. O contador passou a somar **no banco**: era leitura-soma-escrita em cima de um valor
+  velho, e dois pedidos no mesmo ciclo contavam **um**.
+
+  **A armadilha que quase me pegou:** token **não** pode ir por esse caminho. Aquelas colunas passam
+  pelo cifrador (`@Convert SegredoGuardado`) e **UPDATE em JPQL não chama conversor** — gravaria a
+  credencial em texto puro, criando o furo do item 8.4 noutro lugar. Elas continuam indo pela
+  entidade, mas pela linha **relida**, não pela cópia velha do ciclo.
+
+  Testes: `OpollerNaoDesfazOqueOlojistaSalvouIT` (12) **contra Postgres de verdade** — com mock eu
+  provaria que chamei outro método; o que precisa ser provado é o que ficou na linha, coluna por
+  coluna. O primeiro teste prova a **premissa**: com `save` da entidade velha a edição do lojista
+  realmente desaparece. E o banco me corrigiu num ponto: eu pus `coalesce` no contador por causa do
+  `Integer` nulo, e a **coluna é NOT NULL** — o caso não existe, e isso ficou medido em vez de
+  escrito. **LEITURA.**
+- **5.6** O que o iFood muda lá fora não chega aqui — **FECHADO (22/10)**, e a varredura estava certa
+  **só sobre o iFood**. De tudo o que o canal avisa, o Bora tratava pedido novo e cancelamento; o
+  resto era confirmado ao marketplace e jogado fora. Com a **entrega do próprio marketplace** isso
+  congelava o pedido no painel no status que a loja clicou por último, para sempre — quem sabe onde o
+  motoboy está é o iFood, e ninguém na loja tem como saber que chegou.
+
+  **O que medir corrigiu:** a 99 (Open Delivery) **já tinha isto** pelo webhook, para `PICKED_UP` e
+  `DELIVERED` (`OpenDeliveryWebhookController`), e `PedidoService.avancarPorMarketplace` já existia.
+  Quem ficou de fora foi o iFood, que anda por **polling** — por isso o conserto é no poller, não num
+  canal só.
+
+  Agora `DISPATCHED`/`DSP`, `CONCLUDED`/`CON` e `READY_TO_PICKUP`/`RTP` avançam o pedido aqui — **só
+  para frente**, nunca recuando nem reabrindo encerrado, e **sem** devolver o status para o canal
+  (contar de volta a novidade que ele acabou de dar seria eco). Evento que eu não reconheço vai para o
+  **log**, de propósito: é assim que a produção me ensina os nomes de verdade, em vez de eu adivinhar
+  no código. E nome que eu tenha errado vira no-op, não corrupção, porque o avanço nunca recua.
+
+  O cliente final **não** recebe WhatsApp nisso: `notificarFase` sai na primeira linha para pedido de
+  marketplace, porque o telefone que vem no payload é a central do iFood (aprendido no 1º pedido real,
+  19/09). Testes: `OcanalAvancaOpedidoAquiTest` (9). **LEITURA.**
 - **5.7** Pedido com `isTest: true` entrava como venda de verdade — **MARCADO (22/10)**, não excluído.
   `isTest` não aparecia em nenhum `.java` (conferido em 22/10/2026): pedido de teste baixava estoque,
   somava no faturamento e entrava no CMV. E pedido de teste acontece justamente na **homologação**, que
@@ -944,8 +985,27 @@ duas são necessárias — a do serviço cobre os pedidos que já estão órfão
   pendente, nada mais). Marcar é reversível; mexer na sua conta sem você saber, não.
   Testes: `PedidoDeTesteEntraMarcadoTest` (8), incluindo o risco do outro lado — marcar venda de
   verdade como teste faria a loja **cancelar um pedido pago**, que é pior que o defeito original.
-- **5.8** Taxa do marketplace entra como receita da loja mesmo quando o marketplace fica com ela.
-  **LEITURA** no código · **SUSPEITA** no tamanho. **ABERTO.**
+- **5.8** Taxa do marketplace entra como receita da loja — **CONFIRMADO no código, MEDIDO no tamanho,
+  e VISÍVEL (22/10)**. O faturamento é `sum(valorTotal)`, e para pedido de marketplace `valorTotal` é
+  o `total.orderAmount` do payload: o **bruto** que o cliente pagou, **taxa de entrega incluída**.
+  Quando quem entrega é o marketplace, essa taxa é dele.
+
+  **O tamanho, medido na produção em 22/10/2026:** 7 pedidos de iFood, R$ 104,00 somados, **R$ 10,00**
+  de taxa dentro — e são todos os pedidos de teste de setembro. Nenhuma loja tem marketplace no ar.
+  Então **hoje não há dinheiro em jogo**: há a hora certa de arrumar, antes de haver.
+
+  O dado de **quem entrega** já vinha no payload (`delivery.deliveredBy`) e o normalizador já o lia —
+  mas só para escrever "Entrega pelo iFood" na **observação**, que é texto e nenhuma conta alcança. A
+  V58 passa a gravar (`pedido.entrega_pelo_canal`; nulo = não informado, e **nulo não é false**:
+  `false` afirma que a loja recebeu a taxa). O relatório devolve `taxaDoMarketplace` **ao lado** do
+  faturamento, e a tela mostra embaixo dele — só quando existe, para loja de balcão não ganhar ruído.
+
+  **O que NÃO foi feito, e é decisão sua:** o faturamento **continua sendo o bruto**. Descontar a taxa
+  muda um número que você olha todo dia, e há teste cobrando que ele continue bruto — se um dia você
+  pedir o líquido, esse teste falha e conta que a mudança foi deliberada.
+
+  Testes: `QuemFicouComAtaxaDeEntregaTest` (16), incluindo o pedido **real** da loja de teste guardado
+  em 19/09 (`deliveredBy: MERCHANT` — não é suposição), e 4 testes de tela.
 - **5.9** WhatsApp — **a varredura errou a conclusão, e o furo real era outro. FECHADO (22/10).**
   A varredura dizia que o App Secret único "quebra na **segunda** loja que ligar o robô".
   **Não quebra:** o `lojaId` vem do caminho da URL (`/public/whatsapp-webhook/{lojaId}`), não da
@@ -962,7 +1022,17 @@ duas são necessárias — a do serviço cobre os pedidos que já estão órfão
   ainda existem avisos sem ela, e recusar o que não se entende deixaria o robô mudo, que atinge todo
   cliente de boa-fé. Testes: `OavisoDoWhatsAppEhDoNumeroDaLojaTest` (8).
 
-**Rodada de mutação do bloco 5:** 17 mutantes, **17 mortos**. Um sobreviveu na primeira passada e
+**Bloco 5 fechado por inteiro** (5.1 a 5.9) em 22/10/2026.
+
+**Rodada de mutação da onda 6 (5.5, 5.6, 5.8):** 17 mutantes, **16 mortos**. O 17º
+(`o_token_nao_rele_a_linha`) é **equivalente** — a guarda de id nulo não é alcançável, porque quem
+chega lá veio do banco. Está registrado no javadoc do método em vez de coberto por um teste inventado:
+teste verde de cenário impossível não prova nada. **Dois sobreviveram na primeira passada e os dois
+eram lacuna minha de verdade:** eu não testava o `RTP` abreviado (só a forma por extenso), e não
+testava a **fiação** do normalizador até o pedido gravado — as duas pontas medidas e o meio solto, que
+é a mesma lição de sempre vista de outro ângulo.
+
+**Rodada de mutação da onda 5:** 17 mutantes, **17 mortos**. Um sobreviveu na primeira passada e
 valeu a pena: eu havia testado "corpo torto" com o `entry` errado, e aí o caminho principal estoura no
 mesmo lugar — o `catch` de fora devolve 200 de qualquer jeito, e trocar o `catch` de dentro por um
 `throw` não mudava **nada de observável**. Só com o `metadata` torto (e o resto do corpo bom) o
