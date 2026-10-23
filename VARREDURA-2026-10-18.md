@@ -1133,21 +1133,79 @@ dinheiro e não têm nada: `pdv`, `produtos`, `novo-pedido`, `cardapio`, `acerto
   (token válido autentica) está provado nos 15 testes contra o filtro real, **não** na produção — o log
   do Caddy não mostra nenhuma requisição `/api/` desde a troca, porque ninguém está com o painel
   aberto, e eu não crio sessão de ninguém. **Vale o dono abrir o painel uma vez para confirmar.**
-- **8.3** O balconista vê o faturamento da loja no Dashboard (`/api/vendas/termometro` sem
-  `requirePapel`), e o custo de produtos e insumos em quatro endpoints. As telas irmãs exigem papel.
-  **LEITURA.**
+- **8.3** O balconista vê o faturamento da loja no Dashboard — **FECHADO (23/10)**. Duas portas. O
+  **termômetro** (`/api/vendas/termometro`) devolve o faturamento das últimas 24h e a média esperada,
+  em reais, e não tinha checagem de papel nenhuma — enquanto Relatórios, Desempenho e Rede, que
+  mostram a mesma coisa, todos exigem. E a **lista de produtos** devolvia o `custo` de cada item: a
+  tela não desenha, mas ele chega no navegador, então bastam as ferramentas do desenvolvedor para ler
+  o custo do cardápio inteiro, e com ele a margem da loja.
+
+  **O conserto é diferente nos dois, de propósito.** No termômetro a ação inteira é número de dono:
+  bloqueia (403), e a tela esconde o painel em vez de deixar o 403 virar "indisponível". Na lista de
+  produtos **não**: a Frente de Caixa é do balconista e precisa de nome, preço e estoque — barrar a
+  consulta tiraria o PDV de quem trabalha nele. Ali se **omite o campo**, e há teste cobrando que o
+  resto da lista continua chegando. Insumos e ficha técnica bloqueiam: ali a lista inteira é custo.
+
+  Entrou `AuthContext.temPapel`/`podeVerNumeroDeDono`, e a distinção vale para o futuro:
+  `requirePapel` para quando a **ação** é proibida, `temPapel` para quando o que muda é o **conteúdo**
+  da resposta. Testes: `NumeroDeDonoNaoSaiParaObalcaoTest` (12) e 6 de tela. **LEITURA.**
 - **8.4** `config_plataforma.valor` **não passa pelo cifrador** — o `client_secret` do iFood e da 99 da
   plataforma está em texto puro no banco e nos 30 dumps da pasta sincronizada. Vale **mesmo com**
   `BORA_SEGREDO_COLUNAS` ligada. `entity/ConfigPlataforma.java:22-23`. **LEITURA.**
-- **8.5** CORS com `*` e `allowCredentials: true` (`config/WebConfig.java:22-27`). Limitado porque a
-  sessão é Bearer em localStorage, não cookie. **LEITURA** · depende de `BORA_CORS_ORIGINS` no
-  servidor, que eu não li.
-- **8.6** Um estranho escreve no cadastro de cliente da loja pelo cardápio público (endereço em
-  branco). Não dá para **ler** dado de cliente por aí. **LEITURA.**
-- **8.7** Logo e banner de loja suspensa continuam no ar — o único endpoint público que não chama
-  `lojaAtiva`. **LEITURA.**
-- **8.8** Token do webhook comparado com `equals` (vazamento por tempo). O projeto já faz certo em
-  dois outros lugares. Prioridade baixa. **LEITURA.**
+- **8.5** CORS com `*` e `allowCredentials: true` — **o furo descrito NÃO existe na produção, e o
+  defeito real é outro. FECHADO (23/10).** Li o servidor: `BORA_CORS_ORIGINS` **está definida**, com
+  três origens (o domínio, o www e o nip.io), e um preflight de `evil.example.com` contra o servidor
+  de verdade volta **403, sem nenhum cabeçalho Access-Control**. Medi antes de consertar.
+
+  **O defeito real é o padrão:** `getOrDefault(..., "*")`. Um deploy que esqueça a variável —
+  servidor novo, arquivo de ambiente trocado — abre a API para qualquer site **com credenciais, em
+  silêncio**, e nada na tela denuncia. Falhar aberto num item de segurança é o padrão errado. Agora o
+  padrão é **localhost** (serve o desenvolvimento, não serve ninguém na internet) e a falta da
+  variável aparece no log em voz alta — mesma regra do App Secret do WhatsApp e da chave de cifragem.
+  Testes: `OcorsNaoFalhaAbertoTest` (6), que rodam num JVM sem a variável, logo medem o caminho do
+  padrão. **LEITURA.**
+- **8.6** Um estranho escreve no cadastro de cliente pelo cardápio público — **FECHADO (23/10)**.
+  Isto já estava fechado **em parte**: antes, quem digitasse o telefone de um cliente **reescrevia** o
+  endereço cadastrado dele; o conserto de então passou a só completar o que estava em branco.
+
+  Só que "em branco" também é porta. Telefone de cliente não é segredo — está no grupo do bairro, no
+  comprovante, na agenda de muita gente. Um estranho gravava o endereço **dele** no cadastro de um
+  cliente que estava sem endereço, e a próxima entrega da loja para aquele cliente ia para lá.
+
+  Agora o cardápio **não escreve endereço em cadastro que já existe** — e não se perde nada: desde a
+  V48 o endereço da entrega fica no **próprio pedido**, que é o que o motoboy lê. Nome em branco
+  continua sendo completado (nome não manda comida para lugar nenhum). Testes:
+  `OcardapioNaoEscreveNoCadastroTest` (7). **LEITURA.**
+- **8.7** Logo e banner de loja suspensa continuam no ar — **FECHADO (23/10)**, e eram **três**
+  endpoints, não um: logo, banner e as **fotos dos produtos**. Loja suspensa, arquivada ou com prazo
+  vencido tinha o cardápio devolvendo 404 e a marca dela continuava sendo servida pela infraestrutura
+  da plataforma. Duas coisas erradas: a incoerência (página meio carregada em quem tem o link antigo
+  é pior que página que não carrega) e a plataforma seguir hospedando a imagem de quem não paga. Há
+  teste cobrando que a marca e o cardápio respondem **igual**. Testes:
+  `LojaSuspensaSaiDoArInteiraTest` (6). **LEITURA.**
+- **8.8** Token do webhook comparado com `equals` — **FECHADO (23/10)**. Eram **dois** lugares com
+  `equals` e **três** que já faziam certo, cada um com a sua cópia do código. Agora há um lugar só
+  (`security/Segredos`), e nulo recusa **inclusive contra nulo**: integração sem segredo cadastrado
+  aceitando chamada sem segredo é o webhook aberto para qualquer um, e esse não é ataque de
+  laboratório, é um `curl`.
+
+  **O que não dá para cobrir por teste, e está registrado no código:** a mutação que troca
+  `MessageDigest.isEqual` por `equals` **sobrevive** — os dois devolvem a mesma resposta, o que muda é
+  o **tempo**, e tempo não dá para afirmar numa asserção sem criar um teste que passa e falha sozinho.
+  A propriedade está garantida pela escolha da função, e é por isso que existe **um** lugar: um lugar
+  é fácil de reler e julgar. Testes: `SegredoSeComparaEmTempoConstanteTest` (9). **LEITURA.**
+
+**Bloco 8 fechado por inteiro** (8.1 a 8.8) em 23/10/2026.
+
+**Rodada de mutação da onda 7:** 19 mutantes, **18 mortos**; o 19º é o do 8.8, acima. **Três coisas
+que a rodada pegou, e as três eram minhas:** (1) a primeira versão do teste do 8.3 **mockava** o
+`AuthContext` pedindo `thenCallRealMethod` — varargs não repassa, o mock não estourava, e **cinco
+testes passaram verde medindo nada**; trocado pelo `AuthContext` de verdade com a sessão no
+`SecurityContext`. (2) Um mutante de **inserção** deixou `Segredos.java` mutado em produção **duas
+vezes**, porque o original fica sendo substring do mutado e a restauração não reconhece que houve
+mutação; restaurado à mão e a definição corrigida para **trocar** a linha em vez de inserir antes
+dela. (3) Um mutante do 8.6 **não compilava** (return inalcançável) e apareceu como "morto" —
+mutante que não compila não prova nada.
 
 **O que foi procurado e NÃO existe:** vazamento entre lojas. O agente varreu os 29 repositórios método
 por método e os 70 `findById` de controller e service. Todo acesso a dado de loja é filtrado por
