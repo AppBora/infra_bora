@@ -1,0 +1,170 @@
+### acerto-entregadores.html
+  scripts: acerto-entregadores, api, app, cores, whitelabel
+  api....: _conexao, aceitarTermos, acertoHistorico, acertoPrevia, configuracao, entregadores, fazerAcerto, logout, minhasLojas, termos, trocarLoja
+  rotas..: /admin-bora/lojas/, /admin-bora/sair-da-loja
+  acoes..: -
+### acompanhar.html
+  scripts: -
+  api....: -
+  rotas..: -
+  acoes..: -
+### ajuda.html
+  scripts: api, app, cores, whitelabel
+  api....: _conexao, aceitarTermos, configuracao, minhasLojas, termos, trocarLoja
+  rotas..: /admin-bora/lojas/, /admin-bora/sair-da-loja
+  acoes..: -
+### ajustes.html
+  scripts: ajustes, api, app, cores, whitelabel
+  api....: _conexao, aceitarTermos, configuracao, excluirForma, excluirMotivo, excluirTaxa, formasPagamento, horarios, logout, minhasLojas, motivos, salvarForma, salvarHorarios, salvarMotivo, salvarTaxa, taxas, termos, trocarLoja
+  rotas..: /admin-bora/lojas/, /admin-bora/sair-da-loja
+  acoes..: delForma, delMotivo, delTaxa, setH, togDia, toggleForma
+### cadastro.html
+  scripts: api
+  api....: _conexao, login, trocarLoja
+  rotas..: /public/signup
+  acoes..: -
+### caixa.html
+  scripts: api, app, caixa, cores, whitelabel
+  api....: _conexao, aceitarTermos, board, configuracao, logout, minhasLojas, repetir, termos, trocarLoja
+  rotas..: /admin-bora/lojas/, /admin-bora/sair-da-loja
+  acoes..: imprimirFechamento
+### canais.html
+  scripts: api, app, canais, cores, whitelabel
+  api....: _conexao, aceitarTermos, board, configuracao, minhasLojas, repetir, termos, trocarLoja
+  rotas..: /admin-bora/lojas/, /admin-bora/sair-da-loja
+  acoes..: -
+### cardapio-qr.html
+  scripts: api, app, cardapio-qr, cores, whitelabel
+  api....: _conexao, aceitarTermos, configuracao, logout, minhasLojas, termos, trocarLoja
+  rotas..: /admin-bora/lojas/, /admin-bora/sair-da-loja
+  acoes..: copiar
+### cardapio.html
+  scripts: api, cardapio, cores
+  api....: _conexao, cardapioPublico
+  rotas..: /public/loja/
+  acoes..: add
+### clientes.html
+  scripts: api, app, clientes, cores, whitelabel
+  api....: _conexao, aceitarTermos, clientes, configuracao, logout, minhasLojas, termos, trocarLoja
+  rotas..: /admin-bora/lojas/, /admin-bora/sair-da-loja, /api/clientes, /api/clientes/
+  acoes..: cancelarEdicao, del, editar
+### configuracoes.html
+  scripts: api, app, configuracoes, cores, whitelabel
+  api....: _conexao, aceitarTermos, configuracao, logout, minhasLojas, termos, trocarLoja
+  rotas..: /admin-bora/admins, /admin-bora/admins/, /admin-bora/clientes, /admin-bora/config, /admin-bora/config/fiscal, /admin-bora/faturamento, /admin-bora/faturamento/, /admin-bora/lojas, /admin-bora/lojas/, /admin-bora/sair-da-loja, /api/configuracao, /api/ia/gerente, /api/ia/importar-cardapio, /api/ia/recuperacao/resumo, /api/ia/recuperar, /api/ia/status, /api/ia/whatsapp-dono, /auth/trocar-senha
+  acoes..: ARQUIVADA, SEM_PAGAMENTO, SUSPENSA, arquivar, entrar, liberar, pagamento, reativar, renomear, suspender
+### contagem.html
+  scripts: api, app, contagem, cores, whitelabel
+  api....: _conexao, aceitarTermos, configuracao, definirEstoqueProduto, minhasLojas, produtos, termos, trocarLoja
+  rotas..: /admin-bora/lojas/, /admin-bora/sair-da-loja
+  acoes..: recalc
+### crm.html
+  scripts: api, app, cores, crm, whitelabel
+  api....: _conexao, aceitarTermos, clientes, configuracao, linksRepetir, logout, minhasLojas, termos, trocarLoja
+  rotas..: /admin-bora/lojas/, /admin-bora/sair-da-loja
+  acoes..: -
+### dashboard.html
+  scripts: api, app, cores, dashboard, onboarding, whitelabel
+  api....: _conexao, aceitarTermos, board, configuracao, criarPromocao, logout, minhasLojas, onboarding, repetir, resumo, termometro, termos, trocarLoja
+  rotas..: /admin-bora/lojas/, /admin-bora/sair-da-loja
+  acoes..: promoRelampago
+### desempenho.html
+  scripts: api, app, cores, desempenho, whitelabel
+  api....: _conexao, aceitarTermos, configuracao, logout, minhasLojas, termos, trocarLoja
+  rotas..: /admin-bora/lojas/, /admin-bora/sair-da-loja, /api/desempenho
+  acoes..: -
+### entregadores.html
+  scripts: api, app, cores, entregadores, whitelabel
+  api....: _conexao, aceitarTermos, atualizarEntregador, board, configuracao, criarEntregador, entregadores, excluirEntregador, logout, minhasLojas, repetir, termos, trocarLoja
+  rotas..: /admin-bora/lojas/, /admin-bora/sair-da-loja
+  acoes..: del, edit
+### entregas.html
+  scripts: api, app, cores, entregas, whitelabel
+  api....: _conexao, aceitarTermos, board, configuracao, definirEntregador, entregadores, logout, minhasLojas, mudarStatus, repetir, resumo, termos, trocarLoja
+  rotas..: /admin-bora/lojas/, /admin-bora/sair-da-loja
+  acoes..: despachar, despacharBairro, entregue, setEntregador
+### estoque.html
+  scripts: api, app, cores, estoque, whitelabel
+  api....: _conexao, aceitarTermos, ajustarEstoqueProduto, configuracao, definirEstoqueProduto, minhasLojas, produtos, termos, trocarLoja
+  rotas..: /admin-bora/lojas/, /admin-bora/sair-da-loja
+  acoes..: ajustar, definir
+### guia-zira.html
+  scripts: -
+  api....: -
+  rotas..: -
+  acoes..: -
+### index.html
+  scripts: -
+  api....: -
+  rotas..: -
+  acoes..: -
+### insumos.html
+  scripts: api, app, cores, insumos, whitelabel
+  api....: _conexao, aceitarTermos, configuracao, definirEstoqueInsumo, excluirInsumo, insumos, minhasLojas, salvarInsumo, termos, trocarLoja
+  rotas..: /admin-bora/lojas/, /admin-bora/sair-da-loja
+  acoes..: del, edit
+### integracoes.html
+  scripts: api, app, cores, integracoes, recebimento, whitelabel
+  api....: _conexao, aceitarTermos, apiBase, configuracao, integracoes, logout, minhasLojas, recebimento, salvarIntegracao, termos, trocarLoja
+  rotas..: /admin-bora/credenciais, /admin-bora/credenciais/, /admin-bora/lojas/, /admin-bora/sair-da-loja, /api/integracoes/, /api/recebimento/ativar, /api/recebimento/documentos, /api/recebimento/webhook
+  acoes..: confirmar, copy, removerApp, salvar, salvarApp, simular, switch, toggleOpen, vincular
+### kds.html
+  scripts: api, app, cores, kds, whitelabel
+  api....: _conexao, aceitarTermos, board, configuracao, minhasLojas, mudarStatus, repetir, termos, trocarLoja
+  rotas..: /admin-bora/lojas/, /admin-bora/sair-da-loja
+  acoes..: avancar
+### login.html
+  scripts: api
+  api....: _conexao, login
+  rotas..: /auth/pedido-de-senha, /auth/trocar-senha
+  acoes..: -
+### novo-pedido.html
+  scripts: api, app, cores, novo-pedido, whitelabel
+  api....: _conexao, aceitarTermos, clientes, configuracao, formasPagamento, minhasLojas, produtos, taxas, termos, trocarLoja
+  rotas..: /admin-bora/lojas/, /admin-bora/sair-da-loja, /api/clientes, /api/pedidos, /api/produtos/
+  acoes..: rem
+### pdv.html
+  scripts: api, app, cores, pdv, whitelabel
+  api....: _conexao, aceitarTermos, clientes, configuracao, criarPedido, formasPagamento, logout, minhasLojas, mudarStatus, produtos, termos, trocarLoja
+  rotas..: /admin-bora/lojas/, /admin-bora/sair-da-loja, /api/produtos/
+  acoes..: add, dec, inc
+### pedidos.html
+  scripts: api, app, cores, pedidos, whitelabel
+  api....: _conexao, aceitarTermos, board, configuracao, logout, minhasLojas, repetir, termos, trocarLoja
+  rotas..: /admin-bora/lojas/, /admin-bora/sair-da-loja, /api/pedidos/
+  acoes..: aceitar, avancar, cancelar, excluir, imprimir, recusar, refresh
+### planos.html
+  scripts: api, app, cores, planos, whitelabel
+  api....: _conexao, aceitarTermos, assinar, assinatura, configuracao, logout, minhasLojas, plano, termos, trocarLoja
+  rotas..: /admin-bora/lojas/, /admin-bora/sair-da-loja
+  acoes..: -
+### produtos.html
+  scripts: api, app, complementos-gestao, cores, produtos, whitelabel
+  api....: _conexao, aceitarTermos, configuracao, definirEstoqueProduto, ficha, insumos, logout, minhasLojas, produtos, salvarFicha, termos, trocarLoja
+  rotas..: /admin-bora/lojas/, /admin-bora/sair-da-loja, /api/produtos, /api/produtos/
+  acoes..: comp, compAviso, compCorpo, compProblema, compQtd, del, edit, ficha, fichaCalc, precoDoImport
+### promocoes.html
+  scripts: api, app, cores, cupons, promocoes, whitelabel
+  api....: _conexao, aceitarTermos, configuracao, criarPromocao, encerrarPromocao, logout, minhasLojas, promocoes, termometro, termos, trocarLoja
+  rotas..: /admin-bora/lojas/, /admin-bora/sair-da-loja, /api/cupons, /api/cupons/
+  acoes..: delCupom, encerrar
+### rede.html
+  scripts: agente-rede, api, app, cores, rede-analise, whitelabel
+  api....: _conexao, aceitarTermos, analiseCanais, analiseHorario, analiseTempos, balancete, configuracao, logout, minhasLojas, termos, trocarLoja
+  rotas..: /admin-bora/lojas/, /admin-bora/sair-da-loja, /api/ia/rede/analisar, /api/ia/rede/dossie, /api/ia/rede/sinais
+  acoes..: iaAbrir
+### relatorios.html
+  scripts: api, app, balancete, cores, limpeza, relatorios, whitelabel
+  api....: _conexao, aceitarTermos, balancete, configuracao, logout, minhasLojas, relatorios, termos, trocarLoja
+  rotas..: /admin-bora/lojas/, /admin-bora/sair-da-loja
+  acoes..: -
+### respostas-whatsapp.html
+  scripts: api, app, cores, respostas-whatsapp, whitelabel
+  api....: _conexao, aceitarTermos, cardapioPublico, configuracao, horarios, minhasLojas, termos, trocarLoja
+  rotas..: /admin-bora/lojas/, /admin-bora/sair-da-loja
+  acoes..: copiarResposta
+### usuarios.html
+  scripts: api, app, cores, usuarios, whitelabel
+  api....: _conexao, aceitarTermos, configuracao, logout, minhasLojas, termos, trocarLoja
+  rotas..: /admin-bora/lojas/, /admin-bora/sair-da-loja, /api/rede/equipe, /api/rede/lojas-da-empresa, /api/usuarios, /api/usuarios/, /api/usuarios/pedidos-de-senha
+  acoes..: ativo, desvincular, senha, vincular

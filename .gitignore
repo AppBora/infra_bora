@@ -19,3 +19,8 @@ node_modules/
 # Sao ~29 MB de pg_dump da producao; um "git add ." distraido publicaria a base inteira.
 backups-bora/
 *.dump
+
+# O roteiro de teste e GERADO por roteiro-de-teste/gerar.py. A copia versionada
+# e a que vai para o ar, em bora-fase-2-frontend/. Duas copias rastreadas iam
+# divergir em silencio, e a errada seria a publicada.
+/ROTEIRO-DE-TESTE.html
