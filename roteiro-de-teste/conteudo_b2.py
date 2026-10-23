@@ -46,9 +46,16 @@ PARTE_B2 = [
 {'n':'24','t':'Planos e assinatura','tela':'planos.html','r':'A cobrança da plataforma.','testes':[
  {'id':'24.1','t':'Ver o plano','passos':['Abra <b>Planos</b>.'],
   'e':'Plano atual, preço e o que inclui.','eps':['GET /api/plano']},
- {'id':'24.2','t':'Trocar de plano','passos':[
-   'Troque para outro plano.','Confira o limite de usuários em Usuários.'],
-  'e':'O limite muda, e o preço reflete na próxima cobrança.','eps':['PUT /api/plano']},
+ {'id':'24.2','t':'Só existe um plano, e a tela não promete outro','passos':[
+   'Abra <b>Planos</b> e conte quantos planos aparecem.',
+   'Procure algum botão de trocar, assinar outro, ou comparar planos.',
+   'Confira o limite de usuários em Usuários contra o que o card promete.'],
+  'e':'Aparece UM plano (R$ 199/mês, até 15 usuários) e nenhum botão de troca — porque não há '
+      'para onde trocar. O limite de Usuários bate com o card.',
+  'f':'O endpoint PUT /api/plano existe para quando houver mais de um plano. Eu já cheguei a '
+      'anotar "não dá para trocar de plano" como defeito que travava receita: era falso, o enum '
+      'Plano tem só UNICO e as 5 lojas em produção estão nele. Quando nascer o segundo plano, '
+      'este item volta a ser "troque e confira".','eps':['PUT /api/plano']},
  {'id':'24.3','t':'Status da assinatura','passos':['Veja o status na tela.','Compare com o painel do Asaas.'],
   'e':'Batem.','eps':['GET /api/assinatura']},
  {'id':'24.4','t':'Assinar','passos':['Clique em ativar a assinatura.','Siga o link de pagamento.'],
@@ -62,8 +69,14 @@ PARTE_B2 = [
  {'id':'25.1','t':'Ver as integrações','passos':['Abra <b>Integrações</b>.'],
   'e':'Estado de cada canal e o último erro, quando há.','eps':['GET /api/integracoes']},
  {'id':'25.2','t':'Salvar credencial de canal','passos':[
-   'Abra um canal.','Preencha os campos e salve.','Recarregue.'],
-  'e':'Grava e a tela mostra conectado.','eps':['PUT /api/integracoes/{canal}']},
+   'Num canal NÃO oficial, preencha os campos e salve. Recarregue.',
+   'Agora repita num canal oficial (iFood ou 99Food): preencha, salve e recarregue.',
+   'Olhe o status e o Merchant ID nos dois.'],
+  'e':'Nos dois a credencial grava. No canal não oficial a tela mostra conectado. '
+      'No oficial NÃO conecta só por salvar — conectar é pelo vínculo (item 25.3), e o Merchant ID '
+      'só o suporte da plataforma muda.',
+  'f':'Salvar não rebaixa quem já estava conectado. Este item já esteve escrito como se salvar '
+      'conectasse, e nesses dois canais o lojista não conseguia cumpri-lo.','eps':['PUT /api/integracoes/{canal}']},
  {'id':'25.3','t':'Vincular o iFood','passos':[
    'No canal iFood, clique em vincular.','Copie o código que aparece.',
    'Digite o código no Portal do Parceiro do iFood.','Volte e clique em confirmar.',
@@ -294,8 +307,15 @@ PARTE_B2 = [
  {'id':'30.7','t':'Webhook genérico de canal','passos':[
    'Mande <code>POST /webhooks/{canal}</code> com o token certo.','Repita sem token.'],
   'e':'Com token aceita; sem token recusa.','reg':True,'eps':['POST /webhooks/{canal}']},
- {'id':'30.8','t':'Saúde da API','passos':['Chame <code>GET /api/health</code>.'],
-  'e':'Responde que está no ar.','eps':['GET /api/health']},
+ {'id':'30.8','t':'Saúde da API','passos':[
+   'Sem estar logado, chame <code>GET /actuator/health</code>.',
+   'Chame <code>GET /actuator/health/viva</code>.',
+   'Agora chame <code>GET /api/health</code>, também sem login.'],
+  'e':'Os dois do actuator respondem 200 (o <code>viva</code> olha só o processo). '
+      'O <code>/api/health</code> responde <b>401</b>: ele não é público, e é isso mesmo.',
+  'f':'Eu já apontei este item para /api/health como se fosse o endereço público. Não é — quem '
+      'está no permitAll é o actuator. Monitoramento que apontar para /api/health vai ver 401 '
+      'para sempre e achar que a API caiu.','reg':True,'eps':['GET /api/health']},
 ]},
 
 {'n':'31','t':'Ajuda, guia e respostas prontas','tela':'ajuda.html · guia-zira.html · respostas-whatsapp.html','r':'As telas de apoio. Ninguém testa, e são as que o lojista abre quando está perdido.','testes':[

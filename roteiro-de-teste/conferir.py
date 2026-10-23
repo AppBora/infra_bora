@@ -46,5 +46,53 @@ if inventados:
     print('\nAPONTAM PARA ENDPOINT QUE NAO EXISTE (%d):' % len(inventados))
     for e in inventados:
         print('  ' + e + '  <- ' + ', '.join(cobertos[e]))
+# ---- endpoint que EXISTE e nenhuma tela chama
+# O conferidor provava que todo endpoint tem TESTE. Nao provava que alguem consegue USAR.
+# Sete itens do roteiro ganharam passos impossiveis por isso: o endpoint existia, o teste existia,
+# e nao havia botao em tela nenhuma. Quem seguisse o passo a passo nao achava o que clicar.
+FRONT = os.path.join(AQUI, '..', 'bora-fase-2-frontend')
+chamados = ''
+if os.path.isdir(FRONT):
+    for base, _, arquivos in os.walk(FRONT):
+        if 'testes' in base or (os.sep + 'dev') in base or 'node_modules' in base:
+            continue
+        for nome in arquivos:
+            # O proprio ROTEIRO-DE-TESTE.html mora aqui e cita TODOS os endpoints: deixa-lo
+            # entrar fazia a conferencia achar que tudo tem tela.
+            if nome == 'ROTEIRO-DE-TESTE.html':
+                continue
+            if nome.endswith(('.js', '.html')) and '.antes-' not in nome:
+                try:
+                    chamados += io.open(os.path.join(base, nome), encoding='utf-8', errors='ignore').read()
+                except OSError:
+                    pass
+
+
+# Nao sao chamados por tela POR DEFINICAO: entram de fora (webhook), sao de monitoramento,
+# ou a pagina e servida pelo Caddy. Cobrar tela deles seria ruido.
+DE_FORA = ('/public/asaas-webhook', '/public/pix-webhook', '/public/opendelivery',
+           '/public/whatsapp-webhook', '/webhooks/', '/api/health', '/actuator/')
+
+
+def alcancavel(ep):
+    caminho = ep.split(None, 1)[1]
+    if caminho == '/' or any(caminho.startswith(x) for x in DE_FORA):
+        return True
+    # Casar so o prefixo nao serve: '/api/integracoes/{canal}/diagnostico' passaria por causa de
+    # qualquer outra chamada a '/api/integracoes'. O que identifica a rota e o ULTIMO pedaco fixo.
+    fixos = [p for p in caminho.split('/') if p and not p.startswith('{')]
+    if not fixos:
+        return True
+    return fixos[-1] in chamados
+
+
+sem_tela = sorted(e for e in reais if not alcancavel(e)) if chamados else []
+if sem_tela:
+    print('')
+    print('EXISTEM NO SERVIDOR E NENHUMA TELA CHAMA (%d):' % len(sem_tela))
+    for e in sem_tela:
+        print('  ' + e + '  <- testado por ' + ', '.join(cobertos.get(e, ['(ninguem)'])))
+    print('  (nao e defeito de codigo: e funcao pronta que o lojista nao alcanca)')
+
 if not faltando and not inventados:
     print('\nCOBERTURA COMPLETA: todo endpoint tem ao menos um teste, e nenhum teste aponta para o vazio.')

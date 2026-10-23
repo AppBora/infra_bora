@@ -3,10 +3,20 @@
 
 PARTE_C = [
 {'n':'I-A','int':True,'t':'Balcão até o acerto do motoboy','tela':'PDV · KDS · Entregas · Acerto · Caixa · Relatórios','r':'O caminho mais comum da loja, do começo ao fim. Seis telas e quatro números que têm que fechar entre si. Faça os itens em ordem, sem pular.','testes':[
- {'id':'A.1','t':'Vender no balcão','passos':[
-   'Abra o <b>PDV</b>.','Ponha no carrinho produtos que somem R$ 50.',
-   'Escolha ENTREGA e um bairro com taxa de R$ 5.','Escolha pagamento em DINHEIRO.','Feche a venda.'],
-  'e':'Total R$ 55. Aparece em Pedidos e no KDS.','eps':['POST /api/pedidos']},
+ {'id':'A.1','t':'Lançar o pedido que chegou por telefone','passos':[
+   'Em <b>Ajustes Operação</b>, garanta um bairro com taxa cadastrada (anote o valor).',
+   'Abra <b>Novo Pedido</b> — não o PDV: a Frente de Caixa é retirada por definição (item 5.6), '
+   'e é o Novo Pedido que tem entrega, endereço e taxa.',
+   'Escolha ou cadastre o cliente, informando esse bairro.',
+   'Confira que o campo Taxa de entrega preencheu sozinho com o valor cadastrado.',
+   'Ponha no carrinho produtos que somem R$ 50.',
+   'Confira que o canal está num canal da própria loja (Telefone), e não num marketplace.',
+   'Escolha pagamento em DINHEIRO e feche.'],
+  'e':'O total é R$ 50 mais a taxa do bairro. Aparece em Pedidos e no KDS, com o canal e a taxa '
+      'que você viu na tela.',
+  'f':'Este item já mandou "abra o PDV e escolha ENTREGA" — impossível, e em contradição direta '
+      'com o item 5.6, que é regressão e exige que todo pedido do PDV nasça RETIRADA. Como I-A é '
+      'sequencial, o erro derrubava os dez itens do bloco.','eps':['POST /api/pedidos']},
  {'id':'A.2','t':'A cozinha recebe','passos':['Abra o <b>KDS</b>.','Ache o cartão desse pedido e leia o que tem nele.'],
   'e':'Itens, observação, endereço, e que é entrega.','eps':['GET /api/pedidos/board']},
  {'id':'A.3','t':'O estoque baixou','passos':[
@@ -24,9 +34,9 @@ PARTE_C = [
   'e':'Sai da rota e entra no histórico.','eps':['PATCH /api/pedidos/{id}/status']},
  {'id':'A.7','t':'O acerto bate','passos':[
    'Abra <b>Acerto</b>.','Escolha esse entregador.','Abra a prévia.'],
-  'e':'A entrega aparece, com a taxa de R$ 5 e R$ 55 de dinheiro recebido.','eps':['GET /api/acertos/previa']},
- {'id':'A.8','t':'O caixa bate','passos':['Abra <b>Fechar Caixa</b>.','Procure a linha da forma DINHEIRO.'],
-  'e':'Os R$ 55 estão lá, na forma DINHEIRO.','eps':['GET /api/pedidos/board']},
+  'e':'A entrega aparece, com a MESMA taxa que você viu no item A.1 e o total do pedido em dinheiro recebido.','eps':['GET /api/acertos/previa']},
+ {'id':'A.8','t':'O caixa bate','passos':['Abra <b>Fechar Caixa</b>.','Procure a linha da forma DINHEIRO e compare com o total do A.1.'],
+  'e':'O total do pedido está lá, na forma DINHEIRO.','eps':['GET /api/pedidos/board']},
  {'id':'A.9','t':'O relatório concorda','passos':[
    'Abra <b>Relatórios</b> no período de hoje.',
    'Compare o faturamento com o do caixa e com o do Dashboard.','Olhe o CMV.'],
