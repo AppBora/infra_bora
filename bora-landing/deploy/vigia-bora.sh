@@ -19,10 +19,27 @@
 #
 # Agora: ele tenta devolver o `api-anterior` quando o `api` nao existe, e so apaga o marcador quando o
 # site VOLTA. Enquanto nao voltar, cada ciclo escreve que continua fora, com o numero de tentativas.
+#
+# ITEM 9.7 DA VARREDURA (medido em 23/10/2026)
+#
+# Este vigia olhava o `/actuator/health`, que AGREGA os indicadores do Spring -- e um deles e o do
+# banco. Medido num teste contra a aplicacao de verdade: o health cheio tem o componente `db`. Entao
+# quando o RDS piscava, o vigia lia DOWN e REINICIAVA A API.
+#
+# Reiniciar nao conserta banco. A API nova sobe, acha o banco fora do ar, e o ciclo se repete -- e a
+# cada reinicio as requisicoes em voo morrem. O vigia virava o problema.
+#
+# Agora ele pergunta ao grupo `viva`, que olha SO o processo (`ping`): "a JVM esta de pe e
+# atendendo?". E essa a pergunta que justifica um reinicio. Quando o processo esta vivo mas o sistema
+# esta DOWN, ele NAO reinicia: escreve que o problema e DEPOIS da API -- e aí quem le o log sabe
+# olhar o banco em vez de ficar esperando o reinicio resolver.
 LOG=/home/ubuntu/backups/vigia.log
 MARCA=/tmp/bora-falhou
 
-saude() { curl -s -o /dev/null -w "%{http_code}" --max-time 20 https://borahapp.com.br/actuator/health; }
+# O PROCESSO atende? (grupo `viva` = so o ping; nao depende de banco nem de terceiro)
+saude() { curl -s -o /dev/null -w "%{http_code}" --max-time 20 https://borahapp.com.br/actuator/health/viva; }
+# O SISTEMA esta inteiro? (health cheio: agrega o banco)
+sistema() { curl -s -o /dev/null -w "%{http_code}" --max-time 20 https://borahapp.com.br/actuator/health; }
 
 CODE=$(saude)
 if [ "$CODE" = "200" ]; then
@@ -42,6 +59,18 @@ fi
 TENTATIVAS=$(( $(cat "$MARCA" 2>/dev/null || echo 0) + 1 ))
 echo "$TENTATIVAS" > "$MARCA"
 echo "$(date -Is) FORA DO AR (HTTP $CODE) — tentativa $TENTATIVAS" >> "$LOG"
+
+# Item 9.7: o processo nao respondeu. Antes de reiniciar, confere se a API esta de pe por dentro --
+# se ela responde no container e o que falha e so a rota publica, o problema e o Caddy ou a rede, e
+# reiniciar a API tampouco resolve.
+DENTRO=$(docker exec api curl -s -o /dev/null -w "%{http_code}" --max-time 10 \
+  localhost:8080/actuator/health/viva 2>/dev/null)
+if [ "$DENTRO" = "200" ]; then
+  echo "$(date -Is) a API responde DENTRO do container (HTTP $DENTRO) e nao responde de fora." \
+       "O problema esta no Caddy, no DNS ou na rede -- NAO vou reiniciar a API, que esta sadia." >> "$LOG"
+  docker ps --format "{{.Names}}  {{.Status}}" >> "$LOG" 2>&1 || true
+  exit 0
+fi
 
 # O container `api` existe? Se nao, o caso mais provavel e um deploy que falhou no meio e deixou o
 # anterior renomeado. Devolver ele e melhor que ficar tentando reiniciar o que nao existe.
@@ -67,6 +96,14 @@ echo "$(date -Is) depois da tentativa $TENTATIVAS: HTTP $DEPOIS" >> "$LOG"
 if [ "$DEPOIS" = "200" ]; then
   echo "$(date -Is) VOLTOU depois de $TENTATIVAS tentativa(s)" >> "$LOG"
   rm -f "$MARCA"
+  # Item 9.7: o processo voltou. Mas o SISTEMA pode continuar quebrado -- e aí o reinicio nao era a
+  # cura e ninguem fica sabendo. Esta linha e a diferenca entre "resolvido" e "parece resolvido".
+  SIST=$(sistema)
+  if [ "$SIST" != "200" ]; then
+    echo "$(date -Is) ATENCAO: o processo voltou, mas o health CHEIO continua em HTTP $SIST." \
+         "O que esta fora e DEPOIS da API -- provavelmente o banco. Reiniciar a API nao resolve" \
+         "isto: olhe o RDS." >> "$LOG"
+  fi
 elif [ "$TENTATIVAS" -ge 3 ]; then
   echo "$(date -Is) !!! $TENTATIVAS tentativas e o site continua fora (HTTP $DEPOIS). O vigia nao" \
        "consegue resolver sozinho -- precisa de mao humana." >> "$LOG"

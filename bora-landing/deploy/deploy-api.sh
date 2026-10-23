@@ -130,6 +130,23 @@ then
   rollback
 fi
 
+# ITEM 9.7 DA VARREDURA: aqui o health CHEIO esta certo -- versao que nao fala com o banco nao serve,
+# e rollback e a decisao acertada. O que faltava era dizer QUAL dos dois caiu. Sem isso, um RDS fora
+# do ar aparecia como "a versao nova nao ficou sadia", e o proximo passo de quem le seria procurar
+# defeito num codigo que esta bom.
+diagnostico_da_falha() {
+  local viva
+  viva=$(ssh -i "$KEY" "$SRV" "docker exec api curl -s -o /dev/null -w '%{http_code}' --max-time 10 localhost:8080/actuator/health/viva 2>/dev/null" || true)
+  if [ "$viva" = "200" ]; then
+    echo "DIAGNOSTICO: o processo SUBIU e responde (grupo viva = 200). O que esta DOWN e um" >&2
+    echo "indicador de fora -- quase sempre o banco. O codigo provavelmente esta bom: olhe o RDS" >&2
+    echo "antes de procurar defeito na versao nova. Ver varredura 9.7." >&2
+  else
+    echo "DIAGNOSTICO: o processo nao responde nem no grupo viva (HTTP ${viva:-sem resposta})." >&2
+    echo "A falha e da propria aplicacao: veja o log do container." >&2
+  fi
+}
+
 dizer "9/9 esperando ficar sadio (rollback se nao ficar)"
 if ssh -i "$KEY" "$SRV" 'for i in $(seq 1 40); do
       docker exec api curl -fs localhost:8080/actuator/health 2>/dev/null | grep -q UP && exit 0
@@ -140,5 +157,6 @@ if ssh -i "$KEY" "$SRV" 'for i in $(seq 1 40); do
   ssh -i "$KEY" "$SRV" 'docker ps --format "{{.Names}}  {{.Status}}"'
 else
   echo "A versao nova nao ficou sadia." >&2
+  diagnostico_da_falha
   rollback
 fi
