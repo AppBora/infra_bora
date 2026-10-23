@@ -1,2 +1,6 @@
-15 6 * * * /home/ubuntu/backup-bora.sh >> /home/ubuntu/backups/backup.log 2>&1
+# Backup de 6 em 6 horas: no maximo 6h de perda se o banco se for. (O arquivo versionado dizia
+# 1x por dia e o servidor ja fazia de 6 em 6 -- conferido em 23/10/2026 com "crontab -l".)
+15 0,6,12,18 * * * /home/ubuntu/backup-bora.sh >> /home/ubuntu/backups/backup.log 2>&1
+# Ensaio de restauracao semanal: restaura num banco descartavel e conta as linhas.
+40 3 * * 0 /home/ubuntu/ensaio-de-restauracao.sh >> /home/ubuntu/backups/ensaio.log 2>&1
 */5 * * * * /home/ubuntu/vigia-bora.sh

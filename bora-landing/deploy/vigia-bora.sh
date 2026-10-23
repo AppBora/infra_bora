@@ -35,6 +35,8 @@
 # olhar o banco em vez de ficar esperando o reinicio resolver.
 LOG=/home/ubuntu/backups/vigia.log
 MARCA=/tmp/bora-falhou
+# Marcador separado: o processo pode estar vivo e o sistema fora. Sao duas historias diferentes.
+MARCA_SISTEMA=/tmp/bora-sistema-fora
 
 # O PROCESSO atende? (grupo `viva` = so o ping; nao depende de banco nem de terceiro)
 saude() { curl -s -o /dev/null -w "%{http_code}" --max-time 20 https://borahapp.com.br/actuator/health/viva; }
@@ -47,6 +49,29 @@ if [ "$CODE" = "200" ]; then
     echo "$(date -Is) VOLTOU (HTTP 200) depois de $(cat "$MARCA" 2>/dev/null) tentativa(s)" >> "$LOG"
   fi
   rm -f "$MARCA"
+
+  # O processo esta de pe. Isso NAO quer dizer que o sistema esta inteiro -- e era exatamente aqui
+  # que o vigia ficava mudo. Ele saia neste ponto sem nunca perguntar pelo health cheio, e a frase
+  # "o problema e DEPOIS da API" so existia la embaixo, num ramo que so e alcancado DEPOIS de uma
+  # tentativa de reinicio. Com o banco fora e a JVM viva, nada era escrito: o vigia acertava em nao
+  # reiniciar e errava em nao contar. De madrugada isso e silencio, que e o que ele existe para evitar.
+  SIST=$(sistema)
+  if [ "$SIST" = "200" ]; then
+    if [ -f "$MARCA_SISTEMA" ]; then
+      echo "$(date -Is) o SISTEMA voltou (health cheio 200) depois de $(cat "$MARCA_SISTEMA" 2>/dev/null) ciclo(s) fora." >> "$LOG"
+      rm -f "$MARCA_SISTEMA"
+    fi
+  else
+    CICLOS=$(( $(cat "$MARCA_SISTEMA" 2>/dev/null || echo 0) + 1 ))
+    echo "$CICLOS" > "$MARCA_SISTEMA"
+    # Fala alto na primeira vez e a cada 30 min (6 ciclos de 5). Nem inundar o log, nem sumir dele.
+    if [ "$CICLOS" = "1" ] || [ "$(( CICLOS % 6 ))" = "0" ]; then
+      echo "$(date -Is) ATENCAO: a API esta de pe (viva 200) e o health CHEIO responde HTTP $SIST."            "Ha $CICLOS ciclo(s) de 5 min. O que esta fora e DEPOIS da API -- quase sempre o banco."            "NAO vou reiniciar: reiniciar a API nao levanta o RDS, e so mata as requisicoes em voo." >> "$LOG"
+      # Quem esta DOWN, para ninguem ter de adivinhar qual peca e.
+      docker exec api curl -s --max-time 10 localhost:8080/actuator/health >> "$LOG" 2>&1 || true
+      echo "" >> "$LOG"
+    fi
+  fi
   exit 0
 fi
 
