@@ -101,25 +101,45 @@ público em 200, `ASAAS_WEBHOOK_TOKEN` ainda definido, backup de 3,3 MB tirado a
 
 ---
 
-## ⚪ Defeitos abertos que são meus (da lista de 23/10)
+## ⚪ A lista de 23/10, reconferida contra o código de hoje (24/10)
 
-Nenhum destes mexe em dinheiro. Os quatro que mexiam já estão no ar.
+**Eu escrevi aqui que "nenhum destes mexe em dinheiro". Estava errado:** o #17 cobrava R$ 8,00 que o
+cliente não pediu e o #16 fazia a loja entregar de graça. E, ao ir atacar, **6 dos 10 já estavam
+consertados** — a lista estava velha, não o código. Fui item por item:
 
-| # | o que é |
+| # | o que era | estado medido |
+|---|---|---|
+| 16 | Sem bairro, somia a RETIRADA junto com a taxa | ✅ **fechado** — `cardapio.js:342`, "A ESCOLHA ENTRE ENTREGA E RETIRADA APARECE SEMPRE", conferido no ar |
+| 17 | Borda "opcional" que não dava para desmarcar (+R$ 8,00) | ✅ **fechado** — grupo opcional usa `checkbox`, não `radio`; conferido no ar |
+| 19 | Importação por foto escondida no cartão de IA | ⬜ **não achei a funcionalidade** no código, só no roteiro de teste. Precisa de um olhar seu: ela existe mesmo? |
+| 20 | Produtos mandava `estoque` no PUT | ✅ **fechado** — o corpo de edição não leva mais estoque |
+| 21 | Ajuda sem termos, sem menu de usuário | ✅ **fechado** — `ajuda.html` aponta para os termos, e o `quemSouEu` está no `app.js` |
+| 22 | Cadastro não mencionava os 7 dias grátis | ✅ **fechado** — `cadastro.html:28` |
+| 23 | Fallback "Sorveteria da Rosa" | ✅ **fechado** — o nome só existe num comentário explicando o conserto |
+| 24 | Loja 17 sem `merchant_id` | ⬜ **é dado seu** — sem ele não dá para testar marketplace fora da loja 1 |
+| 25 | 3 endpoints sem tela | ✅ **2 de 3** — `pedido-bruto` em `configuracoes.html:433`, `diagnostico` em `integracoes.js`. Falta `fiscal/nfce`, e isso é latente: sem o token da Focus a emissão não existe |
+| 26 | QR dependia de serviço de fora | ✅ **fechado** — nenhuma chamada a `api.qrserver.com` sobrou, conferido nos 3 arquivos **baixados de produção** |
+
+---
+
+## ✅ Os 4 achados do QA de hoje, consertados (24/10)
+
+| o que estava errado | o que mudou |
 |---|---|
-| 16 | **Sem bairro cadastrado, some a RETIRADA junto com a taxa** — loja de balcão recebe tudo como entrega com frete zero |
-| 17 | **Borda "opcional" que não dá para desmarcar**: depois do primeiro toque vira obrigatória e o cliente leva +R$ 8,00 que não pediu |
-| 19 | Importação por foto **escondida** dentro do cartão de IA em Configurações |
-| 20 | Produtos ainda manda `estoque` no corpo do PUT (inofensivo hoje porque o servidor ignora de propósito) |
-| 21 | **Ajuda não menciona os termos**, e não existe menu de usuário mostrando com que conta você está |
-| 22 | **Cadastro não menciona os 7 dias grátis** que a landing promete em 6 lugares |
-| 23 | Fallback do nome da loja é **"Sorveteria da Rosa"** — risco, não defeito ativo (0 de 5 lojas com nome vazio) |
-| 24 | A **loja 17 está sem `merchant_id`**, então não dá para testar marketplace fora da loja 1 |
-| 25 | **3 endpoints que nenhuma tela chama**: `pedido-bruto`, `diagnostico`, `fiscal/nfce` |
-| 26 | **O QR depende de um serviço de fora** (`api.qrserver.com`). Se ele cair, nenhuma loja imprime cardápio |
+| **O recado do marketplace durava 30 segundos.** Quando o marketplace recusa um status que você avançou no painel, a explicação ia para `ultimo_erro` — e o polling, que roda a cada 30s, apagava. Você tinha meio minuto para ver, e só com a tela aberta na hora. E o estrago continua: na 99 a ordem dos status é obrigatória, então os status seguintes do mesmo pedido também são recusados. Você vê tudo verde e lá dentro o pedido ficou parado | coluna própria (**V61**: `ultimo_aviso` + a hora). O polling limpa só a saúde da integração. O único jeito de apagar o recado é você clicar em "Já vi", com linha de auditoria. O diagnóstico também parou de dizer "Nenhum erro registrado" com um pedido parado |
+| **"Por forma de pagamento" estava fragmentado.** Medido na produção: `Pix` (12) e `PIX (pago)` (1) em duas linhas; `Dinheiro` (3) e `Dinheiro (atualizado)` (2) em outras duas; `CREDIT` (5) em inglês; e uma linha cujo rótulo é a frase *"Pago online: Crédito Visa R$ 17,00 + Pago online: Crédito Master R$ 10,00"*. Dez linhas na tela em que você confere o dinheiro do dia | agrupamento normalizado (`boraFormaPagamento`, no `app.js`). **O total não muda** — é a primeira coisa que o teste cobra. Forma desconhecida mantém o próprio nome, para não esconder uma forma nova de pagamento |
+| **O cartão do KDS escondia o canal.** Com a forma de pagamento preenchida, a origem nunca aparecia: pedido do iFood pago em crédito dizia só "Crédito". E isso muda o que o operador faz — pedido de marketplace não se liga para o cliente, e o cancelamento é por lá | saem os dois, forma e canal. Com guarda, para um rótulo de pagamento não derrubar o quadro da cozinha |
+| **O iPhone dava zoom no checkout do cliente.** O Safari amplia a página quando o campo tocado tem letra menor que 16px, e não volta. Os campos não declaravam tamanho e ficavam nos ~13px do padrão: o cliente tocava em "Seu nome" e o checkout ficava ampliado e cortado, no meio do pedido | 16px nos campos. **Não travei o zoom** com `maximum-scale` — isso tiraria a ampliação de quem precisa de letra maior, por um descuido nosso de 3px |
 
-✅ **Corrigido e no ar (confirmei hoje):** a lista-branca do `GET /admin-bora/config` (commit
-`94ec8fa`, 23/10 13:39; a API no ar é de 23/10 19:42, depois disso).
+Testes: **1030 no backend** (incluindo 3 ITs novos contra Postgres de verdade) e **480 no frontend**,
+0 falhas. 8 mutantes conferidos, todos pegos.
+
+**Falta subir:** a API (com a migração V61) e 5 arquivos de frontend.
+
+### ⬜ Ainda aberto deste lote
+
+`FiscalService.java:80-84` devolve o erro da Focus sem tradução — 500 cru para o lojista. Latente:
+sem o token da Focus configurado, a emissão não acontece. Vai no mesmo deploy quando você mandar.
 
 ---
 
