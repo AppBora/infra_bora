@@ -116,7 +116,7 @@ consertados** — a lista estava velha, não o código. Fui item por item:
 | 21 | Ajuda sem termos, sem menu de usuário | ✅ **fechado** — `ajuda.html` aponta para os termos, e o `quemSouEu` está no `app.js` |
 | 22 | Cadastro não mencionava os 7 dias grátis | ✅ **fechado** — `cadastro.html:28` |
 | 23 | Fallback "Sorveteria da Rosa" | ✅ **fechado** — o nome só existe num comentário explicando o conserto |
-| 24 | Loja 17 sem `merchant_id` | ⬜ **é dado seu** — sem ele não dá para testar marketplace fora da loja 1 |
+| 24 | Loja 17 sem `merchant_id` | ✅ **o defeito atrás disso está fechado (25/10)** — era limitação de teste na superfície, e por baixo havia uma integração ATIVA e `CONECTADO` que **nunca buscou um pedido**, em silêncio, com o token vencido há 18 dias. Agora o poller diz por quê, o cartão para de prometer e o diagnóstico escreve **VENCIDA**. ⬜ **Resta a sua parte:** refazer o vínculo do iFood da loja 17 |
 | 25 | 3 endpoints sem tela | ✅ **2 de 3** — `pedido-bruto` em `configuracoes.html:433`, `diagnostico` em `integracoes.js`. Falta `fiscal/nfce`, e isso é latente: sem o token da Focus a emissão não existe |
 | 26 | QR dependia de serviço de fora | ✅ **fechado** — nenhuma chamada a `api.qrserver.com` sobrou, conferido nos 3 arquivos **baixados de produção** |
 
