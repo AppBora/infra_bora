@@ -111,7 +111,7 @@ consertados** — a lista estava velha, não o código. Fui item por item:
 |---|---|---|
 | 16 | Sem bairro, somia a RETIRADA junto com a taxa | ✅ **fechado** — `cardapio.js:342`, "A ESCOLHA ENTRE ENTREGA E RETIRADA APARECE SEMPRE", conferido no ar |
 | 17 | Borda "opcional" que não dava para desmarcar (+R$ 8,00) | ✅ **fechado** — grupo opcional usa `checkbox`, não `radio`; conferido no ar |
-| 19 | Importação por foto escondida no cartão de IA | ⬜ **não achei a funcionalidade** no código, só no roteiro de teste. Precisa de um olhar seu: ela existe mesmo? |
+| 19 | Importação por foto escondida no cartão de IA | ✅ **fechado em 25/10** — ela existia e funcionava; eu não tinha achado porque procurei em `assets/js/*` e ela estava no script embutido do `configuracoes.html`. Mudou para **Produtos → Importar cardápio**, com portão do add-on, teto de 5 MB e aviso para conferir os preços |
 | 20 | Produtos mandava `estoque` no PUT | ✅ **fechado** — o corpo de edição não leva mais estoque |
 | 21 | Ajuda sem termos, sem menu de usuário | ✅ **fechado** — `ajuda.html` aponta para os termos, e o `quemSouEu` está no `app.js` |
 | 22 | Cadastro não mencionava os 7 dias grátis | ✅ **fechado** — `cadastro.html:28` |
