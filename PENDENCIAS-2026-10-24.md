@@ -143,6 +143,20 @@ sem o token da Focus configurado, a emissão não acontece. Vai no mesmo deploy 
 
 ---
 
+## 🆕 Achado de passagem em 25/10, para você decidir
+
+**A integração 99Food da loja 1 está com a credencial recusada.** O 99Food devolve 502 a cada
+tentativa, de 10 em 10 minutos, com esta mensagem: *"A 99Food recusou a credencial: confira o App
+Shop ID desta loja e o App Secret da plataforma."*
+
+Não é defeito de código — é credencial. Medido hoje: `loja 1 · NOVE_NOVE · status ERRO`, última
+tentativa 18:47:54. Enquanto estiver assim, **nenhum pedido do 99Food entra na Sorveteria da Rosa**.
+
+Me diz se quer que eu olhe. Precisaria conferir o App Shop ID dessa loja no portal da 99Food contra
+o que está salvo aqui — e a parte do portal é sua.
+
+---
+
 ## Nota fiscal
 
 Latente, não quebrada: o token da Focus vive em `config_plataforma` (`fiscal.focus-token`) e
