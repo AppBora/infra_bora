@@ -152,8 +152,19 @@ Shop ID desta loja e o App Secret da plataforma."*
 Não é defeito de código — é credencial. Medido hoje: `loja 1 · NOVE_NOVE · status ERRO`, última
 tentativa 18:47:54. Enquanto estiver assim, **nenhum pedido do 99Food entra na Sorveteria da Rosa**.
 
-Me diz se quer que eu olhe. Precisaria conferir o App Shop ID dessa loja no portal da 99Food contra
-o que está salvo aqui — e a parte do portal é sua.
+**Olhei, e o diagnóstico está em `CREDENCIAL-99FOOD-LOJA-1.md`.** O resumo: a loja 1 usa a
+credencial **da plataforma**, cujo `client_secret` tem **13 caracteres** — o único segredo de 99Food
+que comprovadamente funciona aqui (o do app **próprio** da Zirá) tem **32**. A 99Food devolve **401**
+(credencial recusada), e não 404 (app não liberado), então eles reconhecem o aplicativo e o par
+id+segredo é que está errado. Não foi corte de coluna: ela é `varchar(255)`.
+
+**A credencial da plataforma nunca funcionou para loja nenhuma** — a Zirá só funciona porque tem app
+próprio, que conferi não ser o mesmo da plataforma.
+
+🔴 **E o problema maior: não existe tela para salvar a credencial da plataforma.** O `GET /config`
+exclui as chaves `credencial.*` de propósito, o único `PUT` é o da NFC-e, e os campos da tela de
+Integrações são da **loja**. Mesmo com o segredo certo na mão, você não tem como salvá-lo pelo
+painel. Posso construir essa tela — é decisão sua, porque lida com segredo.
 
 ---
 
