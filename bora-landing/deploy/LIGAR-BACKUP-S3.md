@@ -14,6 +14,23 @@ aws: [ERROR] ... assumed-role/AmazonLightsailInstanceRole/i-0d826e3a893c9b57a
      is not authorized to perform: s3:CreateBucket
 ```
 
+**Reconferido em 27/10/2026, e segue igual** — o dono pediu para eu configurar e eu medi antes de
+tentar:
+
+```
+aws: [ERROR]: An error occurred (AccessDenied) when calling the ListBuckets operation:
+User: arn:aws:sts::938184885183:assumed-role/AmazonLightsailInstanceRole/i-0d826e3a893c9b57a
+is not authorized to perform: s3:ListAllMyBuckets because no identity-based policy allows
+the s3:ListAllMyBuckets action
+```
+
+E do lado de fora também não dá: o `aws` desta máquina responde `InvalidClientTokenId` — a
+credencial configurada aqui não vale. Mesmo que valesse, anexar política no IAM é mudança de
+permissão da conta, e isso não é coisa que eu faça sem ser eu quem assina.
+
+A imagem `amazon/aws-cli:latest` **já está no servidor** (650 MB, conferido em 27/10), então a
+primeira cópia não vai precisar baixar nada.
+
 Criar bucket e anexar política são ações de conta, feitas no console da AWS com a sua credencial de
 administrador. Eu não tenho, e não vou pedir.
 
@@ -77,9 +94,41 @@ JSON, cole:
 alguém entre na instância, ele não apaga os backups antigos de lá. E sem `s3:GetObject`: para
 restaurar você baixa pelo console, que é uma operação de gente, não de máquina.
 
-## 3. Dizer ao script para onde copiar
+## 3. Testar a cópia À MÃO, antes de ligar a variável
 
-No servidor:
+**Esta ordem não é capricho.** Quando a cópia para fora falha, o `backup-bora.sh` faz `exit 1`. E o
+`deploy-api.sh` chama esse mesmo script no passo 7, com `set -euo pipefail`:
+
+```bash
+ssh ... '/home/ubuntu/backup-bora.sh && ls -t ~/backups/*.dump | head -1'
+```
+
+Então **variável ligada com a política errada = todo deploy aborta no passo 7**. Aborta do lado
+seguro (antes de trocar o container, o site não cai), mas você fica sem conseguir subir versão até
+arrumar. Medido no código em 27/10/2026.
+
+Por isso: primeiro prove que a permissão funciona, com o mesmo container que o script usa, e só
+depois ligue a variável.
+
+```bash
+ssh -i ~/.ssh/bora-lightsail.pem ubuntu@18.230.57.33
+
+# (a) listar o bucket — prova o s3:ListBucket
+docker run --rm --network host -e AWS_REGION=sa-east-1 amazon/aws-cli:latest \
+  s3 ls s3://bora-backups-938184885183/bora/
+
+# (b) copiar o dump mais novo — prova o s3:PutObject, que é o que o backup faz
+ARQ=$(ls -t ~/backups/bora-*.dump | head -1)
+docker run --rm --network host -e AWS_REGION=sa-east-1 -v ~/backups:/bkp amazon/aws-cli:latest \
+  s3 cp "/bkp/$(basename "$ARQ")" s3://bora-backups-938184885183/bora/ --storage-class STANDARD_IA
+```
+
+O (a) pode voltar vazio — bucket novo não tem nada dentro, e vazio é sucesso. O que importa é **não**
+voltar `AccessDenied`.
+
+## 4. Dizer ao script para onde copiar
+
+Só depois do teste acima passar:
 
 ```bash
 ssh -i ~/.ssh/bora-lightsail.pem ubuntu@18.230.57.33
@@ -89,7 +138,7 @@ echo 'BORA_BACKUP_S3=s3://bora-backups-938184885183/bora' | sudo tee -a /etc/env
 O `backup-bora.sh` roda pelo cron, que não lê o `api.env` — por isso a variável vai no
 `/etc/environment`, que o cron enxerga.
 
-## 4. Conferir
+## 5. Conferir
 
 ```bash
 /home/ubuntu/backup-bora.sh
