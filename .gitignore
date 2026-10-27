@@ -24,3 +24,7 @@ backups-bora/
 # e a que vai para o ar, em bora-fase-2-frontend/. Duas copias rastreadas iam
 # divergir em silencio, e a errada seria a publicada.
 /ROTEIRO-DE-TESTE.html
+
+# Cache do Python: nao vai para o repositorio.
+__pycache__/
+*.pyc
