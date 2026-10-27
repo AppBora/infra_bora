@@ -69,6 +69,41 @@ const APLICAR = false;        // ← troque para true SÓ depois de conferir o e
     'Pote 1L Puro': 24.90,
   };
 
+  // ---------------------------------------------------------------- 27/10: igual ao papel
+  // O dono mandou as duas páginas do cardápio. Conferi preço por preço contra as tabelas acima:
+  // todos batem. O que NÃO batia era outra coisa, e são estas três.
+
+  // 1. O PAPEL ESCREVE 770 ML; o cadastro diz 700ml. É o mesmo produto, com o nome errado.
+  const RENOMEAR_PRODUTO = { 'Copo do Patrão 700ml': 'Copo do Patrão 770ml' };
+  const RENOMEAR_RECIPIENTE = { 'Copo 700ml Puro': 'Copo 770ml Puro' };
+
+  // 2. MORANGO ESTÁ NO PAPEL (FRUTAS, R$ 3,00) E NÃO EXISTE NO CADASTRO.
+  //
+  // Medido na produção em 27/10: o grupo "Adicionais Extras" tem Banana e não tem Morango. O script
+  // antigo já trazia o preço do Morango, mas ele só ATUALIZAVA o que existe -- então passava batido
+  // e ninguém via. Agora ele CRIA o que falta.
+  //
+  // Vai em todo produto que tenha o grupo, porque neste sistema cada produto carrega a sua PRÓPRIA
+  // cópia dos adicionais (eles são apagados e recriados a cada gravação, com ids novos).
+  //
+  // Sem insumo ligado, como os vizinhos: medi Banana, Granola e Kit Kat, e os três estão com
+  // insumo_id nulo. Ligar insumo aqui faria a venda baixar estoque de um insumo que ninguém mandou
+  // baixar.
+  const CRIAR_ADICIONAL = [
+    { grupo: 'Adicionais Extras', nome: 'Morango', preco: 3.00 },
+  ];
+
+  // 3. O QUE EXISTE NO SISTEMA E NÃO ESTÁ NO PAPEL.
+  //
+  // NÃO APAGO NENHUM, de propósito, e o script também não. Ele LISTA no fim, e você decide:
+  //
+  //   - "Roleta 1L Puro" (R$ 30) e "Barca G 1600ml Puro" (R$ 50) no AÇAÍ PURO. O papel mostra
+  //     quatro tamanhos; o sistema tem seis. Apagar tira duas opções que o cliente consegue pedir
+  //     hoje -- é decisão de venda, não de cadastro.
+  //   - "Granola" (R$ 2) e "Leite Condensado" (R$ 2) na lista paga. No papel eles aparecem só como
+  //     o que já VEM nos especiais, não como adicional pago.
+  const NO_PAPEL_RECIPIENTES = Object.keys(PRECO_RECIPIENTE);
+
   // Os três especiais viram nove produtos. O que já existe vira o de 300ml.
   const ESPECIAIS = [
     { atual: 'Ziraniho', nome: 'Ziraninho' },   // o cadastro tem um "n" a menos que o cardápio
@@ -105,7 +140,7 @@ const APLICAR = false;        // ← troque para true SÓ depois de conferir o e
   const porNome = {};
   produtos.forEach(p => { porNome[p.nome] = p; });
 
-  const feito = [], falhou = [], plano = [];
+  const feito = [], falhou = [], plano = [], foraDoPapel = [];
 
   /**
    * Corpo de edição de produto: devolve EXATAMENTE o que o cadastro tem, mudando só o pedido.
@@ -137,9 +172,22 @@ const APLICAR = false;        // ← troque para true SÓ depois de conferir o e
   for (const [nome, novo] of Object.entries(PRECO_PRODUTO)) {
     const p = porNome[nome];
     if (!p) { falhou.push('produto não encontrado: ' + nome); continue; }
-    if (Math.abs(Number(p.preco) - novo) < 0.001) continue;
-    await executar(`preço · ${nome}: ${money(p.preco)} → ${money(novo)}`, () =>
-      Bora.api('/api/produtos/' + p.id, { method: 'PUT', body: JSON.stringify(corpoDe(p, { preco: novo })) }));
+    const mudancas = {};
+    const precoMudou = Math.abs(Number(p.preco) - novo) >= 0.001;
+    if (precoMudou) mudancas.preco = novo;
+    // O papel escreve 770 ML onde o cadastro diz 700ml.
+    const nomeNovo = RENOMEAR_PRODUTO[nome];
+    if (nomeNovo && p.nome !== nomeNovo) mudancas.nome = nomeNovo;
+    if (!Object.keys(mudancas).length) continue;
+    // O NOME DO PRODUTO SEMPRE NO ROTULO. A primeira versao deste ajuste so o escrevia quando havia
+    // renomeacao, e a lista do ensaio saia como "produto · R$ 39,00 → R$ 47,90" -- sem dizer qual.
+    // Peguei simulando o script contra o catalogo real antes de entregar.
+    const rotulo = [
+      mudancas.nome ? `renomear para ${mudancas.nome}` : null,
+      precoMudou ? `${money(p.preco)} → ${money(novo)}` : null,
+    ].filter(Boolean).join(' · ');
+    await executar(`produto · ${nome}: ${rotulo}`, () =>
+      Bora.api('/api/produtos/' + p.id, { method: 'PUT', body: JSON.stringify(corpoDe(p, mudancas)) }));
   }
 
   // ---------------------------------------------------------------- 2) adicionais, produto a produto
@@ -153,11 +201,36 @@ const APLICAR = false;        // ← troque para true SÓ depois de conferir o e
     for (const g of grupos) {
       if (g.nome === GRATIS) continue;
       for (const i of (g.itens || [])) {
-        const alvo = g.nome === 'Recipientes' ? PRECO_RECIPIENTE[i.nome] : PRECO_ADICIONAL[i.nome];
-        if (alvo == null) continue;
+        // A ORDEM AQUI IMPORTA, e a primeira versao deste ajuste errou: eu renomeava ANTES de
+        // buscar o preco, e a tabela e indexada pelo nome VELHO. Resultado: o recipiente de 770 ml
+        // ficava com o preco antigo (R$ 17,00) e ainda aparecia na lista de "fora do papel".
+        // Simular contra o catalogo real foi o que mostrou isso.
+        const nomeOriginal = i.nome;
+        const alvo = g.nome === 'Recipientes'
+          ? PRECO_RECIPIENTE[nomeOriginal] : PRECO_ADICIONAL[nomeOriginal];
+
+        // O papel escreve 770 ML onde o cadastro diz 700ml.
+        const renomeado = g.nome === 'Recipientes' ? RENOMEAR_RECIPIENTE[nomeOriginal] : null;
+        if (renomeado && i.nome !== renomeado) {
+          mudou.push(`${nomeOriginal} → ${renomeado}`);
+          i.nome = renomeado;
+        }
+        if (alvo == null) {
+          // Está no sistema e não está no papel. NÃO apago: só anoto, para o dono decidir.
+          foraDoPapel.push(`${p.nome} · ${g.nome} · ${nomeOriginal} (${money(i.preco)})`);
+          continue;
+        }
         if (Math.abs(Number(i.preco) - alvo) < 0.001) continue;
         mudou.push(`${i.nome} ${money(i.preco)}→${money(alvo)}`);
         i.preco = alvo;          // só o preço; insumoId e quantidade seguem intactos
+      }
+
+      // O que o papel tem e o cadastro não: cria. Era o buraco do Morango.
+      for (const novo of CRIAR_ADICIONAL) {
+        if (novo.grupo !== g.nome) continue;
+        if ((g.itens || []).some(i => i.nome === novo.nome)) continue;
+        (g.itens = g.itens || []).push({ nome: novo.nome, preco: novo.preco });
+        mudou.push(`CRIAR ${novo.nome} ${money(novo.preco)}`);
       }
     }
     if (!mudou.length) continue;
@@ -217,5 +290,30 @@ const APLICAR = false;        // ← troque para true SÓ depois de conferir o e
     console.log('%cavisos do ensaio:', 'color:#b45309;font-weight:bold');
     falhou.forEach(f => console.log('   ! ' + f));
   }
+
+  // ---------------------------------------------------------------- no sistema, fora do papel
+  //
+  // Isto NAO e feito por este script, nem com APLICAR = true. E lista para o dono ler e decidir.
+  // Apagar opcao que o cliente consegue pedir hoje e decisao de venda, e sumir com ela escondido
+  // num script de preco seria a pior forma de toma-la.
+  if (foraDoPapel.length) {
+    const unicos = [...new Set(foraDoPapel.map(l => l.split(' · ').slice(1).join(' · ')))].sort();
+    console.log('\n%cEXISTE NO SISTEMA E NAO ESTA NO PAPEL (' + unicos.length + ') -- eu NAO apaguei nada disto:',
+      'color:#b45309;font-weight:bold;font-size:13px');
+    unicos.forEach(l => console.log('   - ' + l));
+    console.log('   Os dois recipientes a mais (Roleta 1L, Barca 1,6L) sao tamanhos que o cliente');
+    console.log('   consegue pedir hoje. Granola e Leite Condensado aparecem no papel so como o');
+    console.log('   que JA VEM nos especiais, nao como adicional pago. Se quiser tirar algum, me');
+    console.log('   diga qual -- pela tela de Produtos, nao por aqui.');
+  }
+
+  console.log('\n%cO que este script NAO consegue deixar igual ao papel:', 'color:#64748b;font-weight:bold');
+  console.log('   - os grupos. O papel separa FRUTAS, CALDAS, DOCES e CREMES; o cadastro tem');
+  console.log('     \"Adicionais Extras\" e \"Cremes\". Da para reorganizar, mas isso muda o que o');
+  console.log('     cliente ve no celular e e mexida maior que preco.');
+  console.log('   - as descricoes (\"2 Camadas de Creme de Leitinho\", \"Morango, Leite Condensado,');
+  console.log('     Kit Kat\"). O cadastro de produto NAO TEM campo de descricao, e o cardapio');
+  console.log('     publico nao carrega esse campo. Isso e mudanca de sistema, nao de dado.');
+
   console.log(APLICAR ? '' : '\nPara aplicar: troque `const APLICAR = false` para `true` e cole de novo.');
 })();
