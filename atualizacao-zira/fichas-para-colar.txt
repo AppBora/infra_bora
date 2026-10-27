@@ -1,0 +1,172 @@
+# ============================================================================
+# FICHAS TECNICAS DA ZIRA - rascunho
+#
+# COMO LER ESTE ARQUIVO
+#   Linha sem #  -> pronta para colar. Sao as embalagens, e eu tenho certeza delas:
+#                   um copo de 300ml gasta um copo de 300ml, uma tampa e uma colher.
+#   Linha com #  -> FALTA A QUANTIDADE. O cardapio impresso diz o QUE vai no produto,
+#                   mas nao diz QUANTO. So a Zira sabe. Preencha o "?" e tire o #.
+#
+# ONDE COLAR: Produtos -> "Importar fichas tecnicas (lista)" -> Conferir -> Gravar fichas.
+#
+# A QUANTIDADE E PARA UMA UNIDADE DO PRODUTO, na unidade do insumo:
+#   polpa em kg (0,3 = 300 gramas)   |   copo, tampa, colher em peca (1)
+#
+# CUIDADO: gravar SUBSTITUI a ficha inteira do produto. Hoje nenhum produto tem ficha,
+# entao nao ha o que perder - mas na segunda vez, a lista precisa vir completa.
+#
+# DEPOIS DE GRAVAR: o produto fica ESGOTADO no cardapio enquanto qualquer insumo da ficha
+# estiver zerado. Lance a contagem em Estoque ANTES de gravar as fichas.
+# ============================================================================
+
+
+# --------------------------------------------------- ZIRA TRADICIONAL (Copo de Acai)
+# O papel diz: Granola, Leite Condensado, Leite em Po, Banana, Morango.
+Copo de Açaí 300ml ; Copo 300ml ; 1
+Copo de Açaí 300ml ; Tampa 300ml ; 1
+Copo de Açaí 300ml ; Colher Descartável ; 1
+# Copo de Açaí 300ml ; Polpa de Açaí ; ?
+# Copo de Açaí 300ml ; Granola ; ?
+# Copo de Açaí 300ml ; Leite Condensado ; ?
+# Copo de Açaí 300ml ; Leite em Pó ; ?
+# Copo de Açaí 300ml ; Banana ; ?
+# Copo de Açaí 300ml ; Morango ; ?
+
+Copo de Açaí 500ml ; Copo 500ml ; 1
+Copo de Açaí 500ml ; Tampa 500ml ; 1
+Copo de Açaí 500ml ; Colher Descartável ; 1
+# Copo de Açaí 500ml ; Polpa de Açaí ; ?
+# Copo de Açaí 500ml ; Granola ; ?
+# Copo de Açaí 500ml ; Leite Condensado ; ?
+# Copo de Açaí 500ml ; Leite em Pó ; ?
+# Copo de Açaí 500ml ; Banana ; ?
+# Copo de Açaí 500ml ; Morango ; ?
+
+Copo de Açaí 770ml ; Copo 770ml ; 1
+Copo de Açaí 770ml ; Tampa 770ml ; 1
+Copo de Açaí 770ml ; Colher Descartável ; 1
+# Copo de Açaí 770ml ; Polpa de Açaí ; ?
+# Copo de Açaí 770ml ; Granola ; ?
+# Copo de Açaí 770ml ; Leite Condensado ; ?
+# Copo de Açaí 770ml ; Leite em Pó ; ?
+# Copo de Açaí 770ml ; Banana ; ?
+# Copo de Açaí 770ml ; Morango ; ?
+
+Pote de Açaí 1L ; Pote 1L ; 1
+Pote de Açaí 1L ; Tampa Pote 1L ; 1
+Pote de Açaí 1L ; Colher Descartável ; 1
+# Pote de Açaí 1L ; Polpa de Açaí ; ?
+# Pote de Açaí 1L ; Granola ; ?
+# Pote de Açaí 1L ; Leite Condensado ; ?
+# Pote de Açaí 1L ; Leite em Pó ; ?
+# Pote de Açaí 1L ; Banana ; ?
+# Pote de Açaí 1L ; Morango ; ?
+
+
+# --------------------------------------------------- ESPECIAIS PARA COMPARTILHAR
+# BARCA, o papel diz: Banana, Morango, Granola, Leite Condensado e Leite em Po.
+Barca de Açaí Gourmet ; Embalagem Barca ; 1
+Barca de Açaí Gourmet ; Colher Descartável ; 1
+# Barca de Açaí Gourmet ; Polpa de Açaí ; ?
+# Barca de Açaí Gourmet ; Banana ; ?
+# Barca de Açaí Gourmet ; Morango ; ?
+# Barca de Açaí Gourmet ; Granola ; ?
+# Barca de Açaí Gourmet ; Leite Condensado ; ?
+# Barca de Açaí Gourmet ; Leite em Pó ; ?
+
+# TITANIC, o papel diz: Banana, Morango, Granola, Leite Condensado, Leite em Po,
+#                       Sucrilhos, Confete e Creme de Avela.
+Titanic Tamanho Família ; Embalagem Titanic ; 1
+Titanic Tamanho Família ; Colher Descartável ; 1
+# Titanic Tamanho Família ; Polpa de Açaí ; ?
+# Titanic Tamanho Família ; Banana ; ?
+# Titanic Tamanho Família ; Morango ; ?
+# Titanic Tamanho Família ; Granola ; ?
+# Titanic Tamanho Família ; Leite Condensado ; ?
+# Titanic Tamanho Família ; Leite em Pó ; ?
+# Titanic Tamanho Família ; Sucrilhos ; ?
+# Titanic Tamanho Família ; Confete ; ?
+# Titanic Tamanho Família ; Creme de Avelã ; ?
+
+# ROLETA, o papel diz o mesmo do Titanic.
+Roleta de Açaí Gourmet ; Embalagem Roleta ; 1
+Roleta de Açaí Gourmet ; Colher Descartável ; 1
+# Roleta de Açaí Gourmet ; Polpa de Açaí ; ?
+# Roleta de Açaí Gourmet ; Banana ; ?
+# Roleta de Açaí Gourmet ; Morango ; ?
+# Roleta de Açaí Gourmet ; Granola ; ?
+# Roleta de Açaí Gourmet ; Leite Condensado ; ?
+# Roleta de Açaí Gourmet ; Leite em Pó ; ?
+# Roleta de Açaí Gourmet ; Sucrilhos ; ?
+# Roleta de Açaí Gourmet ; Confete ; ?
+# Roleta de Açaí Gourmet ; Creme de Avelã ; ?
+
+
+# --------------------------------------------------- ESPECIALIDADES DA CASA
+# O papel diz, para os tres: 1 camada de Leite Condensado, Banana e Morango.
+# O que muda e o creme: Ziraninho = Creme de Leitinho, Ziracoca = Creme de Pacoca,
+# Ziratella = Creme de Avela -- 2 camadas cada.
+#
+# ATENCAO: no cadastro estes tres ainda estao SEM TAMANHO (um produto so, nao tres).
+# Depois que voce importar o cardapio novo, eles viram Ziraninho 300ml/500ml/770ml e
+# estas linhas precisam ser refeitas com o nome novo.
+Ziraniho ; Copo 300ml ; 1
+Ziraniho ; Tampa 300ml ; 1
+Ziraniho ; Colher Descartável ; 1
+# Ziraniho ; Polpa de Açaí ; ?
+# Ziraniho ; Creme de Leitinho ; ?
+# Ziraniho ; Leite Condensado ; ?
+# Ziraniho ; Banana ; ?
+# Ziraniho ; Morango ; ?
+
+Ziraçoca ; Copo 300ml ; 1
+Ziraçoca ; Tampa 300ml ; 1
+Ziraçoca ; Colher Descartável ; 1
+# Ziraçoca ; Polpa de Açaí ; ?
+# Ziraçoca ; Creme de Paçoca ; ?
+# Ziraçoca ; Leite Condensado ; ?
+# Ziraçoca ; Banana ; ?
+# Ziraçoca ; Morango ; ?
+
+Ziratella ; Copo 300ml ; 1
+Ziratella ; Tampa 300ml ; 1
+Ziratella ; Colher Descartável ; 1
+# Ziratella ; Polpa de Açaí ; ?
+# Ziratella ; Creme de Avelã ; ?
+# Ziratella ; Leite Condensado ; ?
+# Ziratella ; Banana ; ?
+# Ziratella ; Morango ; ?
+
+
+# --------------------------------------------------- COPOS ESPECIAIS
+# COPO PATROA, o papel diz: Morango, Leite Condensado, Kit Kat.
+Copo da Patroa 500ml ; Copo 500ml ; 1
+Copo da Patroa 500ml ; Tampa 500ml ; 1
+Copo da Patroa 500ml ; Colher Descartável ; 1
+# Copo da Patroa 500ml ; Polpa de Açaí ; ?
+# Copo da Patroa 500ml ; Morango ; ?
+# Copo da Patroa 500ml ; Leite Condensado ; ?
+# Copo da Patroa 500ml ; Kit Kat ; ?
+
+# COPO PATRAO, o papel diz: 3 camadas de Leite Condensado, 3 camadas de Leite em Po.
+# (o cadastro chama de 700ml; o papel diz 770 ML)
+Copo do Patrão 700ml ; Copo 770ml ; 1
+Copo do Patrão 700ml ; Tampa 770ml ; 1
+Copo do Patrão 700ml ; Colher Descartável ; 1
+# Copo do Patrão 700ml ; Polpa de Açaí ; ?
+# Copo do Patrão 700ml ; Leite Condensado ; ?
+# Copo do Patrão 700ml ; Leite em Pó ; ?
+
+
+# --------------------------------------------------- PAGUE 4, LEVE 5
+# O papel diz: 5 copos de 300 ml, com Granola, Leite Condensado, Leite em Po,
+# Banana e Morango no topo. Por isso a embalagem vai VEZES 5.
+Leve 5 Pague 4 Açaí ; Copo 300ml ; 5
+Leve 5 Pague 4 Açaí ; Tampa 300ml ; 5
+Leve 5 Pague 4 Açaí ; Colher Descartável ; 5
+# Leve 5 Pague 4 Açaí ; Polpa de Açaí ; ?
+# Leve 5 Pague 4 Açaí ; Granola ; ?
+# Leve 5 Pague 4 Açaí ; Leite Condensado ; ?
+# Leve 5 Pague 4 Açaí ; Leite em Pó ; ?
+# Leve 5 Pague 4 Açaí ; Banana ; ?
+# Leve 5 Pague 4 Açaí ; Morango ; ?
