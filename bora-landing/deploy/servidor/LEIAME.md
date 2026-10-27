@@ -1,6 +1,38 @@
 # O que roda no servidor
 
-Cópia fiel do que está em `/home/ubuntu` na instância Lightsail, tirada em 14/10/2026.
+Esta pasta descreve o que vive em `/home/ubuntu` na instância Lightsail. **Ela não guarda mais uma
+segunda cópia dos scripts**, e isso é conserto de 27/10/2026 — leia o porquê antes de recriar
+alguma.
+
+## A cópia dupla era uma armadilha, e ela armou
+
+Até 27/10 esta pasta dizia ser "cópia fiel do que está em `/home/ubuntu`, tirada em 14/10/2026", e
+tinha os scripts dentro. **As duas estavam velhas**, e eu medi:
+
+| arquivo | nesta pasta | em `../` | instalado no servidor |
+|---|---|---|---|
+| `vigia-bora.sh` | `86b25fcf`, 18 linhas | `288c7493`, 135 linhas | `288c7493` — o de `../` |
+| `backup-bora.sh` | `5f2883ff` | `c4a9aace` | `c4a9aace` — o de `../` |
+
+O `vigia-bora.sh` desta pasta era o **original de setembro**, com os dois defeitos que a v131
+consertou: ele olhava o `/actuator/health` cheio (e por isso **reiniciava a API quando o banco
+piscava**) e apagava o marcador de falha de qualquer jeito (e por isso alternava para sempre entre
+"primeira falha" e "reiniciando", sem nunca escalar). Quem lesse "cópia fiel" e instalasse daqui
+devolveria esses dois defeitos à produção.
+
+**A regra agora: os scripts moram em `../`, um só de cada.** Esta pasta guarda o `crontab.txt` e a
+explicação; os scripts, não.
+
+## Conferir o que está instalado contra o repositório
+
+```bash
+ssh -i ~/.ssh/bora-lightsail.pem ubuntu@18.230.57.33   'md5sum /home/ubuntu/backup-bora.sh /home/ubuntu/vigia-bora.sh /home/ubuntu/ensaio-de-restauracao.sh'
+md5sum ../backup-bora.sh ../vigia-bora.sh ../ensaio-de-restauracao.sh
+```
+
+Os md5 têm de bater. **Se não baterem, veja a quebra de linha antes de qualquer outra coisa:** script
+salvo em Windows vai com CRLF, e o bash do servidor morre na primeira linha com
+`$'': command not found`. Conferir com `tr -cd '' < arquivo | wc -c` — tem de ser `0`.
 
 ## Por que isto está aqui
 
@@ -11,9 +43,10 @@ documentos erra; o que vale é o `../LEIAME.md` e estes arquivos.
 
 | Arquivo | Onde vive | O que faz |
 |---|---|---|
-| `backup-bora.sh` | `/home/ubuntu/backup-bora.sh` | `pg_dump -Fc` do banco gerenciado, 14 dias de retenção em `~/backups`. Roda pelo cron às 06:15 UTC e é chamado pelo `../deploy-api.sh` antes de cada troca de versão. |
-| `vigia-bora.sh` | `/home/ubuntu/vigia-bora.sh` | A cada 5 min, confere o health e reinicia a API depois de 2 falhas seguidas. **Não avisa ninguém** — só escreve em `vigia.log`. |
-| `crontab.txt` | `crontab -l` do usuário `ubuntu` | As duas entradas acima. |
+| `../backup-bora.sh` | `/home/ubuntu/backup-bora.sh` | `pg_dump -Fc` do banco gerenciado, 14 dias de retenção em `~/backups`. Roda pelo cron de 6 em 6 horas e é chamado pelo `../deploy-api.sh` antes de cada troca de versão. |
+| `../vigia-bora.sh` | `/home/ubuntu/vigia-bora.sh` | A cada 5 min: confere o health, reinicia a API depois de 2 falhas seguidas, e desde 27/10/2026 também olha **disco**, **certificado** e **a própria ausência**. **Não avisa ninguém** — só escreve em `vigia.log`. |
+| `../ensaio-de-restauracao.sh` | `/home/ubuntu/ensaio-de-restauracao.sh` | Domingo 03:40: restaura o dump mais novo num Postgres descartável e conta as linhas. |
+| `crontab.txt` | `crontab -l` do usuário `ubuntu` | As entradas acima. |
 
 Nenhum deles tem segredo dentro: a senha do banco é lida do `api.env` por `--env-file`
 (`PGPASSWORD="$SPRING_DATASOURCE_PASSWORD"`), nunca escrita no script. Conferido antes de versionar.

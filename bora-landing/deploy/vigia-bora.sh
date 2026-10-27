@@ -43,6 +43,96 @@ saude() { curl -s -o /dev/null -w "%{http_code}" --max-time 20 https://borahapp.
 # O SISTEMA esta inteiro? (health cheio: agrega o banco)
 sistema() { curl -s -o /dev/null -w "%{http_code}" --max-time 20 https://borahapp.com.br/actuator/health; }
 
+# ==================================================================================================
+# O QUE ELE NAO OLHAVA (achado pelo QA em 26/10/2026, medido em 27/10)
+#
+# O vigia perguntava uma coisa so: "o site responde?". Tres coisas que matam o sistema sem o site
+# parar de responder ficavam fora:
+#
+#   1. DISCO. Disco cheio nao derruba o site na hora: primeiro o backup falha, depois o deploy, e so
+#      no fim a aplicacao. Medido em 27/10: 22% de 58 GB, com 49 imagens Docker somando 7,86 GB (cada
+#      deploy deixa uma) e 232 MB de backups. Nenhum deles encolhe sozinho.
+#   2. CERTIFICADO. O Caddy renova sozinho aos 30 dias restantes. Quando a renovacao falha, nada
+#      avisa -- e no dia em que vence, o site inteiro fica inacessivel para todo mundo, com erro de
+#      seguranca no navegador do cliente. Medido em 27/10: vence em 2 de dezembro.
+#   3. A PROPRIA MORTE. Se o cron parar, ou a maquina reiniciar e nao voltar, este script simplesmente
+#      para de rodar -- e um vigia calado parece um vigia satisfeito.
+#
+# O ponto 3 tem limite honesto: nenhum script detecta a propria ausencia de dentro. O que da e deixar
+# BATIDA em arquivo e, na volta, dizer quanto tempo ficou sem rodar. Isso pega cron desligado e
+# reinicio da maquina, e nao pega "a instancia morreu e nao voltou" -- esse so um alarme de fora pega,
+# como o cabecalho deste arquivo ja diz desde setembro.
+# ==================================================================================================
+
+# A batida mora com os backups, e nao em /tmp, de proposito: /tmp e limpo no reinicio, e reinicio e
+# exatamente um dos silencios que isto existe para contar.
+BATIDA=/home/ubuntu/backups/.vigia-batida
+MARCA_DISCO=/home/ubuntu/backups/.vigia-disco
+MARCA_CERT=/home/ubuntu/backups/.vigia-cert
+
+# Teto do disco: avisa com 85% usado OU menos de 5 GB livres. Os dois porque num disco de 58 GB os
+# 15% que faltam ainda sao 8,7 GB, e num disco maior a porcentagem avisaria tarde.
+DISCO_PCT_LIMITE=85
+DISCO_LIVRE_MIN_MB=5120
+# O Caddy renova aos 30 dias restantes. Abaixo de 20, a renovacao ja deveria ter acontecido e nao
+# aconteceu: ha algo errado e sobram 20 dias para alguem olhar.
+CERT_DIAS_LIMITE=20
+
+# ---------------------------------------------------------------- 3. a propria morte
+AGORA=$(date +%s)
+if [ -f "$BATIDA" ]; then
+  ANTES=$(cat "$BATIDA" 2>/dev/null || echo "$AGORA")
+  MINUTOS=$(( (AGORA - ANTES) / 60 ))
+  # O cron roda de 5 em 5. 15 minutos sao tres ciclos perdidos: nao e atraso, e ausencia.
+  if [ "$MINUTOS" -ge 15 ]; then
+    echo "$(date -Is) ATENCAO: o vigia ficou $MINUTOS minuto(s) SEM RODAR (o cron e de 5 em 5)."          "Ou a maquina reiniciou, ou o cron parou. Nesse periodo ninguem estava olhando o site."          "Confira com 'crontab -l' e 'uptime'." >> "$LOG"
+  fi
+fi
+echo "$AGORA" > "$BATIDA"
+
+# ---------------------------------------------------------------- 1. disco
+USO=$(df -P / | awk 'NR==2 {gsub("%","",$5); print $5}')
+LIVRE_MB=$(( $(df -P / | awk 'NR==2 {print $4}') / 1024 ))
+if [ "${USO:-0}" -ge "$DISCO_PCT_LIMITE" ] || [ "${LIVRE_MB:-999999}" -lt "$DISCO_LIVRE_MIN_MB" ]; then
+  CICLOS_D=$(( $(cat "$MARCA_DISCO" 2>/dev/null || echo 0) + 1 ))
+  echo "$CICLOS_D" > "$MARCA_DISCO"
+  # Fala na primeira vez e a cada 2 horas (24 ciclos de 5 min): disco enche devagar, nao precisa
+  # gritar a cada 5 minutos.
+  if [ "$CICLOS_D" = "1" ] || [ "$(( CICLOS_D % 24 ))" = "0" ]; then
+    echo "$(date -Is) ATENCAO: DISCO em ${USO}% usado, ${LIVRE_MB} MB livres."          "Disco cheio nao derruba o site na hora: primeiro o backup falha, depois o deploy."          "Os tres que mais crescem aqui:" >> "$LOG"
+    echo "   imagens docker: $(docker images -q | wc -l) imagem(ns), $(docker system df --format '{{.Size}}' 2>/dev/null | head -1)" >> "$LOG"
+    echo "   backups: $(du -sh /home/ubuntu/backups 2>/dev/null | cut -f1) em $(ls /home/ubuntu/backups/*.dump 2>/dev/null | wc -l) dump(s)" >> "$LOG"
+    echo "   a pasta do ubuntu: $(du -sh /home/ubuntu 2>/dev/null | cut -f1)" >> "$LOG"
+    # Log de container NAO entra nesta lista, e por um motivo: desde 27/10/2026 os dois containers
+    # (api e caddy) tem `--log-opt max-size=20m max-file=5`, teto de 100 MB cada. Antes disso o log
+    # do Caddy estava com 303 MB num arquivo so. Hoje eles sao os unicos aqui que NAO crescem sem
+    # limite -- e a primeira versao desta linha ainda tentava medi-los, com `sudo du` num glob que
+    # so expande como root e devolvia 0 rodando como ubuntu. Medir errado e pior que nao medir.
+    echo "   imagem antiga do deploy sai com: docker image rm bora-api:vNNN (NAO apague :latest nem a do container de pe)" >> "$LOG"
+  fi
+else
+  if [ -f "$MARCA_DISCO" ]; then
+    echo "$(date -Is) o disco voltou ao normal: ${USO}% usado, ${LIVRE_MB} MB livres." >> "$LOG"
+    rm -f "$MARCA_DISCO"
+  fi
+fi
+
+# ---------------------------------------------------------------- 2. certificado
+# Uma vez por dia basta: certificado nao vence de surpresa, e a consulta e uma conexao TLS a mais.
+CERT_ONTEM=$(cat "$MARCA_CERT" 2>/dev/null || echo 0)
+if [ "$(( AGORA - CERT_ONTEM ))" -ge 86400 ]; then
+  echo "$AGORA" > "$MARCA_CERT"
+  FIM=$(echo | openssl s_client -connect borahapp.com.br:443 -servername borahapp.com.br 2>/dev/null         | openssl x509 -noout -enddate 2>/dev/null | cut -d= -f2)
+  if [ -z "${FIM:-}" ]; then
+    echo "$(date -Is) ATENCAO: nao consegui ler o certificado de borahapp.com.br."          "Pode ser rede, mas tambem pode ser o Caddy fora do ar com o site atendendo em cache." >> "$LOG"
+  else
+    DIAS=$(( ( $(date -d "$FIM" +%s) - AGORA ) / 86400 ))
+    if [ "$DIAS" -le "$CERT_DIAS_LIMITE" ]; then
+      echo "$(date -Is) ATENCAO: o certificado vence em $DIAS dia(s) ($FIM)."            "O Caddy renova sozinho aos 30 dias restantes; abaixo de $CERT_DIAS_LIMITE a renovacao ja"            "deveria ter acontecido. Olhe 'docker logs caddy | grep -i acme'. No dia em que vencer, o"            "site fica inacessivel para TODO mundo, com erro de seguranca no navegador." >> "$LOG"
+    fi
+  fi
+fi
+
 CODE=$(saude)
 if [ "$CODE" = "200" ]; then
   if [ -f "$MARCA" ]; then
