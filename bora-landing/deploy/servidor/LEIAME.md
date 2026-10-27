@@ -27,29 +27,72 @@ no servidor e nos snapshots da instância.
 
 ## O comando do Caddy
 
-O container `caddy` nunca foi recriado (está de pé há mais de 3 meses) e o `docker run` dele não
-estava escrito em lugar nenhum. Reconstruído a partir do `docker inspect`:
+Este é o comando do container que está no ar **desde 27/10/2026**, quando ele foi recriado para ganhar
+limite de log. Confirmado contra `docker inspect` depois da troca:
 
 ```bash
 docker run -d --name caddy --restart unless-stopped --network bora \
-  -p 80:80 -p 443:443 -p 443:443/udp \
+  -p 80:80 -p 443:443 \
   --log-opt max-size=20m --log-opt max-file=5 \
   -v /home/ubuntu/bora/Caddyfile:/etc/caddy/Caddyfile \
   -v /home/ubuntu/bora/frontend:/srv \
   -v caddy_data:/data \
-  caddy:2
+  caddy@sha256:af5fdcd76f2db5e4e974ee92f96ee8c0fc3edb55bd4ba5032547cbf3f65e486d
 ```
 
-### Os `--log-opt` entraram em 27/10/2026, e faltavam
+### Três coisas deste comando que não são escolha de estilo
 
-O container que está no ar foi criado **sem** eles: `docker inspect caddy` devolve
-`LogConfig: json-file map[]`, ou seja, sem limite nenhum. **Medido em 27/10/2026: o log dele estava
-com 303 MB.** O container da API tem `max-size=20m max-file=5` porque o `deploy-api.sh` passa as
-opções a cada deploy; o Caddy nunca foi recriado desde julho, então nunca ganhou as dele.
+**Sem `-p 443:443/udp`.** A versão anterior deste arquivo tinha essa linha, e **o container no ar
+nunca teve** — conferido no `docker inspect` antes de recriar (as `PortBindings` eram só `80/tcp` e
+`443/tcp`). Publicar a UDP ligaria HTTP/3 de fora, que é uma mudança de comportamento. Quem recria só
+para trocar log não deve ligar protocolo novo de carona. O Caddy escuta HTTP/3 **dentro** do
+container de qualquer jeito (aparece no log dele); sem a porta publicada, ninguém de fora alcança.
 
-Trocar opção de log **exige recriar o container** — `docker update` não mexe nisso. São alguns
-segundos de site fora do ar, e por isso não foi feito sem o dono autorizar. O log antigo só encolhe
-truncando (`sudo truncate -s 0 <LogPath>`), que **joga fora o histórico** de acesso que estiver lá.
+**Pelo digest da imagem, não pela tag `caddy:2`.** A tag aponta para o que estiver mais novo no
+registry no dia. Recriar para mexer no log não é hora de descobrir que o Caddy mudou de versão: o
+digest acima é o v2.11.4 que já estava rodando.
+
+**`-v caddy_data:/data` é o que guarda os certificados TLS.** Esquecer essa montagem faz o Caddy
+pedir certificado novo ao Let's Encrypt, que tem limite de emissões — e num dia ruim o site fica sem
+HTTPS. Depois de recriar, **confira que o certificado é o MESMO**:
+
+```bash
+echo | openssl s_client -connect borahapp.com.br:443 -servername borahapp.com.br 2>/dev/null \
+  | openssl x509 -noout -dates
+```
+
+Em 27/10 as datas continuaram `notBefore=Sep 3 2026 / notAfter=Dec 2 2026` — o certificado foi
+reusado, nada foi pedido.
+
+### A sonda de saúde: `--resolve`, nunca `-H "Host:"`
+
+Isto derrubou a primeira tentativa de recriar, em 27/10/2026, e custou dois rollbacks.
+
+Para conferir o Caddy **de dentro do servidor**, `-H "Host: borahapp.com.br"` **não serve em HTTPS**:
+ele muda o cabeçalho HTTP e não o nome do handshake TLS (SNI). A URL é `https://localhost/`, o Caddy
+não tem certificado para `localhost`, o handshake falha e o `curl` devolve **000 mesmo com o site
+perfeito**. Foi exatamente o que aconteceu: o container novo estava sadio e servindo, a sonda disse
+que não, e o script fez rollback de um deploy que tinha dado certo.
+
+A sonda que funciona manda o SNI certo:
+
+```bash
+curl -sk -o /dev/null -w '%{http_code}' --resolve borahapp.com.br:443:127.0.0.1 \
+  https://borahapp.com.br/
+```
+
+**A regra que ficou: provar a sonda contra o container que está de pé ANTES de parar qualquer coisa.**
+O script de troca passou a fazer isso no passo 1 e a abortar sem mexer em nada se a sonda não
+devolver 200 antes.
+
+### O log antigo, de 303 MB
+
+O container velho ficou guardado como **`caddy-anterior`** (parado, `Exited (0)`), e os 303 MB de log
+estão com ele — o dono optou por não jogar o histórico fora. Ele **não sobe sozinho** num reinício da
+máquina: `restart: unless-stopped` só religa o que não foi parado de propósito, e este foi.
+
+Para liberar os 303 MB, `docker rm caddy-anterior` — **isso apaga o log junto**, e com ele vai a
+possibilidade de rollback para o container de julho.
 
 ## A colisão do `index.html` (medida em 27/10/2026)
 
