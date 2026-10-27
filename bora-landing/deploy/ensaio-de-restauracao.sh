@@ -22,7 +22,16 @@ NOME_CT=bora-ensaio-$$
 PORTA=0           # o Docker escolhe; nao disputa porta com nada
 SENHA=ensaio-local-descartavel
 
-limpar() { docker rm -f "$NOME_CT" >/dev/null 2>&1 || true; }
+# O `-v` NAO E DETALHE (achado medindo o disco em 27/10/2026).
+#
+# A imagem do Postgres declara um VOLUME para /var/lib/postgresql/data. Sem `--rm` no `docker run` e
+# sem `-v` aqui, cada ensaio deixava para tras um volume anonimo de ~53 MB -- o initdb mais o banco
+# restaurado. Com o ensaio rodando por cron todo domingo, isso e 53 MB por semana que ninguem ve,
+# porque `docker volume ls` nao aparece em nenhum painel.
+#
+# MEDIDO NO SERVIDOR: 5 volumes orfaos, 260 MB no total, e o mais novo criado em 25/10 as 03:40 --
+# exatamente o horario do cron deste script (40 3 * * 0).
+limpar() { docker rm -f -v "$NOME_CT" >/dev/null 2>&1 || true; }
 trap limpar EXIT
 
 dizer() { printf '%s %s\n' "$(date -Is)" "$*"; }

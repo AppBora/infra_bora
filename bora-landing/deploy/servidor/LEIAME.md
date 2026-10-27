@@ -33,11 +33,43 @@ estava escrito em lugar nenhum. Reconstruído a partir do `docker inspect`:
 ```bash
 docker run -d --name caddy --restart unless-stopped --network bora \
   -p 80:80 -p 443:443 -p 443:443/udp \
+  --log-opt max-size=20m --log-opt max-file=5 \
   -v /home/ubuntu/bora/Caddyfile:/etc/caddy/Caddyfile \
   -v /home/ubuntu/bora/frontend:/srv \
   -v caddy_data:/data \
   caddy:2
 ```
+
+### Os `--log-opt` entraram em 27/10/2026, e faltavam
+
+O container que está no ar foi criado **sem** eles: `docker inspect caddy` devolve
+`LogConfig: json-file map[]`, ou seja, sem limite nenhum. **Medido em 27/10/2026: o log dele estava
+com 303 MB.** O container da API tem `max-size=20m max-file=5` porque o `deploy-api.sh` passa as
+opções a cada deploy; o Caddy nunca foi recriado desde julho, então nunca ganhou as dele.
+
+Trocar opção de log **exige recriar o container** — `docker update` não mexe nisso. São alguns
+segundos de site fora do ar, e por isso não foi feito sem o dono autorizar. O log antigo só encolhe
+truncando (`sudo truncate -s 0 <LogPath>`), que **joga fora o histórico** de acesso que estiver lá.
+
+## A colisão do `index.html` (medida em 27/10/2026)
+
+Os dois repositórios publicam na **mesma pasta** `/home/ubuntu/bora/frontend`, e os dois têm um
+arquivo chamado `index.html`:
+
+- `bora-fase-2-frontend/index.html` → `<script>location.href="dashboard.html"</script>`
+- `bora-landing/index.html` → a página comercial ("Sistema de delivery com a sua marca, sem taxa por
+  pedido")
+
+**Quem copiou por último, vence.** Hoje está o do painel: quem digita `borahapp.com.br` cai direto na
+tela de login, sem passar pela página de vendas. O conteúdo da landing continua no ar e intacto —
+`/landing.html`, `/precos.html`, `/funcionalidades.html` e `/contato.html` respondem 200, e o
+`landing.html` servido é byte a byte o do repositório.
+
+Qual das duas deve estar na raiz é decisão do dono, não do script. O que **não** pode continuar é
+cada deploy decidir isso por acidente, pela ordem em que alguém copiou a pasta.
+
+**Enquanto não houver decisão: publique arquivo por arquivo, nunca a pasta inteira.** Foi o que foi
+feito no deploy da v150 (dois arquivos por `scp`, com md5 conferido por HTTPS depois).
 
 O `Caddyfile` versionado é o `../Caddyfile`. Para aplicar mudança nele **sem derrubar o site**:
 
