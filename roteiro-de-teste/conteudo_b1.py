@@ -58,6 +58,32 @@ PARTE_B1 = [
  {'id':'13.14','t':'Código do marketplace','passos':[
    'Edite um produto e preencha o código dele no iFood.','Salve e recarregue.'],
   'e':'Salva — é por ele que o pedido de fora casa com o produto.','eps':['PUT /api/produtos/{id}']},
+ {'id':'13.15','t':'Ordem das seções: a lista abre como o cliente vê','passos':[
+   'Abra <b>Produtos</b> e role até <b>Ordem das seções do cardápio</b>.'],
+  'e':'Lista as seções da loja, numeradas, com quantos produtos cada uma tem. Se a loja nunca escolheu uma ordem, a tela diz que hoje elas saem em ordem alfabética.',
+  'eps':['GET /api/categorias']},
+ {'id':'13.16','t':'Mudar a ordem e salvar','passos':[
+   'Use ↑/↓ para pôr uma seção em primeiro lugar.',
+   'ANTES de salvar, leia o aviso embaixo e recarregue a página sem salvar.',
+   'Mude de novo e clique em <b>Salvar a ordem</b>.','Recarregue.'],
+  'e':'Mexer na tela não grava nada: ao recarregar sem salvar, volta como estava. Depois de salvar, a ordem continua ao recarregar.',
+  'eps':['PUT /api/categorias/ordem','GET /api/categorias']},
+ {'id':'13.17','t':'A ordem vale nas duas pontas','passos':[
+   'Com a ordem salva, abra a <b>Frente de Caixa</b> e olhe a fila de categorias.',
+   'Abra o cardápio do cliente dessa loja.'],
+  'e':'As duas listam na ordem que você escolheu. Seção que você não ordenou fica no fim, em ordem alfabética — e nenhuma seção aparece partida em dois pedaços.',
+  'eps':['GET /api/categorias','GET /api/produtos','GET /public/loja/{lojaId}/cardapio']},
+ {'id':'13.18','t':'A seta que não tem para onde ir','passos':[
+   'Olhe a seta ↑ da PRIMEIRA seção e a ↓ da ÚLTIMA.','Tente clicar nas duas.'],
+  'e':'As duas saem apagadas, com cursor de bloqueado, e o balão explica ("Já é a primeira").',
+  'f':'Saíam com a mesma cor e o mesmo cursor das que funcionam: o lojista clicava, nada acontecia, e aprendia que a tela estava quebrada.','reg':True,
+  'eps':['GET /api/categorias']},
+ {'id':'13.19','t':'Sair sem salvar a ordem','passos':[
+   'Mude a ordem com ↑/↓ e, SEM salvar, tente fechar a aba.',
+   'Depois recarregue, não mexa em nada, e tente fechar de novo.'],
+  'e':'Na primeira vez o navegador pergunta se você quer mesmo sair. Na segunda, não pergunta.',
+  'f':'Avisar sem motivo ensina o lojista a ignorar o aviso.','reg':True,
+  'eps':['GET /api/categorias']},
 ]},
 
 {'n':'14','t':'Estoque e contagem','tela':'estoque.html · contagem.html','r':'O saldo e o acerto do saldo.','testes':[

@@ -136,10 +136,10 @@ CABECA = u'''<!doctype html>
 <body>
 <div class="wrap">
   <header class="capa">
-    <div class="selo">Roteiro completo &middot; v139 &middot; 23/10/2026</div>
+    <div class="selo">Roteiro completo &middot; v154 &middot; 28/10/2026</div>
     <h1>Roteiro de Teste do BoraHapp</h1>
     <p class="sub">A aplica&ccedil;&atilde;o inteira, item por item: <b>%d testes</b> em %d se&ccedil;&otilde;es, cobrindo
-      <b>as 34 telas</b> e <b>os %d endpoints</b> que o sistema tem. No fim, os testes que cruzam
+      <b>as 35 telas</b> e <b>os %d endpoints</b> que o sistema tem. No fim, os testes que cruzam
       funcionalidades. Marque conforme testar, escreva o que aconteceu e clique em
       <b>Baixar resultado</b> &mdash; me mande o arquivo que eu leio e ajo nas observa&ccedil;&otilde;es.</p>
   </header>
@@ -211,7 +211,7 @@ CABECA = u'''<!doctype html>
   </section>
 
   <footer class="pe">
-    <p>Gerado a partir do invent&aacute;rio real do sistema em 23/10/2026, n&atilde;o de mem&oacute;ria: <b>34 telas</b> e
+    <p>Gerado a partir do invent&aacute;rio real do sistema em 28/10/2026, n&atilde;o de mem&oacute;ria: <b>35 telas</b> e
       <b>%d endpoints</b> levantados do c&oacute;digo. Um verificador confere que <b>todo endpoint aparece em
       pelo menos um teste</b> e que nenhum teste aponta para endpoint que n&atilde;o existe &mdash; por isso a
       cobertura &eacute; completa por constru&ccedil;&atilde;o, e n&atilde;o por julgamento.</p>

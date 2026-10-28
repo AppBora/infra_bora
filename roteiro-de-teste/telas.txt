@@ -33,6 +33,11 @@
   api....: _conexao, aceitarTermos, board, configuracao, minhasLojas, repetir, termos, trocarLoja
   rotas..: /admin-bora/lojas/, /admin-bora/sair-da-loja
   acoes..: -
+### cardapio-folha.html
+  scripts: api, cardapio-impresso
+  api....: -
+  rotas..: /public/loja/{lojaId}/cardapio
+  acoes..: imprimir
 ### cardapio-qr.html
   scripts: api, app, cardapio-qr, cores, whitelabel
   api....: _conexao, aceitarTermos, configuracao, logout, minhasLojas, termos, trocarLoja

@@ -9,9 +9,9 @@ Ele também está no ar, servido pelo Caddy junto com o painel:
 
 ## O que tem hoje
 
-- **325 testes** em **38 seções**
-- cobrem as **34 telas** e os **159 endpoints** que o sistema tem
-- **130 são de regressão**: bug que já aconteceu de verdade e não pode voltar
+- **333 testes** em **38 seções** (atualizado em 28/10/2026, na v154)
+- cobrem as **35 telas** e os **162 endpoints** que o sistema tem
+- **136 são de regressão**: bug que já aconteceu de verdade e não pode voltar
 - as 6 últimas seções (I-A a I-F) são **integradas** — cruzam funcionalidades, como
   pedido → motoboy → acerto → caixa → relatório
 
@@ -76,3 +76,32 @@ O `gerar.py` escreve `../ROTEIRO-DE-TESTE.html` (raiz do projeto) — é esse qu
 no dia a dia, e ele **não** é versionado aqui. A cópia versionada e publicada é a de
 `bora-fase-2-frontend/ROTEIRO-DE-TESTE.html`. Depois de gerar, copie para lá, commite no
 repositório do frontend, e só então mande para o servidor.
+
+
+## A versão para imprimir
+
+`python gerar_pdf.py` escreve `../ROTEIRO-DE-TESTE.pdf` — **25 páginas**, um quadrado para marcar
+por teste e uma linha para escrever a mão. Mesma fonte de dados dos `conteudo_*.py`: o HTML e o
+PDF nunca divergem porque nenhum dos dois é escrito à mão.
+
+**A armadilha que ele guarda:** as fontes embutidas do PDF só têm Latin-1. Seta, travessão e os
+emoji dos botões saem como **quadrado preto**, e saem calados — o PDF gera sem erro nenhum. Por
+isso o `gerar_pdf.py` tem uma tabela de tradução e uma conferência que **estoura** se sobrou
+qualquer caractere que a fonte não desenha. Ao acrescentar texto com símbolo novo, o gerador
+reclama antes; é só pôr a tradução no `TRADUCAO`, no topo do arquivo.
+
+## O que mudou em 28/10/2026
+
+| | |
+|---|---|
+| `endpoints.txt` | 158 → **161** — entraram `GET /api/categorias`, `PUT /api/categorias/ordem` e `POST /api/integracoes/{canal}/aviso-lido` |
+| `telas.txt` | 34 → **35** — entrou `cardapio-folha.html` |
+| seção 12 | +2: a folha impressa, e ela dizer o mesmo preço que o cliente paga |
+| seção 13 | +5: a ordem das seções do cardápio (a tela nova da v154) |
+| seção 25 | +1: o recado do marketplace que espera ser marcado como lido |
+
+**De passagem, um erro meu que vale registrar:** o extrator que eu escrevi para comparar os
+endpoints do código com o inventário acusou 4 rotas novas e 1 sumida. Eram **3 novas e nenhuma
+sumida** — o meu regex não casava `@GetMapping(value = "...", produces = "...")`, e por isso a
+rota do `manifest` virava `GET /public` na minha lista. O inventário estava certo; o extrator é
+que estava errado.

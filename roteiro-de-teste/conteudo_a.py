@@ -477,5 +477,19 @@ PARTE_A = [
    'Use o menu do navegador → "Adicionar à tela inicial".',
    'Abra pelo ícone criado.'],
   'e':'Instala com o nome e o ícone da loja, e abre sem a barra do navegador.','eps':['GET /public/loja/{lojaId}/manifest','GET /public/loja/{lojaId}/marca']},
+ {'id':'12.5','t':'Folha do cardápio para imprimir','passos':[
+   'Abra <code>cardapio-folha.html?loja=SEU_ID</code> (o mesmo caminho que o botão de imprimir usa).',
+   'Espere as fotos carregarem.',
+   'Mande imprimir (Ctrl+P) e olhe a PRÉ-VISUALIZAÇÃO, não só a tela.'],
+  'e':'Sai uma folha com as seções na mesma ordem do cardápio do cliente, as fotos da loja, os preços e o QR. Nada cortado na margem.',
+  'f':'Tela não mede papel: três defeitos desta folha só apareceram no PDF, nunca no navegador.','reg':True,
+  'eps':['GET /public/loja/{lojaId}/cardapio','GET /public/loja/{lojaId}/produto/{produtoId}/imagem']},
+ {'id':'12.6','t':'A folha diz o MESMO preço que o cliente paga','passos':[
+   'Escolha um produto que tenha recipiente ou adicional obrigatório.',
+   'Veja o preço dele na folha impressa.',
+   'Abra o cardápio do cliente e monte esse mesmo produto até o carrinho.'],
+  'e':'O número é o mesmo nos dois.',
+  'f':'A folha anunciava o preço-base e o cliente só descobria o valor real no carrinho: num caso, R$ 90,00 virava R$ 100,00.','reg':True,
+  'eps':['GET /public/loja/{lojaId}/cardapio']},
 ]},
 ]

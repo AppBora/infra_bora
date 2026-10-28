@@ -17,6 +17,9 @@ POST   /auth/trocar-senha
 POST   /auth/pedido-de-senha
 GET    /auth/me
 POST   /auth/trocar-loja
+### CategoriaOrdemController
+GET    /api/categorias
+PUT    /api/categorias/ordem
 ### ClienteController
 GET    /api/clientes
 GET    /api/clientes/links-repetir
@@ -70,6 +73,7 @@ PUT    /api/integracoes/{canal}
 POST   /api/integracoes/{canal}/vincular
 POST   /api/integracoes/{canal}/confirmar
 GET    /api/integracoes/{canal}/diagnostico
+POST   /api/integracoes/{canal}/aviso-lido
 ### MarketplaceDiagnosticoController
 GET    /admin-bora/marketplace/pedido-bruto
 ### OnboardingController
@@ -192,4 +196,4 @@ POST   /webhooks/{canal}
 ### WhatsAppController
 GET    /public/whatsapp-webhook/{lojaId}
 POST   /public/whatsapp-webhook/{lojaId}
-### TOTAL 158
+### TOTAL 161

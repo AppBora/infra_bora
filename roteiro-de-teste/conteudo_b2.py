@@ -128,6 +128,13 @@ PARTE_B2 = [
    'Reenvie esse MESMO corpo para o endereço da loja B.'],
   'e':'Ignora.',
   'f':'O robô responderia ao cliente da loja A com o nome e o cardápio da loja B, pelo número da B.','reg':True,'eps':['POST /public/whatsapp-webhook/{lojaId}']},
+ {'id':'25.17','t':'O recado do marketplace espera você','passos':[
+   'Abra <b>Integrações</b> numa loja que tenha recado do iFood ou da 99.',
+   'Leia o recado e fique MAIS DE UM MINUTO na tela, sem clicar em nada.',
+   'Clique em <b>Já vi, tirar da tela</b>.','Recarregue a página.'],
+  'e':'O recado fica na tela até você marcar como lido. Depois de marcado, não volta.',
+  'f':'Ele sumia sozinho em 30 segundos, porque dividia a coluna com a mensagem de erro — quem não estava olhando na hora nunca soube que a integração reclamou.','reg':True,
+  'eps':['POST /api/integracoes/{canal}/aviso-lido','GET /api/integracoes']},
 ]},
 
 {'n':'26','t':'Fiscal (NFC-e)','tela':'pedidos.html','r':'Emissão fiscal. Hoje dorme até a plataforma ligar.','testes':[
