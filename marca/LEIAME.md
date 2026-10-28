@@ -1,55 +1,34 @@
-# A marca do BoraHapp
+# marca/
 
-Os arquivos desta pasta sao **gerados** por `python gerar_marca.py`. Nao edite o PNG nem o SVG a
-mao: a proxima geracao apaga.
+As regras estao no **[MANUAL-DA-MARCA.md](MANUAL-DA-MARCA.md)**.
 
-## ATENCAO: existem DUAS identidades no produto hoje
+Tudo e **gerado**: `python gerar_sacola.py`. Nao edite PNG nem SVG a mao.
 
-Isto apareceu ao procurar o logo, em 28/10/2026, e **e uma decisao do dono**, nao minha:
-
-| | onde esta | como e |
-|---|---|---|
-| **Landing** (a cara publica) | `bora-landing/` | "Bora" em `#1B1512` + "Happ" em `#D9502B`, sobre papel `#FBF7F3`. Nenhum roxo. |
-| **Roxa** (a do codigo) | `assets/img/logo-bora.svg`, `icone-bora.svg` | quadrado roxo `#7c3aed`, seta verde `#22c55e`, e a palavra **"Bora"** |
-
-E a palavra tambem muda: o SVG diz **"Bora"**, o site diz **"BoraHapp"** 17 vezes na mesma pagina.
-O favicon de TODAS as telas do painel e o roxo; a tela de cadastro tambem usa o roxo.
-
-Enquanto isso nao for decidido, o gerador produz as duas. A **recomendacao** e a da landing: e o
-que qualquer pessoa ve ao procurar o BoraHapp hoje.
-
-## Os arquivos
-
-| arquivo | para que |
+| arquivo | o que e |
 |---|---|
-| `borahapp-logo.png` / `.svg` | o logo, fundo transparente. O de uso geral. |
-| `borahapp-logo-papel.png` | sobre o papel da marca (`#FBF7F3`) |
-| `borahapp-logo-fundo-escuro.png` | sobre `#1B1512` |
-| `borahapp-logo-para-fundo-escuro-transparente.png` | a versao clara, transparente, para por sobre foto escura |
-| `borahapp-icone.png` / `.svg` | so o simbolo, quadrado, enchendo o quadro: avatar, canto de slide, favicon |
-| `bora-logo-roxo.*`, `bora-icone-roxo.*` | a identidade roxa que esta no produto hoje |
+| `borahapp-horizontal*` | o logo padrao: transparente, sobre papel, sobre escuro |
+| `borahapp-simbolo*` | so a sacola no quadrado: brasa, tinta (uma cor), papel |
+| `borahapp-simbolo-16px` | o corte para favicon e atalho -- **so o corpo, sem alca** |
+| `gerar_sacola.py` | producao: o desenho da sacola e dos arquivos |
+| `gerar_marca_v2.py` | o quadrado, a letra e as cores. O briefing esta no topo dele |
+| `prova-16px.png` | a sacola nova contra a anterior, nos tamanhos reais |
+| `comparacao-grafias.png` | BoraHapp x BorahApp, a comparacao que decidiu o nome |
+| `bora-*-roxo.*` | **referencia**: a identidade roxa que ainda esta no produto |
 
-PNG com 2400 px de largura (icone com 1200): aguenta projetor e impressao sem serrilhar.
+## UMA geracao por vez
 
-## O que o gerador protege
+Esta pasta ja teve tres desenhos ao mesmo tempo -- a sacola de linha, o monograma e a sacola nova
+-- e o dono abriu o arquivo errado por causa disso, porque os nomes eram parecidos. **O que nao e
+a marca vigente sai da pasta.** O historico do git guarda.
 
-**A palavra vira CURVA, nao texto.** O SVG original escreve "Bora" como `<text>` com
-`font-family: 'Segoe UI', ...`. Na maquina de quem recebe, sem essa fonte, o navegador troca por
-outra: a palavra muda de largura e o ponto verde -- que esta numa coordenada fixa -- cai em cima
-da letra. Aqui `svg.fonttype = 'path'` converte tudo em contorno, e uma conferencia **estoura** se
-sobrar qualquer `<text>` ou `font-family` no arquivo.
+Saiu em 28/10/2026:
+- a **sacola de linha** (`borahapp-logo*`, `borahapp-icone*`, `gerar_marca.py`) -- morria em
+  16 px e lia como cadeado;
+- o **monograma "B"** (`gerar_identidade.py`, `borahapp-vertical*`) -- proposta minha, **recusada
+  pelo dono**, que preferiu manter a sacola consertada.
 
-**A largura do quadro e MEDIDA, nao chutada.** A posicao de "Happ" sai da largura real de "Bora",
-e o fim do quadro sai do fim real de "Happ". Sem isso sobrava uma faixa vazia a direita, e quem
-centraliza num slide ve a marca fora do meio.
+## Ainda nao existe
 
-## Tres coisas que so apareceram ao OLHAR o resultado
-
-1. **No fundo escuro, "Bora" sumia.** Ele e `#1B1512`, a mesma cor do fundo: saia so "Happ". Por
-   isso existe a paleta `landing_escuro`, com "Bora" em papel.
-2. **O icone tinha 18% de vazio em volta**, porque herdava a folga do logo. Num avatar redondo
-   isso vira uma marca pequena dentro de um espaco grande. Agora o quadrado enche o quadro.
-3. **A seta comecava DENTRO da sacola** (x=34 em vez de 35, que e a borda), e o desenho lia como
-   flecha atravessando a sacola em vez de saindo dela.
-
-Nenhuma das tres o gerador tinha como reclamar sozinho.
+**Versao vertical** (simbolo em cima, palavra embaixo), para espaco estreito e alto -- cracha,
+adesivo. O manual cita area de respiro e tamanho minimo dela; quando for feita, sai do mesmo
+`gerar_sacola.py`.

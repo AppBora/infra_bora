@@ -8,49 +8,55 @@ apaga. O briefing e o raciocinio do simbolo estao no topo de `gerar_marca_v2.py`
 ## 1. O que a marca diz, e por que o simbolo e esse
 
 A landing afirma: *"um painel que tem a cara da sua loja. **Nao a nossa**"* e *"sem taxa por
-pedido"*. Isso decidiu o desenho, nesta ordem:
+pedido"*.
 
-**O BoraHapp nao e uma marca de comida.** E a infraestrutura embaixo da marca de comida do
-cliente. Sacola, talher e moto dizem "eu sou o delivery" — e quem e o delivery e o lojista. Um
-simbolo de categoria aqui **compete com a marca de quem paga**. Por isso a sacola saiu.
+**A sacola e escolha do dono, feita em 28/10/2026**, depois de eu propor um monograma "B" e
+mostrar a medicao. Ele manteve a sacola e pediu os quatro consertos. Fica registrado o que eu
+argumentei, porque continua valendo: sacola e **sinal de categoria** -- ela diz "eu sou o
+delivery", e quem e o delivery e o lojista, nao o BoraHapp. Esse ponto nao da para consertar
+inteiro mantendo a sacola. O que deu para fazer foi **baixar o volume dela**: sem seta, sem
+ponto, sem cor extra -- a sacola mais abstrata possivel ainda sendo sacola. Quem carrega a marca
+e a palavra.
 
-**"Bora" ja e movimento.** E imperativo falado. A seta era redundancia — e morria abaixo de
-32 px.
+## 2. Os quatro consertos, e o que cada um resolveu
 
-**O que sobra para o simbolo dizer e presenca, nao categoria.** Marca que vai conviver ao lado da
-marca do lojista tem de ser firme e quieta. Daí o monograma.
+| Defeito da versao anterior | O que mudou |
+|---|---|
+| **Lia como cadeado** -- retangulo com UM arco centrado e a forma de fechadura | corpo **trapezio**, mais largo em cima (formato de sacola de papel), e **duas** alcas |
+| **Morria em 16 px** | o desenho era de **linha**: 2,4 num simbolo de 48 vira 0,8 px em 16. Agora a sacola e **forma solida** -- e ha um **corte proprio de 16 px**, so o corpo |
+| **O ponto verde** ocupava a posicao do selo de notificacao do iOS e do Android | **removido** |
+| **"Eu sou o delivery"** | reduzido, nao resolvido: sem seta, sem ponto, forma mais abstrata |
 
-**E uma escolha deliberadamente sobria.** Letra em quadrado e um padrao comum em software (e e
-comum porque funciona). Para uma marca que nao pode roubar a cena do cliente, sobrio e a resposta
-certa — nao a resposta facil.
+**O movimento vem da inclinacao**, nao de seta. A sacola pende 4 graus para a frente: e a mesma
+forma solida, entao nao custa nada em legibilidade, e diz carregada. "Bora" ja e pressa; o
+simbolo nao precisa repetir.
 
----
+**Dois erros meus no caminho, para ninguem refazer:** primeiro recortei as alcas como furos
+DENTRO do corpo -- nao leu sacola, leu lixeira, e os dois rasgos viraram olhos. Depois, com as
+alcas por cima, fiz o arco grosso e estreito: o **vao** quase fechou, e o vao e justamente o que
+o olho le como alca.
 
-## 2. As pecas
+## 3. Duas cores chapadas, e so
 
-| Arquivo | O que e | Use quando |
-|---|---|---|
-| `borahapp-horizontal` | simbolo + palavra, lado a lado | o padrao. Cabecalho, slide, assinatura de e-mail |
-| `borahapp-vertical` | simbolo em cima, palavra embaixo | espaco estreito e alto; cracha; adesivo |
-| `borahapp-simbolo` | so o quadrado com o B | favicon, atalho de celular, avatar, carimbo |
-| `*-papel` | sobre `#FBF7F3` | material impresso da marca |
-| `*-escuro` | sobre `#1B1512` | slide escuro, video |
-| `borahapp-simbolo-tinta` | monograma em uma cor so | fax, carimbo, gravacao, bordado |
+O quadrado numa cor, a sacola em outra. Sem contorno, sem furo, sem terceira cor. E o que faz a
+marca sobreviver a carimbo, bordado, serigrafia e papel timbrado preto -- e o que a versao
+anterior nao fazia, porque dependia de traco fino em tres cores.
 
-PNG com 2400 px de largura (simbolo com 1200). SVG com o texto em **curvas** — abre igual na
-maquina de quem receber, sem a fonte instalada.
+## 4. As pecas
 
----
+| Arquivo | Use quando |
+|---|---|
+| `borahapp-horizontal` | o padrao. Cabecalho, slide, assinatura de e-mail |
+| `borahapp-horizontal-papel` / `-escuro` | sobre `#FBF7F3` / sobre `#1B1512` |
+| `borahapp-simbolo` | avatar, canto de slide, qualquer uso a partir de 24 px |
+| `borahapp-simbolo-16px` | **favicon e atalho de celular** -- so o corpo, sem alca |
+| `borahapp-simbolo-tinta` | uma cor so: carimbo, gravacao, bordado |
 
-## 3. O "B" e um FURO, e isso nao e detalhe
+PNG com 2400 px de largura (simbolo com 1200). SVG com o texto em curvas.
 
-A letra nao e pintada por cima do quadrado: e um **recorte**. Por isso a marca funciona em uma cor
-so — carimbo, bordado, serigrafia, papel timbrado preto — e por isso, no fundo escuro, o preto
-atravessa o B. Logo que so existe em duas cores quebra no primeiro uso fora da tela.
+**Nao existe ainda a versao vertical.** O tamanho minimo dela esta na secao 7 por antecipacao.
 
----
-
-## 4. Cor
+## 5. Cor
 
 | Nome | Codigo | Papel |
 |---|---|---|
@@ -65,7 +71,7 @@ marca anterior.
 
 ---
 
-## 5. Tipografia
+## 6. Tipografia
 
 A palavra e **Segoe UI Black**, a primeira da pilha que o site ja usa. Nos arquivos ela esta em
 curvas, entao nada depende de instalacao.
@@ -74,7 +80,7 @@ curvas, entao nada depende de instalacao.
 
 ---
 
-## 6. Area de respiro e tamanho minimo
+## 7. Area de respiro e tamanho minimo
 
 **Respiro:** deixe em volta, livre de qualquer coisa, uma margem igual a **metade do lado do
 quadrado**. Nada entra nessa faixa — nem texto, nem borda, nem foto.
@@ -83,17 +89,19 @@ quadrado**. Nada entra nessa faixa — nem texto, nem borda, nem foto.
 
 | Peca | Minimo | Por que |
 |---|---|---|
-| simbolo | **16 px** | abaixo disso o B fecha |
+| simbolo (com alca) | **24 px** | abaixo disso a alca funde com o corpo |
+| `simbolo-16px` | **16 px** | e o corte feito para esse tamanho |
 | horizontal | **110 px** de largura | abaixo, "Happ" empasta |
 | vertical | **90 px** de largura | idem |
 
 ---
 
-## 7. Usos proibidos
+## 8. Usos proibidos
 
 - esticar, espremer ou inclinar;
 - trocar a cor do quadrado por outra que nao `brasa`, `tinta` ou `papel`;
-- pintar o B em vez de vazar;
+- usar o simbolo com alca abaixo de 24 px -- use o `-16px`;
+- devolver a seta, o ponto verde ou o contorno de linha;
 - por sombra, brilho, contorno ou degrade;
 - por o logo sobre foto movimentada sem uma chapa solida atras;
 - reescrever a palavra em outra fonte;
@@ -101,7 +109,7 @@ quadrado**. Nada entra nessa faixa — nem texto, nem borda, nem foto.
 
 ---
 
-## 8. O que continua aberto, e e decisao do dono
+## 9. O que continua aberto, e e decisao do dono
 
 1. **A identidade antiga ainda esta no produto.** O quadrado roxo `#7c3aed` e o favicon de todas
    as telas do painel e o logo da tela de cadastro. Enquanto nao for trocado, convivem duas
