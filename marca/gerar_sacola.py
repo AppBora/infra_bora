@@ -134,13 +134,22 @@ def simbolo_png_svg(base, cor_quadrado, cor_sacola, fundo=None, lado_px=1200):
 
 
 def logotipo(base, cor_quadrado, cor_sacola, cor_bora, cor_happ, fundo=None, px=2400):
-    mono = os.path.join(AQUI, '_tmp_s.png')
-    simbolo_png_svg('_tmp_s', cor_quadrado, cor_sacola, fundo=None, lado_px=900)
+    # O simbolo e desenhado em VETOR aqui, nao colado como imagem. Eu tinha usado `imshow` com o
+    # PNG, e o SVG do logotipo saia com um BITMAP dentro -- some a escala infinita, que e a unica
+    # razao de existir um SVG. Dava para nao perceber: na tela ficava igual.
     margem, vao = L * 0.14, L * 0.26
     alto = L * 1.34 + 2 * margem
     fig, ax = figura(L * 4.6, alto, fundo=fundo)
-    ax.imshow(plt.imread(mono), extent=(margem, margem + L, (alto - L) / 2.0, (alto + L) / 2.0),
-              zorder=2)
+    corpo, alcas = sacola()
+    desloca = Affine2D().translate(margem, (alto - L) / 2.0)
+    ax.add_patch(PathPatch(desloca.transform_path(quadrado(0, 0, L, RAIO)),
+                           facecolor=cor_quadrado, edgecolor='none', zorder=2))
+    for a in alcas:
+        ax.add_patch(PathPatch(desloca.transform_path(a), facecolor='none',
+                               edgecolor=cor_sacola, linewidth=1.9 * 1.44,
+                               capstyle='round', joinstyle='round', zorder=3))
+    ax.add_patch(PathPatch(desloca.transform_path(corpo), facecolor=cor_sacola,
+                           edgecolor='none', zorder=4))
     base_x, base_y = margem + L + vao, alto / 2.0
     t1 = ax.text(base_x, base_y, 'Bora', fontproperties=FONTE, fontsize=32,
                  color=cor_bora, va='center', ha='left', zorder=3)
@@ -158,8 +167,6 @@ def logotipo(base, cor_quadrado, cor_sacola, cor_bora, cor_happ, fundo=None, px=
     fig.savefig(os.path.join(AQUI, base + '.png'), format='png', dpi=px / (larg / 50.0),
                 transparent=not fundo, facecolor=fundo if fundo else 'none')
     plt.close(fig)
-    os.remove(mono)
-    os.remove(os.path.join(AQUI, '_tmp_s.svg'))
 
 
 def simbolo_pequeno(base, cor_quadrado, cor_sacola, lado_px=256):
