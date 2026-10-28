@@ -1,0 +1,128 @@
+18;46;Copo de Açaí 770ml;Top 4 Mais Vendidos
+18;47;Copo de Açaí 300ml;Top 4 Mais Vendidos
+18;48;Copo de Açaí 500ml;Top 4 Mais Vendidos
+18;49;Pote de Açaí 1L;Top 4 Mais Vendidos
+18;50;Monte Seu Açaí;Monte Seu Açaí
+18;51;Copo da Patroa 500ml;Copos Especiais
+18;52;Copo das Cozinheiras 770ml;Copos Especiais
+18;53;Copo do Patrão 770ml;Copos Especiais
+18;54;Ziraçoca 300ml;Best Forever
+18;55;Ziraninho 300ml;Best Forever
+18;56;Ziratella 300ml;Best Forever
+18;57;Caixa de Açaí 10L Zirá;Caixa e Potes
+18;58;Caixa de Açaí 5L Zirá;Caixa e Potes
+18;59;Potes de 1L Zirá;Caixa e Potes
+18;60;Barca de Açaí Gourmet;Açaí Gourmet e Sobremesa
+18;61;Roleta de Açaí Gourmet;Açaí Gourmet e Sobremesa
+18;62;Titanic Tamanho Família;Açaí Gourmet e Sobremesa
+18;63;Sorvete Natuice Chocolitano 2L;Mundo dos Sorvetes
+18;64;Sorvete Natuice Brasileirinho Creme e Pistache 2L;Mundo dos Sorvetes
+18;65;Sorvete Natuice Carioca 2L;Mundo dos Sorvetes
+18;66;Leve 5 Pague 4 Açaí;Promoções Zirá Açaí
+18;68;Copo Fitness 500ml;Açaí Fitness
+18;69;Copo Whey Protein 770ml;Açaí Fitness
+18;70;Água Mineral Leve 500ml;Bebidas
+18;71;Coca-Cola Lata 350ml;Bebidas
+18;72;Coca-Cola Original 2L;Bebidas
+18;73;Coca-Cola sem Açúcar 350ml;Bebidas
+18;74;Garrafinha 500ml Açaí c/ creme de Morango;Açaí na garrafa
+18;75;Garrafinha 500ml Açaí c/ creme de Maracujá;Açaí na garrafa
+18;76;Garrafinha 500ml Açaí c/ creme de paçoca;Açaí na garrafa
+18;77;Garrafinha 500ml Açaí Tradicional;Açaí na garrafa
+18;78;Napolitano 770ml;Copos Especiais
+18;145;pacoca;mantimento
+18;146;leite condensado;mantimento
+18;147;Ziraninho 500ml;Best Forever
+18;148;Ziraninho 770ml;Best Forever
+18;149;Ziraçoca 500ml;Best Forever
+18;150;Ziraçoca 770ml;Best Forever
+18;151;Ziratella 500ml;Best Forever
+18;152;Ziratella 770ml;Best Forever
+18;153;Açaí Puro 300ml;Açaí Puro
+18;154;Açaí Puro 500ml;Açaí Puro
+18;155;Açaí Puro 770ml;Açaí Puro
+18;156;Açaí Puro 1 Litro;Açaí Puro
+19;80;Água Mineral Leve 500ml;Bebidas
+19;81;Barca de Açaí Gourmet;Açaí Gourmet e Sobremesa
+19;82;Caixa de Açaí 10L Zirá;Caixa e Potes
+19;83;Caixa de Açaí 5L Zirá;Caixa e Potes
+19;84;Coca-Cola Lata 350ml;Bebidas
+19;85;Coca-Cola Original 2L;Bebidas
+19;86;Coca-Cola sem Açúcar 350ml;Bebidas
+19;87;Copo da Patroa 500ml;Copos Especiais
+19;88;Copo das Cozinheiras 770ml;Copos Especiais
+19;89;Copo de Açaí 300ml;Top 4 Mais Vendidos
+19;90;Copo de Açaí 500ml;Top 4 Mais Vendidos
+19;91;Copo de Açaí 770ml;Top 4 Mais Vendidos
+19;92;Copo do Patrão 770ml;Copos Especiais
+19;93;Copo Fitness 500ml;Açaí Fitness
+19;94;Copo Whey Protein 770ml;Açaí Fitness
+19;95;Garrafinha 500ml Açaí c/ creme de Maracujá;Açaí na garrafa
+19;96;Garrafinha 500ml Açaí c/ creme de Morango;Açaí na garrafa
+19;97;Garrafinha 500ml Açaí c/ creme de paçoca;Açaí na garrafa
+19;98;Garrafinha 500ml Açaí Tradicional;Açaí na garrafa
+19;99;Leve 5 Pague 4 Açaí;Promoções Zirá Açaí
+19;100;Monte Seu Açaí;Monte Seu Açaí
+19;101;Napolitano 770ml;Copos Especiais
+19;102;Pote de Açaí 1L;Top 4 Mais Vendidos
+19;103;Potes de 1L Zirá;Caixa e Potes
+19;104;Roleta de Açaí Gourmet;Açaí Gourmet e Sobremesa
+19;105;Sorvete Natuice Brasileirinho Creme e Pistache 2L;Mundo dos Sorvetes
+19;106;Sorvete Natuice Carioca 2L;Mundo dos Sorvetes
+19;107;Sorvete Natuice Chocolitano 2L;Mundo dos Sorvetes
+19;108;Titanic Tamanho Família;Açaí Gourmet e Sobremesa
+19;109;Ziraçoca 300ml;Best Forever
+19;110;Ziraninho 300ml;Best Forever
+19;111;Ziratella 300ml;Best Forever
+19;157;Ziraninho 500ml;Best Forever
+19;158;Ziraninho 770ml;Best Forever
+19;159;Ziraçoca 500ml;Best Forever
+19;160;Ziraçoca 770ml;Best Forever
+19;161;Ziratella 500ml;Best Forever
+19;162;Ziratella 770ml;Best Forever
+19;163;Açaí Puro 300ml;Açaí Puro
+19;164;Açaí Puro 500ml;Açaí Puro
+19;165;Açaí Puro 770ml;Açaí Puro
+19;166;Açaí Puro 1 Litro;Açaí Puro
+20;113;Água Mineral Leve 500ml;Bebidas
+20;114;Barca de Açaí Gourmet;Açaí Gourmet e Sobremesa
+20;115;Caixa de Açaí 10L Zirá;Caixa e Potes
+20;116;Caixa de Açaí 5L Zirá;Caixa e Potes
+20;117;Coca-Cola Lata 350ml;Bebidas
+20;118;Coca-Cola Original 2L;Bebidas
+20;119;Coca-Cola sem Açúcar 350ml;Bebidas
+20;120;Copo da Patroa 500ml;Copos Especiais
+20;121;Copo das Cozinheiras 770ml;Copos Especiais
+20;122;Copo de Açaí 300ml;Top 4 Mais Vendidos
+20;123;Copo de Açaí 500ml;Top 4 Mais Vendidos
+20;124;Copo de Açaí 770ml;Top 4 Mais Vendidos
+20;125;Copo do Patrão 770ml;Copos Especiais
+20;126;Copo Fitness 500ml;Açaí Fitness
+20;127;Copo Whey Protein 770ml;Açaí Fitness
+20;128;Garrafinha 500ml Açaí c/ creme de Maracujá;Açaí na garrafa
+20;129;Garrafinha 500ml Açaí c/ creme de Morango;Açaí na garrafa
+20;130;Garrafinha 500ml Açaí c/ creme de paçoca;Açaí na garrafa
+20;131;Garrafinha 500ml Açaí Tradicional;Açaí na garrafa
+20;132;Leve 5 Pague 4 Açaí;Promoções Zirá Açaí
+20;133;Monte Seu Açaí;Monte Seu Açaí
+20;134;Napolitano 770ml;Copos Especiais
+20;135;Pote de Açaí 1L;Top 4 Mais Vendidos
+20;136;Potes de 1L Zirá;Caixa e Potes
+20;137;Roleta de Açaí Gourmet;Açaí Gourmet e Sobremesa
+20;138;Sorvete Natuice Brasileirinho Creme e Pistache 2L;Mundo dos Sorvetes
+20;139;Sorvete Natuice Carioca 2L;Mundo dos Sorvetes
+20;140;Sorvete Natuice Chocolitano 2L;Mundo dos Sorvetes
+20;141;Titanic Tamanho Família;Açaí Gourmet e Sobremesa
+20;142;Ziraçoca 300ml;Best Forever
+20;143;Ziraninho 300ml;Best Forever
+20;144;Ziratella 300ml;Best Forever
+20;167;Ziraninho 500ml;Best Forever
+20;168;Ziraninho 770ml;Best Forever
+20;169;Ziraçoca 500ml;Best Forever
+20;170;Ziraçoca 770ml;Best Forever
+20;171;Ziratella 500ml;Best Forever
+20;172;Ziratella 770ml;Best Forever
+20;173;Açaí Puro 300ml;Açaí Puro
+20;174;Açaí Puro 500ml;Açaí Puro
+20;175;Açaí Puro 770ml;Açaí Puro
+20;176;Açaí Puro 1 Litro;Açaí Puro
