@@ -317,8 +317,19 @@ footer.rodape a:hover { color: #fff; text-decoration: underline; }
 }
 @media (max-width: 860px) {
   nav.menu { display: none; }
-  .topo-acoes .btn-linha { display: none; }
+  /* O "Entrar" NAO some mais no celular. Ele sumia aqui, e no telefone o unico caminho para o
+     painel passava a ser um link no RODAPE, depois da pagina inteira de rolagem -- ou seja, para
+     quem abre no celular o login simplesmente nao existia. Quem usa este produto e lojista, e
+     lojista abre o painel do telefone, no balcao. */
   section { padding: 48px 0; }
+}
+@media (max-width: 520px) {
+  /* Para os dois botoes caberem lado a lado em 360px: o rotulo do WhatsApp encurta
+     ("Falar no WhatsApp" -> "WhatsApp") e os botoes apertam. */
+  .so-largo { display: none; }
+  .topo-acoes { gap: 6px; }
+  .topo-acoes .btn-pequeno { padding: 9px 11px; font-size: 13.5px; }
+  .topo .wrap { gap: 8px; }
 }
 @media (max-width: 520px) {
   .rodape-grid { grid-template-columns: 1fr; }
