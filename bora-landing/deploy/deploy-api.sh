@@ -43,13 +43,54 @@ fi
 COMMIT="$(git -C "$BACKEND" rev-parse --short HEAD)"
 echo "commit $COMMIT"
 
-dizer "2/9 a data dos Termos no codigo bate com a pagina publicada?"
-# Este teste precisa dos DOIS repositorios e, dentro do build da imagem, so existe o `src`: la ele se
-# pula em silencio desde sempre. Aqui ele roda do checkout completo, que e o unico lugar onde pode
-# valer de verdade. A versao gravada no aceite de cada lojista aponta para ESTE texto -- se a constante
-# e a pagina divergirem, o comprovante aponta para um documento que ninguem sabe qual e.
-( cd "$BACKEND" && mvn -q -o test -Dtest=VersaoDosTermosTest )   || { echo "ABORTADO: a data dos Termos no codigo nao bate com a pagina publicada." >&2; exit 1; }
-echo "ok"
+dizer "2/9 a data dos Termos: codigo, checkout e PAGINA NO AR"
+# A versao gravada no aceite de cada lojista aponta para ESTE texto. Se a constante e a pagina
+# divergirem, o comprovante aponta para um documento que ninguem sabe qual e -- num texto que fala de
+# pagamento, suspensao e reembolso.
+#
+# ESTE PASSO MEDE DUAS COISAS, e a segunda e o conserto (pente fino de 29/10/2026). O anuncio dizia
+# "a pagina publicada" e media o ARQUIVO DO CHECKOUT: o VersaoDosTermosTest le
+# `../bora-landing/termos.html`, do disco. E o proprio deploy-frontend.sh registra que a landing e
+# publicada a parte -- entao o arquivo do checkout pode estar adiantado (ou atrasado) em relacao ao
+# que o lojista le de verdade. O portao parecia cobrir o que nao cobria.
+#
+# O teste fica: ele guarda codigo contra checkout, e e ele que roda dentro do `mvn`. O que entra e a
+# conferencia por HTTP da pagina que esta no ar.
+( cd "$BACKEND" && mvn -q -o test -Dtest=VersaoDosTermosTest )   || { echo "ABORTADO: a data dos Termos no codigo nao bate com o termos.html DESTE checkout." >&2; exit 1; }
+
+TERMOS_URL="${BORA_TERMOS_URL:-https://borahapp.com.br/termos.html}"
+NO_CODIGO="$(grep -oE 'VERSAO_VIGENTE = "[0-9]{4}-[0-9]{2}-[0-9]{2}"' \
+    "$BACKEND/src/main/java/br/com/bora/service/TermosService.java" | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}')"
+[ -n "$NO_CODIGO" ] || { echo "ABORTADO: nao achei a constante VERSAO_VIGENTE no TermosService." >&2; exit 1; }
+NO_AR_TEXTO="$(curl -fsS --max-time 20 "$TERMOS_URL" 2>/dev/null \
+    | grep -oE 'Última atualização:</b> [0-9]{1,2} de [^<]+ de [0-9]{4}' | head -1)"
+if [ -z "$NO_AR_TEXTO" ]; then
+  echo "ABORTADO: nao consegui ler a data dos Termos em $TERMOS_URL." >&2
+  echo "Sem isso este passo volta a medir so o arquivo do checkout, que nao e o que o lojista le." >&2
+  echo "Se a pagina mudou de endereco, ajuste BORA_TERMOS_URL." >&2
+  exit 1
+fi
+# "Última atualização:</b> 4 de outubro de 2026" -> "2026-10-04".
+# Os campos sao contados DO FIM: ano=$NF, mes=$(NF-2), dia=$(NF-4). Contar do inicio ($2 para o dia)
+# erra, porque o "Última atualização:</b>" ocupa os dois primeiros campos -- foi o que o ensaio
+# mostrou, saindo 2026-10-00.
+NO_AR="$(echo "$NO_AR_TEXTO" | awk '
+  BEGIN{split("janeiro fevereiro março abril maio junho julho agosto setembro outubro novembro dezembro",m," ");
+        for(i=1;i<=12;i++) n[m[i]]=i}
+  {printf "%s-%02d-%02d", $NF, n[$(NF-2)], $(NF-4)}')"
+case "$NO_AR" in
+  [0-9][0-9][0-9][0-9]-[01][0-9]-[0-3][0-9]) ;;
+  *) echo "ABORTADO: nao soube converter \"$NO_AR_TEXTO\" em data (saiu \"$NO_AR\")." >&2
+     echo "A linha de Última atualização mudou de forma; ajuste este passo." >&2
+     exit 1 ;;
+esac
+if [ "$NO_AR" != "$NO_CODIGO" ]; then
+  echo "ABORTADO: a pagina NO AR diz \"$NO_AR_TEXTO\" (= $NO_AR) e o codigo diz $NO_CODIGO." >&2
+  echo "O aceite de cada lojista aponta para a data do codigo. Publique a landing primeiro, ou" >&2
+  echo "corrija a constante -- as duas metades andam juntas." >&2
+  exit 1
+fi
+echo "ok: codigo, checkout e pagina no ar dizem $NO_CODIGO"
 
 dizer "3/9 build da imagem (os testes rodam aqui dentro)"
 docker build --label "git=$COMMIT" -t "bora-api:$TAG" "$BACKEND"
@@ -114,6 +155,28 @@ rollback() {
 }
 
 dizer "8/9 troca do container, guardando o anterior"
+# O `api-anterior` SOBRANDO e removido ANTES de qualquer coisa (pente fino de 29/10/2026).
+#
+# O bloco abaixo roda com `set -e` e faz `docker rename api api-anterior`. Esse rename FALHA se ja
+# existir um container com esse nome -- e a limpeza do passo 9 era `docker rm api-anterior ... || true`,
+# sem `-f`: ela falha calada quando o container esta de pe por qualquer motivo, e o `|| true` engole.
+#
+# O estrago nao e o deploy falhar, e o que vem depois: com o rename falhando, o script cai no
+# rollback, que faz `docker rm -f api` (apagando o container BOM, que acabou de ser parado) e depois
+# `docker rename api-anterior api` -- ou seja, sobe o SOBRADO, que e a versao de DOIS deploys atras.
+# Deploy interrompido devolvendo producao para tras, em silencio.
+#
+# Aqui a remocao e `-f`, e ela AVISA quando havia algo para remover: sobra de api-anterior significa
+# que um deploy anterior nao terminou, e isso merece ser visto em vez de limpo calado.
+if ssh -i "$KEY" "$SRV" 'docker ps -a --format "{{.Names}}" | grep -qx api-anterior'; then
+  echo "AVISO: havia um api-anterior sobrando de um deploy que nao terminou. Removendo:" >&2
+  ssh -i "$KEY" "$SRV" 'docker ps -a --format "   {{.Names}}  {{.Status}}" | grep api-anterior' >&2 || true
+  if ! ssh -i "$KEY" "$SRV" 'docker rm -f api-anterior >/dev/null'; then
+    echo "ABORTADO: nao consegui remover o api-anterior sobrando. NADA foi trocado," >&2
+    echo "e a versao que esta no ar continua no ar. Entre no servidor e resolva antes." >&2
+    exit 1
+  fi
+fi
 if ! ssh -i "$KEY" "$SRV" "bash -s" <<SCRIPT
 set -e
 docker tag bora-api:latest bora-api:anterior 2>/dev/null || true
@@ -152,7 +215,9 @@ if ssh -i "$KEY" "$SRV" 'for i in $(seq 1 40); do
       docker exec api curl -fs localhost:8080/actuator/health 2>/dev/null | grep -q UP && exit 0
       sleep 3
     done; exit 1'; then
-  ssh -i "$KEY" "$SRV" 'docker rm api-anterior >/dev/null 2>&1 || true'
+  # `-f`: sem ele a remocao falha quando o container esta de pe, o `|| true` engole a falha, e a
+  # sobra derruba o PROXIMO deploy -- ver a nota do passo 8.
+  ssh -i "$KEY" "$SRV" 'docker rm -f api-anterior >/dev/null 2>&1 || true'
   echo "NO AR: $TAG (commit $COMMIT)"
   ssh -i "$KEY" "$SRV" 'docker ps --format "{{.Names}}  {{.Status}}"'
 else

@@ -1,8 +1,15 @@
 /* BoraHapp — site institucional
    Sem fonte externa e sem framework de propósito: o público abre no 4G do interior,
    e cada requisição a mais é meio segundo de espera antes do primeiro texto aparecer.
-   Paleta: laranja (comida, urgência) + verde (dinheiro, economia). O roxo do produto
-   fica no painel — aqui ele competia com o preço na hora da decisão. */
+
+   PALETA: roxo (a marca, desde 29/10/2026) + verde (dinheiro, economia) + um quente que
+   NÃO é marca, só alerta. Este comentário dizia "laranja (comida, urgência)" e que "o roxo
+   fica no painel" — treze linhas abaixo do `--brasa: #9333EA`. Comentário que desmente o
+   código é pior que comentário nenhum: quem for mexer aqui acredita nele, e foi assim que
+   quatro acentos laranja sobreviveram à troca da cor da marca.
+
+   Quem escolhe a cor de cada coisa são os tokens do `:root` logo abaixo, e a regra é:
+   `--brasa` é identidade, `--alerta` é o cenário ruim, `--verde` é o dinheiro que sobra. */
 
 :root {
   --papel: #FBF7F3;
@@ -28,6 +35,14 @@
      ganham cor propria, com os valores que o laranja tinha. */
   --alerta: #B03D1E;
   --alerta-fraca: #FCEDE7;
+  /* O mesmo alerta, para o fundo escuro: #B03D1E sobre o carvão fica ilegível (o escuro sobre o
+     escuro). Este tom dá 9,03:1 sobre o `--carvao`. */
+  --alerta-clara: #FF9B76;
+
+  /* A marca sobre o fundo escuro. O #9333EA dá 3,36:1 sobre o carvão e reprova; este dá 10,51:1.
+     É o mesmo papel que o `--brasa-esc` faz no claro: a cor da marca, no tom que aquele fundo
+     aceita. */
+  --brasa-clara: #D8B4FE;
 
   --verde: #176B4F;
   --verde-fraco: #E6F2EC;
@@ -129,7 +144,9 @@ section.clara { background: var(--branco); border-top: 1px solid var(--linha); b
 section.escura { background: var(--carvao); color: #F5EFE9; }
 section.escura h2, section.escura h3 { color: #fff; }
 section.escura .apoio, section.escura p { color: #D8CCC2; }
-section.escura .kicker { color: #F0A88C; }
+/* O "chapéu" de cada seção escura é IDENTIDADE, e por isso veste a marca. Ficou laranja na troca
+   de 29/10 porque a cor estava escrita à mão aqui, e não no token. */
+section.escura .kicker { color: var(--brasa-clara); }
 
 .cabeca { max-width: 640px; margin-bottom: 34px; }
 .cabeca p { margin-top: 12px; }
@@ -223,7 +240,8 @@ section.escura .kicker { color: #F0A88C; }
 .calc { display: grid; grid-template-columns: 1fr 1fr; gap: 34px; align-items: center; margin-top: 30px; }
 .controle { margin-bottom: 22px; }
 .controle label { display: flex; justify-content: space-between; font-size: 15px; font-weight: 600; margin-bottom: 8px; }
-.controle b { color: #FFC9AE; font-variant-numeric: tabular-nums; }
+/* O número que o visitante move no controle da calculadora: identidade, não alerta. */
+.controle b { color: var(--brasa-clara); font-variant-numeric: tabular-nums; }
 input[type=range] {
   width: 100%; height: 30px; -webkit-appearance: none; appearance: none; background: transparent; cursor: pointer;
 }
@@ -239,7 +257,11 @@ input[type=range]::-moz-range-thumb {
 .resultado { background: var(--carvao-2); border-radius: var(--raio); padding: 26px; text-align: center; }
 .resultado .rot { font-size: 14px; color: #C7B8AC; }
 .resultado .grande { font-size: clamp(2rem, 6vw, 2.8rem); font-weight: 800; letter-spacing: -.03em; margin: 6px 0 20px; }
-.resultado .perda { color: #FF9B76; }
+/* ESTE FICA QUENTE, de propósito: é "você paga de comissão por ano", o lado ruim da conta, e faz
+   par com o verde do que sobraria. Pintar de roxo faria a cor da MARCA marcar justamente o
+   cenário que o site existe para o lojista abandonar -- a mesma razão da etiqueta pendente e do
+   selo "em obra". O que muda é só o token: o valor é o mesmo de antes. */
+.resultado .perda { color: var(--alerta-clara); }
 .resultado .ganho { color: #6FD3A8; }
 
 /* ---------------- preço ---------------- */
@@ -481,7 +503,8 @@ footer.rodape a:hover { color: #fff; text-decoration: underline; }
   margin-top: 22px; font-size: 14px; color: #B3A69B; border-left: 3px solid #4A3A30;
   padding-left: 14px; max-width: 76ch;
 }
-.nota-demo b { color: #F0A88C; }
+/* Os nomes dos canais na nota de "onde estamos hoje": destaque de identidade. */
+.nota-demo b { color: var(--brasa-clara); }
 
 /* ---------------- entrada ao rolar ---------------- */
 html.js .revela { opacity: 0; transform: translateY(18px); transition: opacity .6s ease, transform .6s cubic-bezier(.2,.8,.3,1); }

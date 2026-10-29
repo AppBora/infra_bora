@@ -49,12 +49,45 @@
 		-Server
 	}
 
+	# NADA que comece com ponto e servido (pente fino de 29/10/2026).
+	#
+	# A pasta servida tem um `.git`, e o file_server o entregava INTEIRO. Medido com curl no site no
+	# ar: `/.git/config` 200 com 300 bytes (inclusive o endereco do remote), `/.git/index` 200 com
+	# 5307 bytes -- que lista todos os caminhos versionados --, e `/.git/logs/HEAD` 200 com 572
+	# bytes, com nome e E-MAIL de quem commitou. A partir de `/.git/refs/heads/main` da para baixar
+	# os objetos um a um e reconstruir a arvore daquele snapshot por URL.
+	#
+	# A regra e por PREFIXO DE PONTO, e nao pelo nome ".git", de proposito: vale para o proximo
+	# arquivo oculto que aparecer ali sem ninguem lembrar desta linha -- `.env`, `.ssh`, `.DS_Store`,
+	# `.htpasswd`. Um deles vazando credencial e o mesmo descuido com consequencia pior.
+	#
+	# `/.well-known/` fica DE FORA da proibicao: e por ali que passa a validacao de certificado e
+	# outros padroes da web. Barrar isso quebraria a renovacao do HTTPS.
+	@oculto {
+		path /.*
+		not path /.well-known/*
+	}
+	handle @oculto {
+		# 404, nao 403: 403 confirma que o caminho existe. Para quem esta tentando, "nao existe" diz
+		# menos que "existe e voce nao pode".
+		respond "Not Found" 404
+	}
+
 	handle {
 		root * /srv
 		# O painel e atualizado direto por scp: sem isto o navegador do lojista fica
 		# com a tela antiga depois do deploy (ja aconteceu). no-cache nao desliga o
 		# cache, so obriga a revalidar - a resposta normal vira um 304 curtinho.
 		header Cache-Control "no-cache"
-		file_server
+		# Cinto e suspensorio: mesmo que uma reorganizacao dos `handle` acima mude qual bloco pega a
+		# requisicao, o file_server nao entrega estes.
+		#
+		# A lista e NOMINAL, e nao `hide .*`. O ensaio local mostrou por que: com `hide .*` o
+		# `/.well-known/acme-challenge/...` passava a devolver 404 -- o glob pega qualquer nome que
+		# comece com ponto, inclusive esse -- e por ali passa a validacao de certificado. A renovacao
+		# do HTTPS do site quebraria dias depois, longe de qualquer mudanca aparente.
+		file_server {
+			hide .git .env .ssh .htpasswd .DS_Store
+		}
 	}
 }
