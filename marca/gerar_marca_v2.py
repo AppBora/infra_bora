@@ -41,11 +41,19 @@ from matplotlib.transforms import Affine2D  # noqa: E402
 AQUI = os.path.dirname(os.path.abspath(__file__))
 FONTE = FontProperties(fname='C:/Windows/Fonts/seguibl.ttf')
 
+# A cor da marca e ROXA desde 29/10/2026, por escolha do dono: o laranja-brasa ficou pesado para
+# ele. A escolha tem uma economia junto -- o painel JA e roxo (`#7c3aed` no styles.css e em uns
+# dez arquivos de JS), entao a marca passa a combinar com o produto sem repintar a interface.
+#
+# As chaves `brasa`/`brasa_clara` guardam o NOME antigo de proposito: elas sao lidas por
+# `gerar_sacola.py` e renomear as duas sem necessidade so criaria chance de erro. O que importa e
+# o valor.
 COR = {
     'papel':  '#FBF7F3',
     'tinta':  '#1B1512',
-    'brasa':  '#D9502B',
-    'brasa_clara': '#E8603B',   # sobre preto, o #D9502B fecha demais
+    'brasa':  '#9333EA',        # a cor da marca (opcao D)
+    'brasa_clara': '#A855F7',   # sobre o escuro: o #9333EA da 3,36:1, que passa raspando;
+                                # este da 4,57:1. Medido, nao estimado.
     'verde':  '#176B4F',
 }
 

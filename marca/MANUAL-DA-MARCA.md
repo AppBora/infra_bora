@@ -60,11 +60,25 @@ PNG com 2400 px de largura (simbolo com 1200). SVG com o texto em curvas.
 
 | Nome | Codigo | Papel |
 |---|---|---|
-| brasa | `#D9502B` | a cor da marca. O quadrado, e "Happ" |
+| **marca** | `#9333EA` | a cor da marca: o quadrado, e "Happ" |
+| marca clara | `#A855F7` | **so** sobre fundo escuro |
 | tinta | `#1B1512` | "Bora", e todo texto sobre claro |
-| papel | `#FBF7F3` | fundo da marca, e o B vazado sobre o brasa |
-| brasa clara | `#E8603B` | **so** sobre fundo escuro — o `#D9502B` fecha demais contra o preto |
+| papel | `#FBF7F3` | fundo da marca, e a sacola dentro do quadrado |
 | verde | `#176B4F` | apoio, nunca na marca |
+
+**A cor virou roxa em 29/10/2026**, por escolha do dono -- o laranja-brasa (`#D9502B`) ficou
+pesado para ele. Entre quatro roxos, ele escolheu o `#9333EA`.
+
+**Por que existe um tom claro so para o escuro:** medido, o `#9333EA` sobre `#1B1512` da
+**3,36:1** -- passa no minimo de 3:1 para texto grande, mas raspando. O `#A855F7` da **4,57:1**.
+Marca que so passa raspando e marca que some no primeiro projetor mal calibrado.
+
+**Contraste do `#9333EA` no claro, medido:** 5,05:1 sobre o papel `#FBF7F3` e 5,38:1 sobre
+branco. Os dois folgados.
+
+**De passagem, uma economia:** o painel **ja e roxo** (`#7c3aed`, no `styles.css` e em uns dez
+arquivos de JS). A marca em `#9333EA` fica da mesma familia -- nao e o mesmo codigo, mas para e
+de brigar com a interface, que era o que acontecia com o laranja.
 
 **Uma cor no simbolo.** Tres cores num quadrado de 16 px viram papa — foi o que aconteceu com a
 marca anterior.
