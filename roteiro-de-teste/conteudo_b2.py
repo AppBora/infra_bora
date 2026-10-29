@@ -358,5 +358,13 @@ PARTE_B2 = [
   'e':'Dá para fazer tudo sem ampliar nada e sem teclado cobrindo o campo.','eps':['POST /public/loja/{lojaId}/pedido']},
  {'id':'32.7','t':'Ajuda e guia no celular','passos':['Abra Ajuda no celular.','Abra o guia de operação no celular.'],
   'e':'Leem bem, sem rolagem lateral.','eps':['GET /api/termos']},
+ {'id':'32.8','t':'Entrar no painel pelo celular','passos':[
+   'No celular, abra <code>borahapp.com.br</code> — a página de vendas, não o painel.',
+   'SEM rolar a página, olhe o topo.'],
+  'e':'O botão <b>Entrar</b> aparece no topo, ao lado do botão do WhatsApp, e leva ao login.',
+  'f':'O "Entrar" era escondido por CSS abaixo de 860px. Com o menu também escondido, o único '
+      'caminho para o painel virava um link no RODAPÉ, depois da página inteira. Para o lojista '
+      'que abre do telefone no balcão, o login simplesmente não existia.','reg':True,
+  'eps':['GET /']},
 ]},
 ]
