@@ -14,9 +14,20 @@
   --linha: #E7DCD0;
   --linha-forte: #D4C4B4;
 
-  --brasa: #D9502B;
-  --brasa-esc: #B03D1E;
-  --brasa-fraca: #FCEDE7;
+  /* A cor da marca e ROXA desde 29/10/2026 (escolha do dono; o laranja ficou pesado).
+     De quebra, conserta contraste: branco sobre o laranja #D9502B dava 4,09:1 e a cor como texto
+     dava 3,84:1 -- os dois ABAIXO do minimo de 4,5:1. Com o roxo: 5,38:1 e 5,05:1. */
+  --brasa: #9333EA;
+  --brasa-esc: #7E22CE;
+  --brasa-fraca: #F6EDFE;
+
+  /* ALERTA: o quente que SOBROU, e que nao e marca.
+     Tres lugares usavam a cor da marca como SEMANTICA de negativo, sempre fazendo par com o
+     verde: a etiqueta pendente, o selo "em obra" e o lado "sem o BoraHapp" do comparativo.
+     Pintar esses de roxo faria a cor da marca marcar justamente o cenario ruim. Entao eles
+     ganham cor propria, com os valores que o laranja tinha. */
+  --alerta: #B03D1E;
+  --alerta-fraca: #FCEDE7;
 
   --verde: #176B4F;
   --verde-fraco: #E6F2EC;
@@ -159,7 +170,7 @@ section.escura .kicker { color: #F0A88C; }
 .etiqueta {
   display: inline-block; font-size: 11.5px; font-weight: 700; letter-spacing: .04em;
   text-transform: uppercase; padding: 2px 8px; border-radius: 999px;
-  background: var(--brasa-fraca); color: var(--brasa-esc);
+  background: var(--alerta-fraca); color: var(--alerta);
 }
 .etiqueta.ok { background: var(--verde-fraco); color: var(--verde); }
 
@@ -200,11 +211,11 @@ section.escura .kicker { color: #F0A88C; }
 /* ---------------- comparativo ---------------- */
 .confronto { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 26px; }
 .lado { border-radius: var(--raio); padding: 24px; border: 1px solid var(--linha); background: var(--branco); }
-.lado.ruim { border-color: #E9C6BA; background: var(--brasa-fraca); }
+.lado.ruim { border-color: #E9C6BA; background: var(--alerta-fraca); }
 .lado.bom { border-color: #B6D9C8; background: var(--verde-fraco); }
 .lado h3 { font-size: 1rem; margin-bottom: 10px; }
 .valor { font-size: clamp(1.9rem, 5vw, 2.5rem); font-weight: 800; letter-spacing: -.03em; line-height: 1; }
-.lado.ruim .valor { color: var(--brasa-esc); }
+.lado.ruim .valor { color: var(--alerta); }
 .lado.bom .valor { color: var(--verde); }
 .valor small { display: block; font-size: 14px; font-weight: 600; color: var(--tinta-2); margin-top: 8px; letter-spacing: 0; }
 
@@ -258,7 +269,7 @@ input[type=range]::-moz-range-thumb {
   padding: 4px 10px; border-radius: 999px; white-space: nowrap;
 }
 .estado-agora { background: var(--verde-fraco); color: var(--verde); }
-.estado-obra { background: var(--brasa-fraca); color: var(--brasa-esc); }
+.estado-obra { background: var(--alerta-fraca); color: var(--alerta); }
 .item-trilha h3 { font-size: 1.02rem; margin-bottom: 4px; }
 .item-trilha p { margin: 0; font-size: 15px; color: var(--tinta-2); }
 
