@@ -1,7 +1,7 @@
 # Documentação de Levantamento — Arquitetura, Custos e Modelo SaaS da Bora
 
 ## Visão geral
-A Bora é uma solução de gestão operacional para negócios de delivery, inicialmente pensada para sorveterias, açaíterias, lanchonetes e pequenos estabelecimentos que recebem pedidos por WhatsApp, balcão, telefone ou plataformas externas.
+A Bora é uma solução de gestão operacional para negócios de delivery, pensada para sorveterias, açaíterias, lanchonetes, pizzarias, restaurantes e redes com mais de uma loja — de qualquer porte — que recebem pedidos por WhatsApp, balcão, telefone ou plataformas externas.
 
 ## Objetivo
 Criar uma arquitetura de baixo custo, rápida de implantar e escalável para SaaS.
@@ -23,6 +23,12 @@ Criar uma arquitetura de baixo custo, rápida de implantar e escalável para Saa
 | SaaS com WhatsApp oficial | R$ 350 a R$ 1.200+ |
 
 ## Planos sugeridos
+
+> **Histórico.** Estes três planos foram a proposta do levantamento e **não existem
+> mais** desde 05/07/2026: hoje é um plano único de **R$ 199/mês por loja**, com o add-on
+> **Módulo IA (+R$ 99/mês)**. A tabela abaixo fica como registro do que foi proposto.
+> Fonte de verdade: `PLANOS_SAAS.md`.
+
 | Plano | Valor | Público |
 |---|---:|---|
 | Bora Start | R$ 69/mês | Pequenos deliveries começando a organizar pedidos |
@@ -33,4 +39,4 @@ Criar uma arquitetura de baixo custo, rápida de implantar e escalável para Saa
 Com custo fixo inicial aproximado de R$ 250/mês, a Bora paga sua infraestrutura com cerca de 3 clientes Pro ou 4 clientes Start.
 
 ## Posicionamento
-Controlar pedidos, entregas e vendas de pequenos deliveries em tempo real.
+Controlar pedidos, entregas e vendas de deliveries de qualquer porte em tempo real.

@@ -203,7 +203,7 @@ para **98 arquivos**, que é exatamente o que os dois repositórios publicam.
 
 Empresa 2, CNPJ vazio. Não quebra nada hoje porque a emissão fiscal está desligada.
 
-## 12. Os quatro itens de dados (iguais a 27/10)
+## 13. Os quatro itens de dados (iguais a 27/10)
 
 | | medido hoje | mexe em dinheiro? |
 |---|---|---|
@@ -216,19 +216,37 @@ Empresa 2, CNPJ vazio. Não quebra nada hoje porque a emissão fiscal está desl
 
 # E o que continua comigo
 
-**A frase da tela de login espera UM comando.** Ela dizia "BoraHapp · SaaS para pequenos
-deliveries" e virou **"SaaS de delivery para pequenos, médios e grandes"** — por decisão sua: o
-produto atende os três, e a frase estava dizendo ao lojista que ele talvez fosse grande demais
-para o sistema, na primeira tela que ele abre todo dia. Está commitada e os 660 testes do frontend
-passam; na hora de publicar o modo automático bloqueou como "Production Deploy", e eu não
-contornei:
+**A frase da tela de login está no ar.** Ela dizia "BoraHapp · SaaS para pequenos deliveries" e
+virou **"BoraHapp · SaaS de delivery para pequenos, médios e grandes"** — por decisão sua: o produto
+atende os três, e a frase estava dizendo ao lojista que ele talvez fosse grande demais para o
+sistema, na primeira tela que ele abre todo dia. Publicada em **30/10**, 88 arquivos conferidos por
+sha256; a busca pela frase velha no que está no ar dá **zero**.
 
-```bash
-cd bora-landing/deploy && bash deploy-frontend.sh --so-painel
-```
+**E a mesma descrição foi alinhada nos documentos e nos agentes** (30/10, 16 arquivos): os sete
+agentes que descreviam o produto como "para pequenos lojistas/deliveries" (`marketing`,
+`product-owner`, `ux-designer`, `dev-frontend`, `devops-sre`, `arquiteto-finops`,
+`especialista-saas`), a `VISAO_PRODUTO.md` com a frase principal e a lista de público, os dois
+`README.md`, a `DOCUMENTACAO_LEVANTAMENTO_GERADA.md`, o `PLANO_COMERCIAL.md` e a copy do site
+institucional. Nada disso é visto pelo lojista, mas é o que orienta o que eu e os agentes
+escrevemos.
 
-A mesma descrição velha ainda está nos documentos de arquitetura e nas definições dos agentes.
-Nada disso é visível ao lojista — me diga se quer que eu alinhe também.
+**Dois achados que vieram de carona nessa varredura:**
+
+- **A `sobre.html` da landing tinha a frase velha na descrição que o Google mostra** — "para o
+  pequeno lojista brasileiro", dentro da `meta name="description"`. Essa **é** vista por quem
+  procura o BoraHapp. Corrigida no repositório; **espera um comando seu** para ir ao ar:
+
+  ```bash
+  cd bora-landing/deploy && bash deploy-frontend.sh --so-landing
+  ```
+
+- **Três documentos ainda vendiam os planos Start R$ 69 / Pro R$ 129 / Premium R$ 249**, que
+  **não existem desde 05/07/2026** — hoje é plano único de R$ 199/mês por loja mais o Módulo IA de
+  R$ 99 (conferido no código: `entity/Plano.java` traz `UNICO(15, 0, 199.00)`, e a `precos.html`
+  que está no ar diz R$ 199). Pior: o agente de **marketing**, que escreve copy de vendas, tinha
+  esses três preços escritos dentro dele. Troquei no agente e marquei os três documentos como
+  históricos, apontando para a `PLANOS_SAAS.md`. **Não apaguei as tabelas velhas** — elas são
+  registro de uma decisão que existiu.
 
 **O "Fechamento de Caixa" não guarda nada e não existe para ontem.** Não é defeito, é
 funcionalidade que não existe — e o tamanho dela é decisão sua: um seletor de data (pequeno) ou um

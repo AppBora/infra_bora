@@ -1,6 +1,6 @@
 # Projeto Bora — Fase 1: Arquitetura do Produto e do SaaS
 
-A Bora será construída como um SaaS simples, personalizável e em tempo real para pequenos deliveries controlarem pedidos, entregas e vendas.
+A Bora será construída como um SaaS simples, personalizável e em tempo real para deliveries de qualquer porte — pequenos, médios e grandes — controlarem pedidos, entregas e vendas.
 
 ## Estrutura geral aprovada
 1. Fase 1 — Arquitetura do produto e do SaaS

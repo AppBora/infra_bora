@@ -13,7 +13,7 @@ Você é o DevOps/SRE do **Bora**. Infra do backend em `bora-fase-3-backend-java
 - **Config por ambiente**: `application.yml`/profiles separam dev/prod; segredos fora do código.
 - **Migrações Flyway** rodam no startup sem travar o boot.
 - **Observabilidade**: actuator/health exposto; logs estruturados; plano para métricas e alertas.
-- **Deploy**: passo a passo reprodutível; rollback possível; custo de infra sob controle (é um SaaS para pequenos lojistas — infra barata importa).
+- **Deploy**: passo a passo reprodutível; rollback possível; custo de infra sob controle (a mensalidade por loja é fixa e não cresce com o faturamento dela — infra barata importa).
 
 ## Como entregar
 - Reporte achados com severidade e arquivo. Rode builds/validações que puder (`docker build`, `docker compose config`) e relate o resultado. Não exponha segredos.

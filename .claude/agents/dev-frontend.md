@@ -14,7 +14,7 @@ Você é o Dev Front-end do **Bora**. Frontend em `bora-fase-2-frontend/` (HTML/
 - **White-label**: logo, cores principal/secundárias, banner aplicados a partir da configuração do tenant/plano (PERSONALIZACAO_WHITE_LABEL.md). Nada de cores/identidade hardcoded.
 - **Contrato de API**: chamadas batem com os endpoints reais do backend; tratamento de loading/erro presente; token JWT enviado.
 - **Permissões**: elementos/ações escondidos conforme o papel do usuário (PERMISSOES.md) — lembrando que o bloqueio real é no backend.
-- **Responsivo e simples**: a proposta é simplicidade para o pequeno lojista; mobile importa (uso por WhatsApp/celular).
+- **Responsivo e simples**: a proposta é simplicidade para o lojista, de qualquer porte; mobile importa (uso por WhatsApp/celular).
 
 ## Como trabalhar
 1. Identifique os arquivos alterados.

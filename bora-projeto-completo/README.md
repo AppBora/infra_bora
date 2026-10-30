@@ -1,6 +1,6 @@
 # Projeto Bora — Pacote Completo
 
-A Bora é um SaaS simples, personalizável e em tempo real para pequenos deliveries controlarem pedidos, entregas e vendas.
+A Bora é um SaaS simples, personalizável e em tempo real para deliveries de qualquer porte — pequenos, médios e grandes — controlarem pedidos, entregas e vendas.
 
 Este pacote consolida as fases:
 1. Arquitetura do produto e do SaaS

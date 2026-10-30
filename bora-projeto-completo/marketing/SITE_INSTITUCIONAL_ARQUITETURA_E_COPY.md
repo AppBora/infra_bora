@@ -319,7 +319,7 @@ Link: Quer simular com os seus números? Use a calculadora na página inicial �
 ### PÁGINA 4 — SOBRE
 
 **Título da aba:** Sobre o BoraHapp — sistema de delivery da ADF Sistemas e Tecnologias
-**Meta description:** Conheça o BoraHapp: por que criamos um sistema de delivery com preço fixo e marca própria pro pequeno lojista brasileiro.
+**Meta description:** Conheça o BoraHapp: por que criamos um sistema de delivery com preço fixo e marca própria para o lojista brasileiro, de qualquer porte.
 
 **H1:** Por que existe o BoraHapp
 
