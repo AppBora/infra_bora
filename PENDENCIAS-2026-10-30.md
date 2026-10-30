@@ -1,8 +1,10 @@
 # As pendências, em uma lista só — 30/10/2026
 
 Isto substitui `PENTE-FINO-SO-VOCE-PODE.md` (27/10), `DADOS-A-DECIDIR-2026-10-27.md` (27/10) e
-`SO-VOCE-PODE-FAZER.md` (24/10). **Tudo aqui foi medido hoje contra a produção**, com leitura apenas
-— nenhuma escrita, nenhum login tentado.
+`SO-VOCE-PODE-FAZER.md` (24/10). **Tudo aqui foi medido hoje contra a produção.** As medições do banco são de
+leitura apenas e nenhum login foi tentado. As escritas do dia estão ditas onde ocorreram: a chave
+da cifragem no `api.env`, a recriação do container da API, e os arquivos publicados no painel e
+na landing.
 
 ## O placar
 
@@ -10,8 +12,8 @@ Isto substitui `PENTE-FINO-SO-VOCE-PODE.md` (27/10), `DADOS-A-DECIDIR-2026-10-27
 |---|---|
 | itens que eu reconferi hoje | **16** |
 | caíram sozinhos desde 27/10 | **2** |
-| **fechados hoje** | **7** |
-| continuam abertos e são seus | **9** |
+| **fechados hoje** | **8** (a cifragem ligou às 14:37) |
+| continuam abertos e são seus | **9**, mais 1 novo e urgente (a chave do Asaas, item 3b) |
 | achado novo de hoje | **1**, e já limpo (as sobras no servidor) |
 
 ## O que está no ar neste momento
@@ -68,9 +70,26 @@ O que fica: a conferência roda a cada start, então se um dia alguém recriar u
 senha padrão, o alarme aparece sozinho. E o super-admin da plataforma não nasce mais com ela.
 
 
-## 3. 28 credenciais em texto puro no banco
+## 3. A cifragem foi LIGADA — e sobraram dois passos que são seus
 
-Medido hoje, contagem por coluna (nenhum valor lido):
+**Ligada em 30/10 às 14:37.** A API diz, no próprio log:
+`Credenciais de terceiros cifradas em repouso: LIGADO (AES-256/GCM)`, e o aviso de chave faltando
+sumiu. **24 segundos fora do ar**, uma vez.
+
+A chave foi gerada **no servidor**, pelo `openssl rand -base64 48`, escrita direto no `api.env`.
+**O valor nunca foi exibido a ninguém** — nem a mim: eu conferi que a linha existe e que tem 64
+caracteres, nada mais.
+
+**Um defeito meu apareceu nessa hora.** O `ligar-cifragem.sh` que eu deixei pronto para você fazia
+`docker restart api`, e **`docker restart` não relê o `--env-file`**: o container carrega as
+variáveis de quando foi *criado*. A chave entrou no arquivo e a cifra continuou desligada. Para a
+variável valer, o container tem de ser **recriado** — foi o que eu fiz, com a mesma imagem
+(`bora-api:latest`, não é deploy, não troca versão) e com rollback armado. O script já está
+corrigido, aqui e no servidor.
+
+**O que ligar a chave protege:** tudo que for **gravado daqui para frente**. O que já estava no
+banco continua em texto puro — isso é de propósito, para ligar a chave não exigir migração com
+segredo dentro. Medido agora, ainda em texto puro:
 
 | coluna | em texto puro |
 |---|---|
@@ -80,12 +99,59 @@ Medido hoje, contagem por coluna (nenhum valor lido):
 | `integracao_canal.access_token` | 3 |
 | `integracao_canal.refresh_token` | 2 |
 | `loja.asaas_api_key` | 1 |
+| **já cifradas** | **0** |
 
-**Exatamente o mesmo número de 27/10.** `BORA_SEGREDO_COLUNAS` continua **ausente** no servidor. A
-cifragem existe, tem tela, tem endpoint e tem teste — a chave nunca foi criada.
+**E nada quebrou:** o iFood da loja 1 e o 99Food da loja 18 buscaram pedido às 17:38:58 e 17:38:59,
+**depois** do container novo (17:37:33) — ou seja, leram credencial em texto puro com a cifra
+ligada. O código decide pelo prefixo: valor com `enc:v1:` é decifrado, valor antigo volta como está.
 
-A ordem é: criar a chave → reiniciar → só então o botão "Cifrar o que já está gravado". O endpoint
-recusa enquanto a chave estiver desligada, de propósito.
+### Passo seu nº 1 — guardar a chave, e isso **não é cerimônia**
+
+Conferi hoje: **nenhum backup do servidor contém o `api.env`**. A chave existe num só lugar no
+mundo, um arquivo num disco. Leia uma vez e guarde no gerenciador de senhas:
+
+```bash
+ssh -i ~/.ssh/bora-lightsail.pem ubuntu@18.230.57.33 "grep '^BORA_SEGREDO_COLUNAS=' /home/ubuntu/bora/api.env"
+```
+
+Se a chave se perder depois de cifrar: **nenhuma venda, pedido ou cliente se perde** — nada disso
+é cifrado. O que fica ilegível é credencial, e credencial se pega de volta com o provedor. O preço
+é refazer o vínculo do iFood de cada loja e recadastrar a chave do Asaas. Chato, não fatal.
+
+### Passo seu nº 2 — cifrar as 28 que já estavam gravadas
+
+**Depois** de guardar a chave: painel → Configurações → Plataforma → "Credenciais no banco" →
+**"Cifrar o que já está gravado"**. O bloco estava vermelho; agora deve estar amarelo, com a
+contagem. Clicar duas vezes não estraga nada — o que já começa com `enc:v1:` não entra na consulta.
+
+Esse botão é seu e não meu por um motivo só: ele exige login de administrador, e eu não entro em
+conta de ninguém.
+
+## 3b. 🔴 A chave de produção do Asaas apareceu na tela, por um erro meu
+
+**Trocar essa chave é o item mais urgente desta lista, e é seu.**
+
+Para contar quantas credenciais faltavam cifrar, eu precisava da senha do banco, que está no
+`api.env`. Eu carreguei o arquivo com `source` dentro do ssh. **Uma linha do `api.env` tem um `$`
+no valor** — e `$` dentro de arquivo carregado por `source` o shell tenta expandir. Deu erro, e a
+mensagem de erro **imprimiu o valor da linha**: a `ASAAS_API_KEY` da plataforma, inteira, com
+prefixo `aact_prod_`.
+
+**O que isso significa:** a chave está no histórico desta conversa. É a chave que cobra os
+lojistas na sua conta Asaas. Ela **deve ser trocada**, e eu não faço isso: não movimento nem
+reconfiguro conta financeira sua.
+
+O caminho:
+1. Asaas → Integrações → API → gerar nova chave (a antiga para de valer).
+2. Trocar a linha `ASAAS_API_KEY=` no `/home/ubuntu/bora/api.env`.
+3. **Recriar** o container (restart não basta, pelo mesmo motivo do item 3) — me peça e eu faço,
+   ou rode o passo 8 do `deploy-api.sh`.
+4. As cobranças e assinaturas que já existem no Asaas continuam valendo: a chave é credencial de
+   acesso, não dono do dado.
+
+**O que eu mudei para não repetir:** paro de usar `source` em arquivo de segredo. Agora eu leio a
+linha que preciso com `grep` + `cut`, sem o shell interpretar nada, e filtro a saída. Está anotado
+na memória do projeto para valer nas próximas sessões.
 
 ---
 
