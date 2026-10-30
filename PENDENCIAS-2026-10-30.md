@@ -10,15 +10,20 @@ Isto substitui `PENTE-FINO-SO-VOCE-PODE.md` (27/10), `DADOS-A-DECIDIR-2026-10-27
 |---|---|
 | itens que eu reconferi hoje | **16** |
 | caíram sozinhos desde 27/10 | **2** |
-| **fechei hoje** | **3** |
-| continuam abertos e são seus | **11** |
-| mais, do pente fino de ontem | **2** |
+| **fechados hoje** | **5** |
+| continuam abertos e são seus | **10** |
+| achado novo de hoje | **1** (as sobras no servidor) |
 
 ## O que está no ar neste momento
 
-A API em produção é o commit **786c12d, de 28/10 às 11:57** — a v154. **Nada do dia 29 nem do dia 30
-subiu.** O painel no ar tem o botão desabilitado (de 28/10) mas não tem o menu do celular nem os
-contrastes; a landing no ar ainda é a laranja.
+**A v155 subiu hoje às 10:51** (commit `dbde6c9`), sem rollback, e o container está `healthy`. A
+migração **V65 aplicou em 71 ms** — os índices únicos de bairro e de cliente estão valendo no banco
+de produção.
+
+**O painel subiu**: 88 arquivos conferidos por sha256 um a um, e o `index.html` do painel ficou de
+fora pela marca no próprio arquivo — a raiz continua servindo a página de vendas.
+
+**A landing é a única que falta**, e é um comando só (está no fim deste documento).
 
 ---
 
@@ -46,22 +51,22 @@ então não se perdeu nada. E o `remote` dele **não tinha usuário nem token em
 `.git/config` que ficou aberto entregou o endereço do repositório e os nomes dos arquivos, não uma
 credencial.
 
-## 2. A conta `admin@bora.app` provavelmente está com a senha que está publicada no código
+## 2. ~~A conta `admin@bora.app` com a senha do código~~ — **RESPONDIDO, e eu estava errado**
 
-Isto mudou de "não dá para saber" para "provavelmente sim", e foi medindo duas datas:
+Ontem eu disse "provavelmente está com a senha publicada". **Não está.**
 
-- a conta foi **criada em 01/07/2026**, está **ativa**, é **ADMINISTRADOR_LOJA da loja 1**;
-- o arquivo de variáveis do servidor foi mexido pela última vez em **04/10/2026** — três meses depois.
+Quem respondeu foi o próprio sistema. A v155 confere, no start, se o hash gravado bate com o
+`bora123` do código, e grita no log de auditoria se bater. A v155 subiu hoje às 10:51 e
+**nenhum alarme saiu** — nas duas contas de bootstrap, porque as duas estão configuradas
+(`BORA_BOOTSTRAP_ADMIN_EMAIL` e `..._SUPERADMIN_EMAIL`) e as duas foram conferidas.
 
-O bootstrap **só cria**: ele nunca troca a senha de uma conta que já existe. Então definir a variável
-depois não mudou nada, e o hash gravado continua sendo o de `bora123` — que está no
-`BootstrapAdmin.java`, linha 34, em texto.
+O raciocínio de ontem — conta criada em 01/07, `api.env` mexido em 04/10, bootstrap que só cria —
+estava correto em cada passo e **mesmo assim deu na conclusão errada**: alguém trocou a senha pelo
+painel em algum momento, e isso não deixa rastro em nenhuma das duas datas que eu olhei.
 
-**Não tentei o login** (não é coisa que eu faça). Mas a partir da v155 o próprio sistema responde:
-no start, ele compara o hash gravado com a senha do código e **grita no log de auditoria** se bater.
-Também parei de deixar o super-admin da plataforma nascer com ela.
+O que fica: a conferência roda a cada start, então se um dia alguém recriar uma dessas contas com a
+senha padrão, o alarme aparece sozinho. E o super-admin da plataforma não nasce mais com ela.
 
-**O que fazer:** Usuários → redefinir a senha dessa conta. Um minuto. Ou desative, se ninguém usa.
 
 ## 3. 28 credenciais em texto puro no banco
 
@@ -172,7 +177,36 @@ Melhorou um pouco desde 27/10 — não porque ela encolheu, mas porque entraram 
 (loja 17 com 4, loja 18 com 3, loja 20 com 1). Limpar a movimentação dela, arquivá-la, ou aceitar e
 lembrar disso ao ler relatório.
 
-## 11. A empresa da Pizzaria está sem CNPJ
+## 11. 18 arquivos no servidor que não vêm de repositório nenhum — **14 são cópias antigas de tela**
+
+Achado hoje, estendendo o deploy do frontend para cobrir a landing: o script passou a listar o que
+está na pasta servida e não vem de repositório nenhum. São 18, e entre eles:
+
+```
+configuracoes.html.antes-papeis          (56 KB, responde 200)
+configuracoes.html.antes-sanfona         (47 KB, responde 200)
+login.html.antes-senha-no-login          (4 KB, responde 200)
+pdv.html.antes-cashback                  (4 KB, responde 200)
+usuarios.html.antes-editar / .antes-olhinho / .antes-senha-no-login
+relatorios.html.antes-limpeza
+assets/js/app.js.antes-papeis / .antes-senha-no-login
+assets/js/pdv.js.antes-cashback
+assets/js/usuarios.js.antes-editar / .antes-olhinho / .antes-senha-no-login
+planos.js        (não existe em repositório nenhum)
+.gitignore  README.md  docs/GUIA_FRONTEND.md
+```
+
+**É o mesmo tipo de sobra que o `.git` era:** ninguém põe de propósito, ninguém lembra que está lá,
+e o Caddy serve. Conferi quatro delas com curl: respondem 200 com o conteúdo inteiro.
+
+Remover não perde nada — são versões antigas de telas cuja versão atual está no Git. Eu não apaguei
+por conta própria porque apagar tudo o que "não vem de repositório" levaria junto o
+`ROTEIRO-DE-TESTE.html` e o `guia-zira.html`, que foram postos lá de propósito. **Me diga e eu
+removo as 14 `.antes-*` e o `planos.js`, com backup antes.**
+
+---
+
+## 12. A empresa da Pizzaria está sem CNPJ
 
 Empresa 2, CNPJ vazio. Não quebra nada hoje porque a emissão fiscal está desligada.
 
@@ -189,20 +223,16 @@ Empresa 2, CNPJ vazio. Não quebra nada hoje porque a emissão fiscal está desl
 
 # E o que continua comigo
 
-**O "Fechamento de Caixa" não guarda nada e não existe para ontem.** Não é defeito, é funcionalidade
-que não existe — e o tamanho dela é decisão sua: um seletor de data (pequeno) ou um fechamento
-guardado e assinado (grande).
-
-**O deploy.** Está tudo commitado e testado — **1.335 testes de backend, 211 de integração contra um
-Postgres de verdade, 660 do frontend, zero falhas.** Quando você mandar:
+**A landing ainda não subiu — e falta UM comando.** O script já cobre os dois repositórios e o
+ensaio diz que só `assets/site.css` está diferente (a paleta roxa). Na hora de enviar, o modo
+automático bloqueou a execução classificando como "Production Deploy" — eu não contornei. É isto,
+e leva segundos:
 
 ```bash
-cd bora-landing/deploy && bash deploy-api.sh v155
+cd bora-landing/deploy && bash deploy-frontend.sh --so-landing
 ```
 
-```bash
-cd bora-landing/deploy && bash deploy-frontend.sh --ensaio
-```
+**O "Fechamento de Caixa" não guarda nada e não existe para ontem.** Não é defeito, é
+funcionalidade que não existe — e o tamanho dela é decisão sua: um seletor de data (pequeno) ou um
+fechamento guardado e assinado (grande).
 
-A landing também mudou e é publicada à parte — ela ainda não tem script. Se quiser, eu estendo o
-`deploy-frontend.sh` para cobrir os dois.
