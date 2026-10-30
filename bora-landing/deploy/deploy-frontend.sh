@@ -85,9 +85,17 @@ dizer "1/6 que arquivos vao"
 # CONTEUDO, e nao pelo nome, para valer para o proximo arquivo que precisar dela sem ninguem
 # lembrar de mexer aqui.
 MARCA='ESTE ARQUIVO NAO VAI PARA O SERVIDOR'
+# A lista e SEMPRE dos DOIS repositorios, mesmo com --so-painel ou --so-landing. O $QUAIS decide o
+# que SOBE, nao o que o script CONHECE.
+#
+# Isto nasceu de um alarme falso no primeiro uso: publicando so a landing, o passo 4 comparou a
+# pasta servida com os 12 arquivos dela e acusou 101 "sobras" -- que eram o painel inteiro. Passo
+# que grita 101 vezes sem motivo e passo que todo mundo aprende a pular, e ai ele nao serve para
+# nada no dia em que a sobra for de verdade.
 UNIAO=$(novo_temp)
+TODOS="painel landing"
 
-for repo in $QUAIS; do
+for repo in $TODOS; do
   dir="$(raiz_de "$repo")"
   lista="$(novo_temp)"
   eval "LISTA_$repo=\"\$lista\""
@@ -105,7 +113,11 @@ for repo in $QUAIS; do
     echo "$marcados" | sed 's/^/   /'
     tmp=$(novo_temp); grep -vxF -f <(echo "$marcados") "$lista" > "$tmp"; cp "$tmp" "$lista"
   fi
-  echo "$repo: $(wc -l < "$lista") arquivo(s)"
+  if echo " $QUAIS " | grep -q " $repo "; then
+    echo "$repo: $(wc -l < "$lista") arquivo(s)"
+  else
+    echo "$repo: $(wc -l < "$lista") arquivo(s) -- NAO sobe agora, mas conta para a conferencia"
+  fi
   sed "s|^|$repo\t|" "$lista" >> "$UNIAO"
 done
 
@@ -116,7 +128,8 @@ done
 # dois e sao IDENTICOS byte a byte -- entao nao da estrago, e o script segue dizendo que existem.
 # No dia em que alguem trocar o logo de um lado so, o publicado passa a depender de qual repo subiu
 # por ultimo, e ninguem teria como adivinhar isso olhando a tela. Ai ele ABORTA.
-if [ "$QUAIS" = "painel landing" ]; then
+# Sempre, e nao so quando os dois sobem: o conflito existe no disco, independente do que vai hoje.
+if true; then
   REPETIDOS=$(cut -f2 "$UNIAO" | sort | uniq -d || true)
   if [ -n "$REPETIDOS" ]; then
     conflito=0
@@ -140,8 +153,16 @@ if [ "$QUAIS" = "painel landing" ]; then
   fi
 fi
 
-QUANTOS=$(wc -l < "$UNIAO")
-echo "vao $QUANTOS arquivo(s) no total"
+# Duas listas, de propositos diferentes:
+#   TODOS_CAMINHOS = o que o servidor DEVERIA ter, dos dois repositorios. E com ela que o passo 4
+#                    decide o que e sobra.
+#   SO_CAMINHOS    = o que sobe AGORA. E com ela que os passos 3 e 6 medem e conferem.
+TODOS_CAMINHOS=$(novo_temp)
+cut -f2 "$UNIAO" | sort -u > "$TODOS_CAMINHOS"
+SO_CAMINHOS=$(novo_temp)
+for repo in $QUAIS; do cat "$(eval "echo \"\$LISTA_$repo\"")"; done | sort -u > "$SO_CAMINHOS"
+QUANTOS=$(wc -l < "$SO_CAMINHOS")
+echo "sobem agora $QUANTOS arquivo(s)"
 
 # --------------------------------------------------------------------------------- 2
 dizer "2/6 os arquivos que vao estao commitados?"
@@ -171,13 +192,12 @@ done
 
 # --------------------------------------------------------------------------------- 3
 dizer "3/6 o que esta diferente hoje"
+# So dos repositorios que sobem agora: medir diferenca de um arquivo que nao vai ser enviado faria o
+# passo 3 listar trabalho que este comando nao vai fazer.
 AQUI_HASH=$(novo_temp)
-while IFS=$'\t' read -r repo f; do
+grep -E "^($(echo $QUAIS | tr ' ' '|'))	" "$UNIAO" | while IFS=$'\t' read -r repo f; do
   printf '%s|%s\n' "$f" "$(sha256sum "$(raiz_de "$repo")/$f" | cut -c1-16)"
-done < "$UNIAO" | sort -u > "$AQUI_HASH"
-
-SO_CAMINHOS=$(novo_temp)
-cut -f2 "$UNIAO" | sort -u > "$SO_CAMINHOS"
+done | sort -u > "$AQUI_HASH"
 LA=$(novo_temp)
 ssh -i "$KEY" -o StrictHostKeyChecking=no "$SRV" \
   "cd $REMOTO && while IFS= read -r f; do if [ -f \"\$f\" ]; then printf '%s|%s\n' \"\$f\" \"\$(sha256sum \"\$f\" | cut -c1-16)\"; else printf '%s|AUSENTE\n' \"\$f\"; fi; done | sort" \
@@ -202,7 +222,7 @@ dizer "4/6 o que esta no servidor e NAO vem de repositorio nenhum"
 # guia-zira.html, que foram postos la de proposito e nao estao em repositorio nenhum.
 SOBRAS=$(ssh -i "$KEY" -o StrictHostKeyChecking=no "$SRV" \
   "cd $REMOTO && find . -type f -printf '%P\n' | sort" \
-  | grep -vxF -f "$SO_CAMINHOS" | grep -vE "$NAO_E_SOBRA" || true)
+  | grep -vxF -f "$TODOS_CAMINHOS" | grep -vE "$NAO_E_SOBRA" || true)
 if [ -z "$SOBRAS" ]; then
   echo "nenhuma"
 else
