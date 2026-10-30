@@ -49,9 +49,31 @@ de ninguém.
       **não tem Merchant ID**. Nenhum pedido do iFood entra nessa loja.
       **Caminho:** Integrações → iFood → Conectar, e autorizar no portal.
 
-- [ ] **99Food recusou a credencial da plataforma.** Loja 1: ativo, sem `client_secret`. O polling
-      roda e volta recusado. Nenhum pedido do 99Food entra.
+- [ ] 🔴 **A Zirá AÇAÍTERIA não recebe pedido do 99Food, e a tela diz CONECTADO.** O operador
+      reclamou em 30/10 e eu medi: o canal da loja 18 está `CONECTADO`, o polling rodou agora,
+      **sem erro nenhum** — e `pedidos_recebidos = 0` desde 21/10. Em todo o banco não existe **um
+      único** pedido do 99Food, de loja nenhuma, desde sempre.
+      **A causa não está no Bora:** a loja real nunca foi vinculada ao aplicativo BoraHapp no
+      portal da 99. O `merchant_id` gravado é `zira-acaiteria`, um apelido digitado à mão — não um
+      App Shop ID da 99 (os deles são numéricos). Com um merchant que a 99 não conhece, ela
+      responde lista vazia: sem erro e sem pedido, para sempre.
+      **Caminho (é seu, e depende da Zirá):** 99Food → Gerenciamento da loja → Vincular
+      estabelecimento → "Autorização de solicitação de lote" gera um link que **só um
+      super-administrador da Zirá** consegue concluir. O acesso que temos (Maria Eduarda,
+      "Gerente da loja") não pode, por regra de permissão deles. O link vale 7 dias.
+      **O que dizer ao operador hoje:** os pedidos do 99 continuam chegando no aplicativo da 99;
+      ele lança no Bora pela Frente de Caixa até o vínculo existir. Nada se perdeu.
+
+- [ ] **99Food da loja 1 (Sorveteria da Rosa): credencial da plataforma recusada.** Ativo, sem
+      `client_secret`, e o polling volta recusado a cada 10 min. É problema **diferente** do de
+      cima, e na loja de QA.
       **Caminho:** Configurações → 🔑 Credencial do app BoraHapp nos marketplaces.
+
+- [ ] **Autorizar o conserto do "CONECTADO" que mente** (o conserto é meu). Um canal com
+      `merchant_id` que o marketplace não conhece fica verde e roda para sempre com zero pedido,
+      e nenhuma tela diz "nunca recebi nada". Já existe aviso para canal ativo que **não consegue
+      buscar**; falta o caso do canal que **busca e nunca recebe**. Proposta: avisar quando o
+      canal está ativo há mais de 48 h com `pedidos_recebidos = 0`.
 
 - [ ] **Quatro lojas entregam de graça por falta de bairro.** Loja 1 tem 4 bairros; **17, 18, 19 e
       20 têm zero** — e sem bairro o frete sai R$ 0,00, inclusive nas três lojas pagantes da Zirá.
