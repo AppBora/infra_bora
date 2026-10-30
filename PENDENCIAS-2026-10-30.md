@@ -10,9 +10,9 @@ Isto substitui `PENTE-FINO-SO-VOCE-PODE.md` (27/10), `DADOS-A-DECIDIR-2026-10-27
 |---|---|
 | itens que eu reconferi hoje | **16** |
 | caíram sozinhos desde 27/10 | **2** |
-| **fechei hoje** | **2** |
-| continuam abertos e são seus | **12** |
-| mais, do pente fino de ontem | **3** |
+| **fechei hoje** | **3** |
+| continuam abertos e são seus | **11** |
+| mais, do pente fino de ontem | **2** |
 
 ## O que está no ar neste momento
 
@@ -22,12 +22,29 @@ contrastes; a landing no ar ainda é a laranja.
 
 ---
 
-# 🔴 Primeiro, as três que eu faria hoje
+# 🔴 As três que eu faria hoje — a primeira já está feita
 
-## 1. O `.git` do painel continua aberto na internet
+## 1. ~~O `.git` do painel aberto na internet~~ — **FECHADO em 30/10 às 13:42**
 
-Medido agora: `/.git/config` → **200**. A regra do Caddy está escrita, validada e ensaiada. São três
-comandos e eu rodo quando você mandar — estão em `PENTE-FINO-CONSERTADO-2026-10-29.md`.
+Antes: `/.git/config` → 200, `/.git/index` → 200, `/.git/logs/HEAD` → 200.
+Agora: **404 nos quatro caminhos**, e `/.env` junto. O site inteiro continua 200 — landing, painel,
+CSS, JS, cardápio público, marca da loja e a API.
+
+Foi feito em duas metades:
+
+- **A regra do Caddy.** O arquivo do servidor era byte a byte igual ao do repositório antes da
+  mudança (conferi antes de sobrescrever, para não apagar edição feita direto lá). Guardei uma
+  cópia em `/home/ubuntu/backups/Caddyfile-antes-de-fechar-o-git-20261030-134123`, validei dentro
+  do container e recarreguei. O Caddy não reclamou de nada depois; o certificado vale até 02/12 e
+  o `/.well-known/` continua de fora da proibição, que é o que mantém a renovação do HTTPS.
+- **O `.git` saiu da pasta servida.** Guardado antes em
+  `/home/ubuntu/backups/git-do-frontend-20261030-134233.tgz` (105 KB).
+
+**O que aquele `.git` era, e o que ele vazou:** um clone de `AppBora/front_bora` parado no commit
+`a2ad10f`, de **30/06** — quatro meses atrás. Essa história já existe inteira no repositório daqui,
+então não se perdeu nada. E o `remote` dele **não tinha usuário nem token embutido**: o
+`.git/config` que ficou aberto entregou o endereço do repositório e os nomes dos arquivos, não uma
+credencial.
 
 ## 2. A conta `admin@bora.app` provavelmente está com a senha que está publicada no código
 
