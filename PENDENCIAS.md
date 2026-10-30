@@ -83,6 +83,19 @@ de ninguém.
       principalmente, ela. Limpar a movimentação, arquivar a loja, ou aceitar e lembrar disso ao
       ler relatório.
 
+- [ ] **Decidir o caminho do modo offline** (internet da loja cai). O levantamento está pronto em
+      [ESTUDO-OFFLINE-2026-10-30.md](ESTUDO-OFFLINE-2026-10-30.md): é viável, e o pedido de entrega
+      **não para de entrar** quando a loja cai — ele fica na nuvem. O que para é o balcão e a
+      visualização. Três caminhos; eu recomendo o A agora, depois a chave de idempotência, depois o
+      B limitado ao PDV. **Antes de construir o B, me peça a medição de quantas vezes a internet
+      caiu em cada loja** — é leitura de log e é ela que diz se vale.
+
+- [ ] **Autorizar o conserto da venda duplicada** — isto é defeito de **hoje**, com a internet boa.
+      O `POST /api/pedidos` não tem chave de idempotência: se a resposta se perde na volta e o
+      balconista clica "Finalizar" de novo, a venda é gravada **duas vezes** (estoque baixado duas
+      vezes, cashback acumulado duas vezes, faturamento inflado). O conserto é meu — código, uma
+      migração e uma versão nova —, só preciso do seu "sobe". Detalhe no item 4 do estudo.
+
 - [ ] **"Fechamento de Caixa" não guarda nada e não existe para ontem.** Não é defeito: é
       funcionalidade que não existe. O tamanho é decisão sua — um seletor de data (pequeno) ou um
       fechamento guardado e assinado (grande).
