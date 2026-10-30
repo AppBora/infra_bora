@@ -1,5 +1,9 @@
 # Só você pode fazer — 24/10/2026
 
+> **Registro de 24/10/2026. Nao atue por aqui.**
+> A lista viva de pendencias e a [PENDENCIAS.md](PENDENCIAS.md), que nunca muda de nome.
+> Itens desta pagina que nao aparecem la ja foram fechados.
+
 Tudo o que era meu foi feito. O que sobrou nesta lista depende de uma senha, de uma decisão sua,
 ou de um dado que só a loja tem. **Nenhum item aqui eu consigo destravar sozinho.**
 

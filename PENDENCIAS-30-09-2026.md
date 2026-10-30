@@ -1,5 +1,9 @@
 # Levantamento de pendências do BoraHapp — 30/09/2026
 
+> **Registro de 30/09/2026. Nao atue por aqui.**
+> A lista viva de pendencias e a [PENDENCIAS.md](PENDENCIAS.md), que nunca muda de nome.
+> Itens desta pagina que nao aparecem la ja foram fechados.
+
 Pergunta que originou este documento: **o que falta para o Bora rodar liso num cliente pagante?**
 Resposta curta: **não falta só a integração com marketplace.** O sistema opera — pedido entra, cozinha
 produz, entrega sai, PIX cai na conta do lojista. O que falta está espalhado entre segurança, cobrança,

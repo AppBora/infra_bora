@@ -1,5 +1,9 @@
 # O que falta — levantado em 24/10/2026
 
+> **Registro de 24/10/2026. Nao atue por aqui.**
+> A lista viva de pendencias e a [PENDENCIAS.md](PENDENCIAS.md), que nunca muda de nome.
+> Itens desta pagina que nao aparecem la ja foram fechados.
+
 Tudo com **medido** foi lido hoje na produção (banco em modo somente-leitura, ou o arquivo no ar).
 O resto veio da lista de 23/10 e está marcado como tal.
 

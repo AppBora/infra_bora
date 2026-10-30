@@ -1,5 +1,9 @@
 # Pente fino 26/10 — o que só você pode fazer
 
+> **Registro de 27/10/2026. Nao atue por aqui.**
+> A lista viva de pendencias e a [PENDENCIAS.md](PENDENCIAS.md), que nunca muda de nome.
+> Itens desta pagina que nao aparecem la ja foram fechados.
+
 Esta lista é a parte da varredura que **não depende de código**: é senha, credencial, chave ou decisão
 sua. Está separada do resto de propósito, porque é a que pode ser feita hoje, sem deploy.
 

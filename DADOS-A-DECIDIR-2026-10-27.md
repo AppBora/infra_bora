@@ -1,5 +1,9 @@
 # Os 4 itens de dados: levantados, não tocados
 
+> **Registro de 27/10/2026. Nao atue por aqui.**
+> A lista viva de pendencias e a [PENDENCIAS.md](PENDENCIAS.md), que nunca muda de nome.
+> Itens desta pagina que nao aparecem la ja foram fechados.
+
 Levantamento de **27/10/2026**, feito com o banco de produção em **somente leitura**
 (`PGOPTIONS='-c default_transaction_read_only=on'`). **Nenhuma linha foi alterada.**
 

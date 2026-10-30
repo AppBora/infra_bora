@@ -1,5 +1,9 @@
 # O que falta, e é só você que pode fazer
 
+> **Registro de 23/10/2026. Nao atue por aqui.**
+> A lista viva de pendencias e a [PENDENCIAS.md](PENDENCIAS.md), que nunca muda de nome.
+> Itens desta pagina que nao aparecem la ja foram fechados.
+
 Atualizado em **23/10/2026**. Três coisas. Nenhuma delas é código — todas dependem de uma conta que
 é sua. Em todas eu já deixei o terreno pronto: o que falta é o clique.
 

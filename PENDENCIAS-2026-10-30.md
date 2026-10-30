@@ -1,5 +1,8 @@
 # As pendências, em uma lista só — 30/10/2026
 
+> **Para atuar, use a [PENDENCIAS.md](PENDENCIAS.md)** — nome fixo, só as ações, com onde
+> clicar. Esta página aqui é a **prova**: o que foi medido, quando, e como eu sei.
+
 Isto substitui `PENTE-FINO-SO-VOCE-PODE.md` (27/10), `DADOS-A-DECIDIR-2026-10-27.md` (27/10) e
 `SO-VOCE-PODE-FAZER.md` (24/10). **Tudo aqui foi medido hoje contra a produção.** As medições do banco são de
 leitura apenas e nenhum login foi tentado. As escritas do dia estão ditas onde ocorreram: a chave
