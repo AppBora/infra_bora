@@ -61,6 +61,8 @@ de ninguém.
       estabelecimento → "Autorização de solicitação de lote" gera um link que **só um
       super-administrador da Zirá** consegue concluir. O acesso que temos (Maria Eduarda,
       "Gerente da loja") não pode, por regra de permissão deles. O link vale 7 dias.
+      **Desde 30/10 a tela não engana mais:** o cartão dizia "Recebendo pedidos" em verde com zero
+      pedido; agora diz "Conectado, sem pedido ainda" e explica o que conferir.
       **O que dizer ao operador hoje:** os pedidos do 99 continuam chegando no aplicativo da 99;
       ele lança no Bora pela Frente de Caixa até o vínculo existir. Nada se perdeu.
 
@@ -69,11 +71,12 @@ de ninguém.
       cima, e na loja de QA.
       **Caminho:** Configurações → 🔑 Credencial do app BoraHapp nos marketplaces.
 
-- [ ] **Autorizar o conserto do "CONECTADO" que mente** (o conserto é meu). Um canal com
-      `merchant_id` que o marketplace não conhece fica verde e roda para sempre com zero pedido,
-      e nenhuma tela diz "nunca recebi nada". Já existe aviso para canal ativo que **não consegue
-      buscar**; falta o caso do canal que **busca e nunca recebe**. Proposta: avisar quando o
-      canal está ativo há mais de 48 h com `pedidos_recebidos = 0`.
+- [ ] **(opcional) Fazer o aviso de "sem pedido" contar o tempo.** O verde que mentia já foi
+      consertado e publicado em 30/10 — a tela agora diz "Conectado, sem pedido ainda" em vez de
+      prometer. O que ela **não** diz é há quanto tempo, porque isso **não existe no banco**: o
+      `ultima_sync` só é gravado quando um pedido entra, e não há coluna de "conectado desde".
+      Para o aviso virar "ativo há mais de 48 h sem pedido" falta uma coluna `conectado_em` —
+      migração e **versão nova da API**. Só se você quiser; hoje a tela já não engana.
 
 - [ ] **Quatro lojas entregam de graça por falta de bairro.** Loja 1 tem 4 bairros; **17, 18, 19 e
       20 têm zero** — e sem bairro o frete sai R$ 0,00, inclusive nas três lojas pagantes da Zirá.
