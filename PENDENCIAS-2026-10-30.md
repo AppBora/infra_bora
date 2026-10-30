@@ -234,11 +234,10 @@ escrevemos.
 
 - **A `sobre.html` da landing tinha a frase velha na descrição que o Google mostra** — "para o
   pequeno lojista brasileiro", dentro da `meta name="description"`. Essa **é** vista por quem
-  procura o BoraHapp. Corrigida no repositório; **espera um comando seu** para ir ao ar:
-
-  ```bash
-  cd bora-landing/deploy && bash deploy-frontend.sh --so-landing
-  ```
+  procura o BoraHapp, e era a única da varredura que o cliente podia ler. **Publicada em 30/10 às
+  17:30**: os 12 arquivos da landing conferidos por sha256, backup do que estava lá em
+  `/home/ubuntu/backups/frontend-20261030-173037.tgz` (363 KB), e a busca pela frase velha no que
+  está no ar dá **zero**. As cinco páginas e o CSS continuam **200**.
 
 - **Três documentos ainda vendiam os planos Start R$ 69 / Pro R$ 129 / Premium R$ 249**, que
   **não existem desde 05/07/2026** — hoje é plano único de R$ 199/mês por loja mais o Módulo IA de
