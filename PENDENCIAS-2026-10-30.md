@@ -10,9 +10,9 @@ Isto substitui `PENTE-FINO-SO-VOCE-PODE.md` (27/10), `DADOS-A-DECIDIR-2026-10-27
 |---|---|
 | itens que eu reconferi hoje | **16** |
 | caíram sozinhos desde 27/10 | **2** |
-| **fechados hoje** | **5** |
-| continuam abertos e são seus | **10** |
-| achado novo de hoje | **1** (as sobras no servidor) |
+| **fechados hoje** | **7** |
+| continuam abertos e são seus | **9** |
+| achado novo de hoje | **1**, e já limpo (as sobras no servidor) |
 
 ## O que está no ar neste momento
 
@@ -177,34 +177,27 @@ Melhorou um pouco desde 27/10 — não porque ela encolheu, mas porque entraram 
 (loja 17 com 4, loja 18 com 3, loja 20 com 1). Limpar a movimentação dela, arquivá-la, ou aceitar e
 lembrar disso ao ler relatório.
 
-## 11. 18 arquivos no servidor que não vêm de repositório nenhum — **14 são cópias antigas de tela**
+## 11. ~~18 arquivos no servidor que não vêm de repositório nenhum~~ — **LIMPOS em 30/10 às 14:07**
 
-Achado hoje, estendendo o deploy do frontend para cobrir a landing: o script passou a listar o que
-está na pasta servida e não vem de repositório nenhum. São 18, e entre eles:
+Achados estendendo o deploy do frontend para a landing: o script passou a listar o que está na
+pasta servida e não vem de repositório nenhum. Eram 18, e **14 eram cópias antigas de tela**
+(`configuracoes.html.antes-papeis` com 56 KB, `.antes-sanfona` com 47 KB, `app.js.antes-papeis`,
+`usuarios.js.antes-olhinho`…), todas respondendo 200 na internet — mesmo tipo de sobra que o
+`.git` era. Mais o `planos.js` da raiz, de 1º de julho, substituído pelo `assets/js/planos.js` e
+órfão desde então, e o `README.md`, o `.gitignore` e o `docs/GUIA_FRONTEND.md`.
 
-```
-configuracoes.html.antes-papeis          (56 KB, responde 200)
-configuracoes.html.antes-sanfona         (47 KB, responde 200)
-login.html.antes-senha-no-login          (4 KB, responde 200)
-pdv.html.antes-cashback                  (4 KB, responde 200)
-usuarios.html.antes-editar / .antes-olhinho / .antes-senha-no-login
-relatorios.html.antes-limpeza
-assets/js/app.js.antes-papeis / .antes-senha-no-login
-assets/js/pdv.js.antes-cashback
-assets/js/usuarios.js.antes-editar / .antes-olhinho / .antes-senha-no-login
-planos.js        (não existe em repositório nenhum)
-.gitignore  README.md  docs/GUIA_FRONTEND.md
-```
+**Antes de apagar eu conferi que ninguém os chamava:** nenhuma página referencia `.antes-*`, e
+nenhuma referencia o `planos.js` da raiz (o `planos.html` carrega o `assets/js/planos.js`, que é
+outro arquivo e ficou). Guardei os 18 em
+`/home/ubuntu/backups/sobras-do-frontend-20261030-140706.tgz` (49 KB) antes de remover.
 
-**É o mesmo tipo de sobra que o `.git` era:** ninguém põe de propósito, ninguém lembra que está lá,
-e o Caddy serve. Conferi quatro delas com curl: respondem 200 com o conteúdo inteiro.
-
-Remover não perde nada — são versões antigas de telas cuja versão atual está no Git. Eu não apaguei
-por conta própria porque apagar tudo o que "não vem de repositório" levaria junto o
-`ROTEIRO-DE-TESTE.html` e o `guia-zira.html`, que foram postos lá de propósito. **Me diga e eu
-removo as 14 `.antes-*` e o `planos.js`, com backup antes.**
+Depois: os 18 respondem **404** e o que tem de ficar responde **200** — inclusive os três que o
+script protege de propósito (`ROTEIRO-DE-TESTE.html`, `guia-zira.html`, `manifest.webmanifest`),
+que não estão em repositório nenhum mas foram postos lá por alguém. A pasta servida passou de 116
+para **98 arquivos**, que é exatamente o que os dois repositórios publicam.
 
 ---
+
 
 ## 12. A empresa da Pizzaria está sem CNPJ
 
@@ -223,14 +216,19 @@ Empresa 2, CNPJ vazio. Não quebra nada hoje porque a emissão fiscal está desl
 
 # E o que continua comigo
 
-**A landing ainda não subiu — e falta UM comando.** O script já cobre os dois repositórios e o
-ensaio diz que só `assets/site.css` está diferente (a paleta roxa). Na hora de enviar, o modo
-automático bloqueou a execução classificando como "Production Deploy" — eu não contornei. É isto,
-e leva segundos:
+**A frase da tela de login espera UM comando.** Ela dizia "BoraHapp · SaaS para pequenos
+deliveries" e virou **"SaaS de delivery para pequenos, médios e grandes"** — por decisão sua: o
+produto atende os três, e a frase estava dizendo ao lojista que ele talvez fosse grande demais
+para o sistema, na primeira tela que ele abre todo dia. Está commitada e os 660 testes do frontend
+passam; na hora de publicar o modo automático bloqueou como "Production Deploy", e eu não
+contornei:
 
 ```bash
-cd bora-landing/deploy && bash deploy-frontend.sh --so-landing
+cd bora-landing/deploy && bash deploy-frontend.sh --so-painel
 ```
+
+A mesma descrição velha ainda está nos documentos de arquitetura e nas definições dos agentes.
+Nada disso é visível ao lojista — me diga se quer que eu alinhe também.
 
 **O "Fechamento de Caixa" não guarda nada e não existe para ontem.** Não é defeito, é
 funcionalidade que não existe — e o tamanho dela é decisão sua: um seletor de data (pequeno) ou um
