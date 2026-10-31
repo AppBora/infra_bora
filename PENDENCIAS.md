@@ -125,6 +125,19 @@ de ninguém.
       funcionalidade que não existe. O tamanho é decisão sua — um seletor de data (pequeno) ou um
       fechamento guardado e assinado (grande).
 
+- [ ] **As seis unidades da Zirá: faltam quatro respostas suas.** O cadastro **já guarda endereço
+      completo** desde hoje (CEP, rua, número, complemento, bairro, cidade e UF — no ar em 31/10,
+      API v156, migração V66). Hoje existem 3 lojas da Zirá e você pediu 6 nomes, então é renomear
+      3 e criar 3. O que eu não invento:
+      1. **O endereço da unidade Jardim Montreal** — não está no folheto.
+      2. **A cidade** das seis (o folheto não diz; Sorocaba?). CEP é opcional, deixo em branco.
+      3. **A 19 ("Zirá Centro") e a 20 ("Zirá Zona Norte") viram quais duas** das cinco do folheto.
+         As duas são gêmeas (42 produtos iguais, nenhum usuário), então na prática dá para escolher.
+      4. **As 3 novas entram sem prazo** (como a 19 e a 20 hoje) **ou cobradas**? Loja nova nasce
+         com 7 dias e depois expira.
+      Com as respostas eu renomeio, crio, gravo os endereços e copio o catálogo da 18 — com ensaio
+      antes, como foi no cardápio.
+
 ---
 
 ## ⚪ Um "sim" seu e eu faço — eu não escrevo em produção sem autorização
@@ -134,6 +147,14 @@ de ninguém.
 - [ ] **1 linha de ficha técnica fantasma** — **esta mexe em dinheiro**: entra no custo e, portanto,
       na margem que o lojista lê. É a única das quatro que mexe.
 - [ ] **"Vale Refeicao" repetido na loja 1** — forma de pagamento duplicada. É um clique.
+- [ ] **O nome da loja no painel tem uma rede de segurança que nunca pega** (`whitelabel.js:45`).
+      Medido em 31/10. Quando o lojista **apaga** o campo "nome de exibição", o painel cai no texto
+      neutro do HTML em vez do nome da loja. A rede está morta por três motivos somados:
+      `window.Bora` é sempre `undefined` (o `const Bora` do api.js não cria propriedade em
+      `window`); o `boraUser` da sessão guarda só `{nome, papel, lojaId}`, **sem `lojaNome`**; e
+      `lojaNome` só vem de dois endpoints, nunca do login normal. **Não toca dinheiro nem papel
+      impresso** — é o nome na tela do próprio lojista. O conserto é meu, é pequeno, e precisa de
+      um "sim".
 
 ---
 
