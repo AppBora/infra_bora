@@ -125,18 +125,29 @@ de ninguém.
       funcionalidade que não existe. O tamanho é decisão sua — um seletor de data (pequeno) ou um
       fechamento guardado e assinado (grande).
 
-- [ ] **As seis unidades da Zirá: faltam quatro respostas suas.** O cadastro **já guarda endereço
-      completo** desde hoje (CEP, rua, número, complemento, bairro, cidade e UF — no ar em 31/10,
-      API v156, migração V66). Hoje existem 3 lojas da Zirá e você pediu 6 nomes, então é renomear
-      3 e criar 3. O que eu não invento:
-      1. **O endereço da unidade Jardim Montreal** — não está no folheto.
-      2. **A cidade** das seis (o folheto não diz; Sorocaba?). CEP é opcional, deixo em branco.
-      3. **A 19 ("Zirá Centro") e a 20 ("Zirá Zona Norte") viram quais duas** das cinco do folheto.
-         As duas são gêmeas (42 produtos iguais, nenhum usuário), então na prática dá para escolher.
-      4. **As 3 novas entram sem prazo** (como a 19 e a 20 hoje) **ou cobradas**? Loja nova nasce
-         com 7 dias e depois expira.
-      Com as respostas eu renomeio, crio, gravo os endereços e copio o catálogo da 18 — com ensaio
-      antes, como foi no cardápio.
+- [ ] **As seis unidades da Zirá: falta a foto do folheto e uma decisão de prazo.** O cadastro
+      **já guarda endereço completo** desde 31/10 (CEP, rua, número, complemento, bairro, cidade
+      e UF — API v156, migração V66). Hoje existem 3 lojas da Zirá e são 6 unidades, então é
+      renomear 3 e criar 3. O roteiro está pronto e exercitado (6 de 6 exercícios), nasce em
+      ensaio, e roda duas vezes sem criar loja repetida:
+      `<scratchpad>/zira/unidades-da-zira.js`.
+      **Já respondido por ele (31/10):** cidade **Sorocaba/SP**; a **Jardim Montreal é uma loja a
+      mais** somada às 5 do folheto (= 6), e o endereço que a 99 tem para a Montreal
+      (Rua Antenor Maciel, 393 — Jardim Tropical, 18053-458) é dela mesma, não da unidade
+      Jardim Tropical.
+      **Falta:**
+      1. **A foto do folheto** — os 5 endereços estavam nela e não existem em texto em lugar
+         nenhum. Eu não invento rua e número de loja de cliente.
+      2. **O prazo das 3 novas.** Ele pediu "sem prazo", e medido no código isso **não tem porta**:
+         `POST /admin-bora/lojas` grava sempre +7 dias, `liberar-acesso` exige data futura com teto
+         de 180 dias, e nada no backend põe `acessoAte` de volta em `null`. (A) alinhar as três a
+         **24/01/2027**, a data que a 18 já tem — é o que o roteiro faz, e o que eu recomendo; ou
+         (B) um endpoint novo "tirar o prazo" + deploy da API.
+      3. **A 19 e a 20 viram quais duas.** Ele não respondeu; eu escolhi na ordem do folheto
+         (19 → Vila Mineirão, 20 → Parque São Bento). Medido: a 19 tem 0 pedidos e a **20 tem 1**.
+      Depois que as seis existirem falta o **passo 2**: copiar da 18 o catálogo do papel, os
+      adicionais, a ordem das categorias, o cashback de 3% e a cor `#5B1A8B`. Loja nova nasce com
+      cardápio genérico (`provisionamento.semear`).
 
 ---
 
