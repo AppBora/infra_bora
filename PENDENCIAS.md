@@ -125,19 +125,25 @@ de ninguém.
       funcionalidade que não existe. O tamanho é decisão sua — um seletor de data (pequeno) ou um
       fechamento guardado e assinado (grande).
 
-- [ ] **As seis unidades da Zirá: falta a foto do folheto e uma decisão de prazo.** O cadastro
+- [ ] **As seis unidades da Zirá: os endereços chegaram; faltam 2 decisões suas.** O cadastro
       **já guarda endereço completo** desde 31/10 (CEP, rua, número, complemento, bairro, cidade
       e UF — API v156, migração V66). Hoje existem 3 lojas da Zirá e são 6 unidades, então é
       renomear 3 e criar 3. O roteiro está pronto e exercitado (6 de 6 exercícios), nasce em
       ensaio, e roda duas vezes sem criar loja repetida:
       `<scratchpad>/zira/unidades-da-zira.js`.
-      **Já respondido por ele (31/10):** cidade **Sorocaba/SP**; a **Jardim Montreal é uma loja a
-      mais** somada às 5 do folheto (= 6), e o endereço que a 99 tem para a Montreal
-      (Rua Antenor Maciel, 393 — Jardim Tropical, 18053-458) é dela mesma, não da unidade
-      Jardim Tropical.
+      **Já respondido por ele:** cidade **Sorocaba/SP** (31/10); a **Jardim Montreal é uma loja a
+      mais** somada às 5 do folheto, = 6 (31/10); e os **5 endereços do folheto** (01/11), já
+      transcritos na tabela do roteiro — Vila Mineirão: Rua Firmino Mineli, 751 · Parque São
+      Bento: Rua Maria de Fátima Faria, 72 · Vila Hortência: Rua Dr. Pereira da Rocha, 94 ·
+      Jardim Tropical: Rua Antenor Maciel, 393 · Jardim Nova Esperança: Rua Geraldo Aparecido
+      Rodrigues, 401. O folheto não traz CEP; só o 393 tem (18053-458, vindo da 99).
       **Falta:**
-      1. **A foto do folheto** — os 5 endereços estavam nela e não existem em texto em lugar
-         nenhum. Eu não invento rua e número de loja de cliente.
+      1. **A Montreal e a Jardim Tropical têm o MESMO endereço.** O folheto põe a unidade
+         *Jardim Tropical* na Rua Antenor Maciel, 393 — que é exatamente o endereço que o portal
+         da 99 guarda para a loja *Montreal*. Mesma rua, mesmo número. Ou são a mesma loja com
+         dois nomes (e então são 5 unidades, não 6), ou o cadastro da 99 aponta para o endereço
+         errado. O roteiro pôs o 393 na Jardim Tropical e deixou a **Montreal sem endereço** até
+         ele falar. Em branco não estraga nada (aparece "sem endereço cadastrado" em laranja).
       2. **O prazo das 3 novas.** Ele pediu "sem prazo", e medido no código isso **não tem porta**:
          `POST /admin-bora/lojas` grava sempre +7 dias, `liberar-acesso` exige data futura com teto
          de 180 dias, e nada no backend põe `acessoAte` de volta em `null`. (A) alinhar as três a
