@@ -125,35 +125,31 @@ de ninguém.
       funcionalidade que não existe. O tamanho é decisão sua — um seletor de data (pequeno) ou um
       fechamento guardado e assinado (grande).
 
-- [ ] **As seis unidades da Zirá: os endereços chegaram; faltam 2 decisões suas.** O cadastro
-      **já guarda endereço completo** desde 31/10 (CEP, rua, número, complemento, bairro, cidade
-      e UF — API v156, migração V66). Hoje existem 3 lojas da Zirá e são 6 unidades, então é
-      renomear 3 e criar 3. O roteiro está pronto e exercitado (6 de 6 exercícios), nasce em
-      ensaio, e roda duas vezes sem criar loja repetida:
+- [ ] **As cinco unidades da Zirá: o roteiro está pronto, falta você rodar.** Tudo o que faltava
+      foi respondido (02/11). São **5 unidades**, não 6: a "Jardim Montreal" e a "Jardim Tropical"
+      são a mesma loja — Montreal é o nome que o portal da 99 usa, Jardim Tropical é o que o
+      folheto publica, e as duas ficam na Rua Antenor Maciel, 393. Então é **renomear 3 e criar 2**.
+      Os cinco endereços do folheto já estão na tabela, e as duas lojas novas entram com acesso
+      até **24/01/2027** (opção A, a mesma data que a 18 já tem, pelo endpoint auditado).
+      O cadastro guarda endereço completo desde 31/10 (API v156, migração V66).
+      O roteiro nasce em ensaio e está exercitado — `node exercitar.mjs` dá 6 de 6, e
+      `node exercitar.mjs --mostrar` imprime o ensaio inteiro:
       `<scratchpad>/zira/unidades-da-zira.js`.
-      **Já respondido por ele:** cidade **Sorocaba/SP** (31/10); a **Jardim Montreal é uma loja a
-      mais** somada às 5 do folheto, = 6 (31/10); e os **5 endereços do folheto** (01/11), já
-      transcritos na tabela do roteiro — Vila Mineirão: Rua Firmino Mineli, 751 · Parque São
-      Bento: Rua Maria de Fátima Faria, 72 · Vila Hortência: Rua Dr. Pereira da Rocha, 94 ·
-      Jardim Tropical: Rua Antenor Maciel, 393 · Jardim Nova Esperança: Rua Geraldo Aparecido
-      Rodrigues, 401. O folheto não traz CEP; só o 393 tem (18053-458, vindo da 99).
-      **Falta:**
-      1. **A Montreal e a Jardim Tropical têm o MESMO endereço.** O folheto põe a unidade
-         *Jardim Tropical* na Rua Antenor Maciel, 393 — que é exatamente o endereço que o portal
-         da 99 guarda para a loja *Montreal*. Mesma rua, mesmo número. Ou são a mesma loja com
-         dois nomes (e então são 5 unidades, não 6), ou o cadastro da 99 aponta para o endereço
-         errado. O roteiro pôs o 393 na Jardim Tropical e deixou a **Montreal sem endereço** até
-         ele falar. Em branco não estraga nada (aparece "sem endereço cadastrado" em laranja).
-      2. **O prazo das 3 novas.** Ele pediu "sem prazo", e medido no código isso **não tem porta**:
-         `POST /admin-bora/lojas` grava sempre +7 dias, `liberar-acesso` exige data futura com teto
-         de 180 dias, e nada no backend põe `acessoAte` de volta em `null`. (A) alinhar as três a
-         **24/01/2027**, a data que a 18 já tem — é o que o roteiro faz, e o que eu recomendo; ou
-         (B) um endpoint novo "tirar o prazo" + deploy da API.
-      3. **A 19 e a 20 viram quais duas.** Ele não respondeu; eu escolhi na ordem do folheto
-         (19 → Vila Mineirão, 20 → Parque São Bento). Medido: a 19 tem 0 pedidos e a **20 tem 1**.
-      Depois que as seis existirem falta o **passo 2**: copiar da 18 o catálogo do papel, os
-      adicionais, a ordem das categorias, o cashback de 3% e a cor `#5B1A8B`. Loja nova nasce com
-      cardápio genérico (`provisionamento.semear`).
+      **Para fazer:** colar no console do painel logado como ADMINISTRADOR_BORA, ler a tabela do
+      ensaio, e só então trocar `APLICAR` para `true`. Eu não escrevo em produção sem o seu ok.
+      **Escolha minha, fácil de desfazer:** a 19 virou Vila Mineirão e a 20 virou Parque São Bento,
+      na ordem do folheto. Medido: a 19 tem 0 pedidos e a 20 tem 1.
+      **Depois disso falta o passo 2:** copiar da loja 18 o catálogo do papel, os adicionais, a
+      ordem das categorias, o cashback de 3% e a cor `#5B1A8B`. Loja nova nasce com cardápio
+      genérico (`provisionamento.semear`).
+
+- [ ] **Duas das cinco lojas da Zirá nunca vencem.** A 19 e a 20 estão com `acessoAte = NULL`, que
+      o código trata como "sem prazo, nunca vence" (`Loja.java:163`). O roteiro das unidades **não
+      mexe** nisso — não é hora de tirar acesso de loja que já existe. Mas é o mesmo buraco do item
+      do corte por falta de pagamento: loja sem prazo some da cobrança sem ninguém notar. E não há
+      porta para o contrário: nada no backend põe `acessoAte` de volta em `null`, `POST
+      /admin-bora/lojas` grava sempre +7 dias e `liberar-acesso` exige data futura com teto de 180.
+      Se quiser alinhar as duas a 24/01/2027 como as outras, é um clique no painel por loja.
 
 ---
 
