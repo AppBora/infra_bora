@@ -65,6 +65,14 @@ de ninguém.
       autorização existir, o 403 vira 200 e o erro some sozinho — ela é o nosso termômetro.
       Se preferir, eu pauso.
 
+      **Estado do lado do Bora em 04/11, conferido no banco — não falta nada aqui:** as 5 lojas
+      estão com `ativo = true`, `auto_aceitar = true`, segredo de webhook gravado e o código de
+      roteamento da 99 único em todo o sistema. O pedido da 99 chega por **webhook**
+      (`POST /public/opendelivery/v1/newEvent`) e o Bora acha a loja pelo cabeçalho
+      `X-App-MerchantId` — que é exatamente esse código. Lojas 19-22 ficaram em **ERRO** de
+      propósito: nesse estado o Bora tenta de novo a cada 10 min, então elas se acertam **sozinhas**
+      assim que o App Secret entrar. Ninguém precisa clicar em nada depois.
+
 - [ ] 🔴 **Colar o App Secret do `BR_P_BoraHapp` — é o que trava as lojas 19 a 22.** A credencial
       da plataforma salva em 09/10 aponta para outro aplicativo (`5764607673624955027`) e tem 13
       caracteres; é ela que a 99 recusa na loja 1 todo dia. O par que funciona está guardado dentro
