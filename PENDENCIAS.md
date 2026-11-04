@@ -5,7 +5,7 @@ que você guardar hoje continua valendo no mês que vem. Aqui estão **só as a�
 onde clicar. A prova de cada uma — o que foi medido, quando e onde — está em
 [PENDENCIAS-2026-10-30.md](PENDENCIAS-2026-10-30.md).
 
-Última conferência contra a produção: **30/10/2026**. Tudo marcado como pendente aqui foi medido
+Última conferência contra a produção: **04/11/2026** (o bloco do 99Food; o resto, **30/10/2026**). Tudo marcado como pendente aqui foi medido
 nesse dia, não deduzido.
 
 ---
@@ -49,22 +49,53 @@ de ninguém.
       **não tem Merchant ID**. Nenhum pedido do iFood entra nessa loja.
       **Caminho:** Integrações → iFood → Conectar, e autorizar no portal.
 
-- [ ] 🔴 **A Zirá AÇAÍTERIA não recebe pedido do 99Food, e a tela diz CONECTADO.** O operador
-      reclamou em 30/10 e eu medi: o canal da loja 18 está `CONECTADO`, o polling rodou agora,
-      **sem erro nenhum** — e `pedidos_recebidos = 0` desde 21/10. Em todo o banco não existe **um
-      único** pedido do 99Food, de loja nenhuma, desde sempre.
-      **A causa não está no Bora:** a loja real nunca foi vinculada ao aplicativo BoraHapp no
-      portal da 99. O `merchant_id` gravado é `zira-acaiteria`, um apelido digitado à mão — não um
-      App Shop ID da 99 (os deles são numéricos). Com um merchant que a 99 não conhece, ela
-      responde lista vazia: sem erro e sem pedido, para sempre.
-      **Caminho (é seu, e depende da Zirá):** 99Food → Gerenciamento da loja → Vincular
-      estabelecimento → "Autorização de solicitação de lote" gera um link que **só um
-      super-administrador da Zirá** consegue concluir. O acesso que temos (Maria Eduarda,
-      "Gerente da loja") não pode, por regra de permissão deles. O link vale 7 dias.
-      **Desde 30/10 a tela não engana mais:** o cartão dizia "Recebendo pedidos" em verde com zero
-      pedido; agora diz "Conectado, sem pedido ainda" e explica o que conferir.
-      **O que dizer ao operador hoje:** os pedidos do 99 continuam chegando no aplicativo da 99;
-      ele lança no Bora pela Frente de Caixa até o vínculo existir. Nada se perdeu.
+- [ ] 🔴 **99Food da Zirá: o vínculo não existe, e agora está PROVADO.** Em 04/11 li a tela do
+      portal da 99 (você logado como **Superadministrador**, José Camilo) e gravei no Bora o código
+      real de cada uma das 5 unidades. A 99 passou a responder, a cada consulta:
+      `403 "User is forbidden to access this resource"`.
+      **Isso é a prova que faltava.** Até ontem o canal da loja 18 usava o apelido inventado
+      `zira-acaiteria`, a 99 devolvia lista vazia e o cartão ficava verde para sempre. O teste de
+      token **não serve de prova**: a 99 devolve token até para um código que não existe. Quem
+      separa é a consulta de pedidos — e ela diz 403.
+      **Caminho (é seu, e agora dá para fazer):** você já está logado com o perfil certo. 99Food →
+      Gerenciamento da loja → Vincular estabelecimento → **"Autorização de solicitação de lote"**
+      gera um link; abra-o nessa mesma sessão e autorize as 5 para o app `BR_P_BoraHapp`
+      (App ID `5764607707103889279`). O link vale 7 dias.
+      **A loja 18 ficou ligada de propósito**, consultando a 99 a cada 30 s. No instante em que a
+      autorização existir, o 403 vira 200 e o erro some sozinho — ela é o nosso termômetro.
+      Se preferir, eu pauso.
+
+- [ ] 🔴 **Colar o App Secret do `BR_P_BoraHapp` — é o que trava as lojas 19 a 22.** A credencial
+      da plataforma salva em 09/10 aponta para outro aplicativo (`5764607673624955027`) e tem 13
+      caracteres; é ela que a 99 recusa na loja 1 todo dia. O par que funciona está guardado dentro
+      da loja 18, no app de produção. As lojas 19-22 não têm credencial própria: herdam a da
+      plataforma, que está errada.
+      **Caminho:** painel → Configurações → 🔑 Credencial do app BoraHapp nos marketplaces →
+      99Food → App ID `5764607707103889279` + o App Secret (portal da 99, Gerenciamento de
+      aplicativo → `BR_P_BoraHapp` → Ver detalhes).
+      **Eu não digito segredo — esse colar é seu.** Um colar só resolve as quatro, e conserta a
+      loja 1 de quebra. Aviso: a loja 1 passa a usar o app de produção em vez do de teste.
+
+- [ ] **Confirmar qual unidade é a "Zona Norte" da 99.** Quatro das cinco casam por nome **e** por
+      endereço oficial dos Correios. A quinta eu fechei **por eliminação**: sobrou a loja 19
+      (Rua Firmino Mineli 751, que os Correios colocam no **Jardim Hungarês**) de um lado e a
+      "Zona Norte" do outro. Gravei o código `5764608427259856166` nela, mas está **PRONTO, não
+      conectado** — nenhum pedido corre risco até você confirmar.
+      **Caminho:** 99Food → Lista de lojas → Zona Norte → Configurações → ver o endereço.
+
+- [ ] 🔴 **Jardim Montreal e Jardim Hungarês não estão na lista de bairros de entrega.** O
+      checkout **recusa** bairro fora da lista. Hoje, um cliente que mora na porta da loja 18 não
+      consegue fechar pedido no cardápio. Os Correios dizem que a Rua Antenor Maciel 393 fica no
+      **Jardim Montreal** (por isso a loja 18 mudou de nome em 04/11) e que a Rua Firmino Minelli
+      fica no **Jardim Hungarês**. "Jardim Tropical" existe em Sorocaba — só não é onde a loja está.
+      **É decisão sua, porque é preço:** me diga a taxa de cada um e eu cadastro nas 5.
+
+- [ ] **A tela diz CONECTADO com 403 em toda consulta.** Defeito do Bora, achado em 04/11: quando
+      a consulta de pedidos falha, o Bora grava o erro mas **não rebaixa o status**. A loja 18 está
+      agora com `status = CONECTADO` e `ultimo_erro = 403 ... forbidden`. É o mesmo padrão de
+      "morre em silêncio" de sempre, numa variante nova.
+      **Onde:** `OpenDeliveryClient.polling`, no `catch` — o `marcarPollingFalhou` grava hora e erro,
+      e o status fica como estava. Precisa de deploy. **Me peça e eu subo.**
 
 - [ ] **99Food da loja 1 (Sorveteria da Rosa): credencial da plataforma recusada.** Ativo, sem
       `client_secret`, e o polling volta recusado a cada 10 min. É problema **diferente** do de
