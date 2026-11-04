@@ -96,6 +96,16 @@ de ninguém.
       Esperança R$ 7,00 · Centro R$ 8,00. Conferido no banco: 6 por loja, todos ativos, **0
       duplicatas em todo o sistema**, e a loja de outro cliente intacta com os 4 dela.
 
+- [ ] **Pedido de teste na loja 22, agendado para hoje 04/11 às 13:07.** É a única prova que falta
+      do frete: tudo o que eu afirmei sobre a cobrança veio de LER o código que está rodando, não
+      de ver o dinheiro na tela. A 22 foi escolhida porque nasceu hoje e tem **zero pedidos** —
+      nada se confunde com venda real. O roteiro do agendamento: pedido de ENTREGA com bairro
+      "Jardim Nova Esperança" (R$ 7,00), conferir se o total = produto + 7,00 na resposta E no
+      banco; depois um segundo pedido com bairro inexistente, que deve levar 400 sem gravar nada;
+      e por fim cancelar o pedido de teste e conferir o estorno de estoque.
+      **Atenção:** o agendamento vive só nesta sessão do Claude. Se ela fechar antes das 13h, o
+      pedido de teste não acontece e alguém precisa pedir de novo.
+
 - [ ] **No balcão/painel, bairro fora da lista sai R$ 0,00 em silêncio.** `PedidoService.taxaPara`
       (linha 82): a taxa sai do bairro do **cadastro do cliente**, e sem correspondência devolve
       `BigDecimal.ZERO` — o pedido é aceito com frete zerado, sem aviso. Cliente sem bairro no
