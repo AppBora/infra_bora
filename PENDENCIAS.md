@@ -78,9 +78,19 @@ de ninguém.
       Para o aviso virar "ativo há mais de 48 h sem pedido" falta uma coluna `conectado_em` —
       migração e **versão nova da API**. Só se você quiser; hoje a tela já não engana.
 
-- [ ] **Quatro lojas entregam de graça por falta de bairro.** Loja 1 tem 4 bairros; **17, 18, 19 e
-      20 têm zero** — e sem bairro o frete sai R$ 0,00, inclusive nas três lojas pagantes da Zirá.
-      **Caminho:** Configurações → Taxas de entrega, em cada loja.
+- [ ] **As 5 lojas da Zirá entregam de graça por falta de bairro — roteiro pronto, faltam os
+      valores.** Medido em 04/11: **nenhuma das cinco tem um bairro cadastrado**, e sem bairro o
+      frete sai R$ 0,00 em todo pedido. No sistema inteiro, só a loja 1 (teste) tem taxa.
+      **Pior que isso:** os 5 pedidos de ENTREGA da loja 18 (28/10 a 01/11) estão com
+      `bairro_entrega` VAZIO, `endereco_entrega` VAZIO e `taxa_entrega` 0,00 — não dá nem para
+      saber para onde foram.
+      O roteiro está pronto e exercitado (9 de 9, provado contra 3 mutantes):
+      `<scratchpad>/zira/bairros-e-taxas.js`. Aceita a mesma tabela para as cinco (`PARA_TODAS`)
+      ou uma por unidade (`POR_LOJA`), nasce em ensaio, nunca apaga bairro que já esteja lá, e
+      rodar duas vezes não escreve nada — o próprio `POST /api/taxas` trata bairro repetido como
+      atualização (conserto do pente fino de 29/10).
+      **Falta só o dono dizer os bairros e os preços.** Taxa de entrega é dinheiro que o cliente
+      final paga: não é número que eu invente, e o sistema não tem de onde eu derivar.
 
 - [ ] **Dois insumos estão à venda no cardápio público da Zirá** (loja 18, categoria "mantimento"):
       `leite condensado` R$ 3,00 e `pacoca` R$ 2,50, os dois ativos. O cliente final vê isso.
