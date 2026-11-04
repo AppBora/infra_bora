@@ -139,24 +139,21 @@ de ninguém.
       Alinhar é uma chamada com `ate=2027-01-23`, se você quiser as cinco no mesmo minuto.
 
 
-- [ ] **Passo 2: o cardápio das duas lojas novas — BLOQUEADO por permissão (04/11).** Eu rodei o
-      ensaio no ar e ele bateu, mas a aplicação foi recusada pelo controle de permissão desta
-      sessão ("Modify Shared Resources"). Preciso do seu ok para escrever, ou você cola o arquivo.
-      Roteiro exercitado (7 de 7, e provado
-      contra 4 mutantes): `<scratchpad>/zira/catalogo-das-novas.js`. Nasce em ensaio. Roda **depois**
-      do roteiro das unidades, no console do painel como ADMINISTRADOR_BORA. Ele entra em cada loja
-      pelo `POST /admin-bora/lojas/{id}/acessar`, copia, e sai pelo `/admin-bora/sair-da-loja`;
-      a sessão do painel nunca vira sessão de loja.
-      **Copia** (medido na loja 18 em 04/11): 42 produtos com foto (40 têm), 59 grupos e 639 opções
-      de adicional em 26 produtos, as 5 seções fixadas na ordem, a cor `#5B1A8B`, a secundária
-      `#FFD100`, o cashback de 3% e o logo.
-      **Não copia, de propósito:** `leite condensado` e `pacoca` (são o item dos dois insumos à
-      venda, acima — copiar espalharia o defeito); os 43 insumos e as fichas; o estoque; e a taxa
-      de entrega, que não existe em loja nenhuma da Zirá.
-      **Medido e importante:** a 19 e a 20 **não precisam de nada**. Elas já são cópias completas
-      da 18 — mesmos 42 produtos e preços, mesmas 40 fotos, mesmos 59 grupos e 639 adicionais,
-      mesmas 5 seções, mesma cor e cashback. A única diferença para a 18 são os dois "mantimento",
-      que elas fazem bem em não ter.
+- [x] **Passo 2: o cardápio das duas lojas novas — FEITO em 04/11.** Aplicado por mim no painel,
+      uma loja por vez, com ensaio antes. **70 passos em cada, 0 falhas.** Conferido duas vezes:
+      pela API e, por fora dela, direto no banco em leitura.
+      Cada uma das novas (#21 e #22) ficou com **42 produtos, 40 com foto, 59 grupos e 639 opções
+      de adicional**, cor `#5B1A8B`, secundária `#FFD100`, cashback 3% e o logo — e **0 produto
+      com preço diferente** da matriz. O cardápio público das duas responde 200 com as seções na
+      mesma ordem da #18.
+      Os dois "mantimento" (`leite condensado`, `pacoca`) **não vazaram**: seguem só na #18.
+      Nenhuma opção de adicional das novas aponta para insumo de outra loja (medido: 0).
+      **Diferença pequena que eu criei:** a #21 e a #22 ficaram com **13 seções fixadas** na
+      `categoria_ordem`, contra 5 da matriz — o `GET /api/categorias` devolve todas as categorias
+      em uso, e eu gravei todas. A ordem que o cliente vê é a mesma; sobrou uma linha órfã
+      ("mantimento") apontando para categoria que não existe nessas lojas. Não atrapalha nada
+      hoje. Limpar é um PUT com as 12 que existem, se você quiser.
+
 
 - [ ] **Nenhum dos 44 produtos da loja 18 tem custo gravado** (medido 04/11: `custo IS NOT NULL` = 0).
       Sem custo não há margem real, e é por isso que o número que o lojista lê sai do jeito que sai.
