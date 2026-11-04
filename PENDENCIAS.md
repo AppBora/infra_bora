@@ -84,21 +84,34 @@ de ninguém.
       direto no banco (0 duplicatas de bairro por loja) e no **cardápio público das cinco**, que
       já devolve os três bairros com os preços. A loja de outro cliente ficou intacta.
 
-- [ ] **Bairro fora da lista continua saindo R$ 0,00, em silêncio.** Medido no código
-      (`PedidoService.taxaPara`, linha 82): a taxa sai do **bairro do CADASTRO do cliente**, e
-      quando não há correspondência o retorno é `BigDecimal.ZERO` — o pedido é aceito e o frete
-      fica zerado, sem aviso para ninguém. Com a tabela de hoje isso atinge, entre outros, os
-      bairros onde ficam três das próprias lojas: **Vila Mineirão, Parque São Bento e Jardim
-      Nova Esperança**. Duas saídas, e as duas são decisão do dono: cadastrar mais bairros
-      (é rodar o mesmo roteiro de novo), ou mudar a regra para recusar/avisar em vez de zerar.
+- [ ] **CORREÇÃO do que eu disse: no cardápio público a taxa FUNCIONA — e agora ela bloqueia.**
+      Medido em 04/11 no commit que está no ar (`698e7f5`, `PublicController` linhas 529-539): o
+      pedido do cardápio lê a tabela de bairros da loja e, quando a loja TEM bairros cadastrados e
+      é entrega, **recusa** em vez de zerar — bairro em branco dá *"Escolha o bairro da entrega
+      para calcularmos a taxa"*, e bairro fora da lista dá *"Ainda não entregamos nesse bairro.
+      Escolha um da lista ou retire no balcão"*. Com bairro válido, a taxa entra no total e é
+      gravada no pedido. O fallback silencioso para R$ 0,00 que eu apontei é de **outro caminho**
+      (`PedidoService.taxaPara`, usado pelo balcão/painel), não deste.
+      **A consequência, e é urgente:** até ontem as cinco lojas não tinham bairro nenhum, então o
+      cardápio aceitava qualquer endereço e entregava de graça. Desde hoje, quem for de bairro
+      fora dos três cadastrados **não consegue mais pedir entrega pelo cardápio** — incluindo os
+      bairros onde ficam três das próprias lojas: **Vila Mineirão, Parque São Bento e Jardim Nova
+      Esperança**. Ou o dono manda mais bairros (é rodar o mesmo roteiro de novo, segundos), ou
+      essas regiões ficam só com retirada.
 
-- [ ] **Cliente sem bairro no cadastro também paga R$ 0,00 de frete.** Mesma linha do item acima:
-      `cli.bairro == null || isBlank()` devolve zero antes de olhar a tabela. Hoje quase nenhum
-      cliente da Zirá tem bairro preenchido, e os 5 pedidos de ENTREGA da loja 18 (28/10 a 01/11)
-      estão com `bairro_entrega` e `endereco_entrega` VAZIOS. Ou seja: a tabela de taxa só passa
-      a valer de fato quando o bairro chegar no cadastro do cliente. **Vale medir se o cardápio
-      público está gravando o bairro do cliente no checkout** — se não estiver, a taxa nova não
-      vai ser cobrada em pedido nenhum.
+- [ ] **No balcão/painel, bairro fora da lista sai R$ 0,00 em silêncio.** `PedidoService.taxaPara`
+      (linha 82): a taxa sai do bairro do **cadastro do cliente**, e sem correspondência devolve
+      `BigDecimal.ZERO` — o pedido é aceito com frete zerado, sem aviso. Cliente sem bairro no
+      cadastro também paga zero. Diferente do cardápio público, aqui não há bloqueio. É defeito
+      ou é de propósito (o comentário do código diz que o balconista pode combinar frete fora da
+      tabela)? Vale a decisão do dono antes de eu mexer.
+
+- [ ] **As outras quatro lojas da Zirá abrem às 18h no cardápio; só a 18 abre às 13h.** Medido em
+      04/11: a loja 18 tem 13:00→23:00 nos sete dias (horário que alguém configurou), e as lojas
+      19, 20, 21 e 22 têm 18:00→23:00 — o padrão genérico que o `provisionamento.semear` grava.
+      Enquanto estiver assim, o cardápio dessas quatro recusa pedido antes das 18h com "A loja
+      está fechada agora". Copiar o horário da 18 para as outras é o mesmo tipo de roteiro do
+      cardápio, e é rápido — falta o dono dizer se 13h vale para todas.
 
 
 - [ ] **Dois insumos estão à venda no cardápio público da Zirá** (loja 18, categoria "mantimento"):
