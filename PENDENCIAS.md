@@ -139,9 +139,28 @@ de ninguém.
       ensaio, e só então trocar `APLICAR` para `true`. Eu não escrevo em produção sem o seu ok.
       **Escolha minha, fácil de desfazer:** a 19 virou Vila Mineirão e a 20 virou Parque São Bento,
       na ordem do folheto. Medido: a 19 tem 0 pedidos e a 20 tem 1.
-      **Depois disso falta o passo 2:** copiar da loja 18 o catálogo do papel, os adicionais, a
-      ordem das categorias, o cashback de 3% e a cor `#5B1A8B`. Loja nova nasce com cardápio
-      genérico (`provisionamento.semear`).
+      **Logo depois, o passo 2** (já pronto, item abaixo): copiar o cardápio da loja 18 para as
+      duas lojas novas.
+
+- [ ] **Passo 2: o cardápio das duas lojas novas.** Roteiro pronto e exercitado (7 de 7, e provado
+      contra 4 mutantes): `<scratchpad>/zira/catalogo-das-novas.js`. Nasce em ensaio. Roda **depois**
+      do roteiro das unidades, no console do painel como ADMINISTRADOR_BORA. Ele entra em cada loja
+      pelo `POST /admin-bora/lojas/{id}/acessar`, copia, e sai pelo `/admin-bora/sair-da-loja`;
+      a sessão do painel nunca vira sessão de loja.
+      **Copia** (medido na loja 18 em 04/11): 42 produtos com foto (40 têm), 59 grupos e 639 opções
+      de adicional em 26 produtos, as 5 seções fixadas na ordem, a cor `#5B1A8B`, a secundária
+      `#FFD100`, o cashback de 3% e o logo.
+      **Não copia, de propósito:** `leite condensado` e `pacoca` (são o item dos dois insumos à
+      venda, acima — copiar espalharia o defeito); os 43 insumos e as fichas; o estoque; e a taxa
+      de entrega, que não existe em loja nenhuma da Zirá.
+      **Medido e importante:** a 19 e a 20 **não precisam de nada**. Elas já são cópias completas
+      da 18 — mesmos 42 produtos e preços, mesmas 40 fotos, mesmos 59 grupos e 639 adicionais,
+      mesmas 5 seções, mesma cor e cashback. A única diferença para a 18 são os dois "mantimento",
+      que elas fazem bem em não ter.
+
+- [ ] **Nenhum dos 44 produtos da loja 18 tem custo gravado** (medido 04/11: `custo IS NOT NULL` = 0).
+      Sem custo não há margem real, e é por isso que o número que o lojista lê sai do jeito que sai.
+      Não é conserto de código: é cadastro que alguém precisa preencher.
 
 - [ ] **Duas das cinco lojas da Zirá nunca vencem.** A 19 e a 20 estão com `acessoAte = NULL`, que
       o código trata como "sem prazo, nunca vence" (`Loja.java:163`). O roteiro das unidades **não
