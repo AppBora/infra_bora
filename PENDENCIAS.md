@@ -105,6 +105,36 @@ de ninguém.
       **Onde:** `OpenDeliveryClient.polling`, no `catch` — o `marcarPollingFalhou` grava hora e erro,
       e o status fica como estava. Precisa de deploy. **Me peça e eu subo.**
 
+- [x] ✅ **PROVADO AO VIVO em 04/11, 13h08: a taxa de entrega entra no total do cardápio.** Até
+      hoje isso só tinha sido **lido no código**. Pedido de teste real na loja 22
+      (Zirá - Jardim Nova Esperança), que tinha **zero** pedidos:
+      1 Água Mineral **R$ 3,50** + bairro Jardim Nova Esperança **R$ 7,00** = **R$ 10,50**.
+      No banco: `taxa_entrega = 7.00`, `bairro_entrega = Jardim Nova Esperança`,
+      `valor_total = 10.50`. Pedido 139, código CD-139.
+      **E a recusa também foi provada:** com o bairro "Bairro Que Nao Existe" a resposta foi
+      **400 — "Ainda nao entregamos nesse bairro"**, e a loja continuou com **1** pedido, não 2.
+      Nada foi gravado.
+      **Cancelado em seguida** (pedido 139, status CANCELADO): o cliente de teste voltou a
+      `total_gasto = 0,00`, `qtd_pedidos = 0` e `cashback = 0,00`. A devolução funciona.
+
+- [ ] 🔴 **O cashback está sendo pago sobre o frete.** Achado no mesmo teste: o cashback de 3%
+      saiu **R$ 0,32**, que é 3% de **R$ 10,50** — o total **com** a taxa de entrega. Sobre os
+      R$ 3,50 do produto daria R$ 0,11. A loja devolve dinheiro em cima do que pagou ao motoboy.
+      Neste pedido foram R$ 0,21 a mais; num pedido de R$ 60 com frete de R$ 8 são R$ 0,24 a mais,
+      todo dia, em toda loja.
+      **Decisão sua:** cashback sobre o produto (o normal no mercado) ou sobre o total? Me diga e
+      eu conserto — precisa de deploy.
+
+- [ ] **Nenhum dos 42 produtos das lojas novas controla estoque.** Tentei provar que o
+      cancelamento devolve estoque e **não deu**: na loja 22, os 42 produtos estão com `estoque`
+      vazio. Não é defeito do cancelamento — é que não há estoque para devolver. Veio assim da
+      matriz (loja 18), junto com a falta de `custo` que já estava anotada.
+
+- [ ] **Rastro do teste na loja 22, para você decidir.** Ficaram: o pedido **139 CANCELADO** no
+      histórico (não conta como venda) e o cliente **"TESTE BORAHAPP - NAO ENTREGAR"** com tudo
+      zerado. Não removi: apagar cliente ligado a pedido pede a limpeza de dados de teste da loja
+      inteira, e isso é marreta grande demais para um registro zerado. **Me peça e eu tiro.**
+
 - [ ] **99Food da loja 1 (Sorveteria da Rosa): credencial da plataforma recusada.** Ativo, sem
       `client_secret`, e o polling volta recusado a cada 10 min. É problema **diferente** do de
       cima, e na loja de QA.
