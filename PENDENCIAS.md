@@ -84,20 +84,17 @@ de ninguém.
       direto no banco (0 duplicatas de bairro por loja) e no **cardápio público das cinco**, que
       já devolve os três bairros com os preços. A loja de outro cliente ficou intacta.
 
-- [ ] **CORREÇÃO do que eu disse: no cardápio público a taxa FUNCIONA — e agora ela bloqueia.**
-      Medido em 04/11 no commit que está no ar (`698e7f5`, `PublicController` linhas 529-539): o
-      pedido do cardápio lê a tabela de bairros da loja e, quando a loja TEM bairros cadastrados e
-      é entrega, **recusa** em vez de zerar — bairro em branco dá *"Escolha o bairro da entrega
-      para calcularmos a taxa"*, e bairro fora da lista dá *"Ainda não entregamos nesse bairro.
-      Escolha um da lista ou retire no balcão"*. Com bairro válido, a taxa entra no total e é
-      gravada no pedido. O fallback silencioso para R$ 0,00 que eu apontei é de **outro caminho**
-      (`PedidoService.taxaPara`, usado pelo balcão/painel), não deste.
-      **A consequência, e é urgente:** até ontem as cinco lojas não tinham bairro nenhum, então o
-      cardápio aceitava qualquer endereço e entregava de graça. Desde hoje, quem for de bairro
-      fora dos três cadastrados **não consegue mais pedir entrega pelo cardápio** — incluindo os
-      bairros onde ficam três das próprias lojas: **Vila Mineirão, Parque São Bento e Jardim Nova
-      Esperança**. Ou o dono manda mais bairros (é rodar o mesmo roteiro de novo, segundos), ou
-      essas regiões ficam só com retirada.
+- [x] **O cardápio público cobra o frete de verdade — e os 6 bairros estão no ar (04/11).**
+      Medido no commit que está rodando (`698e7f5`, `PublicController` 529-539): quando a loja tem
+      bairro cadastrado e o pedido é entrega, o servidor **recusa** em vez de zerar — bairro em
+      branco dá *"Escolha o bairro da entrega para calcularmos a taxa"* e bairro fora da lista dá
+      *"Ainda não entregamos nesse bairro"*. Com bairro válido a taxa entra no total e é gravada.
+      (Eu havia dito que saía R$ 0,00 em silêncio: isso é de **outro** caminho, o do balcão.)
+      Como aquilo bloquearia quem mora nos bairros de três das próprias lojas, o dono completou a
+      tabela no mesmo dia. **As 5 lojas agora têm os mesmos 6 bairros:** Jardim Tropical R$ 5,00 ·
+      Vila Hortência R$ 6,00 · Vila Mineirão R$ 7,00 · Parque São Bento R$ 7,00 · Jardim Nova
+      Esperança R$ 7,00 · Centro R$ 8,00. Conferido no banco: 6 por loja, todos ativos, **0
+      duplicatas em todo o sistema**, e a loja de outro cliente intacta com os 4 dela.
 
 - [ ] **No balcão/painel, bairro fora da lista sai R$ 0,00 em silêncio.** `PedidoService.taxaPara`
       (linha 82): a taxa sai do bairro do **cadastro do cliente**, e sem correspondência devolve
