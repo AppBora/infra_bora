@@ -117,13 +117,20 @@ de ninguém.
       **Cancelado em seguida** (pedido 139, status CANCELADO): o cliente de teste voltou a
       `total_gasto = 0,00`, `qtd_pedidos = 0` e `cashback = 0,00`. A devolução funciona.
 
-- [ ] 🔴 **O cashback está sendo pago sobre o frete.** Achado no mesmo teste: o cashback de 3%
-      saiu **R$ 0,32**, que é 3% de **R$ 10,50** — o total **com** a taxa de entrega. Sobre os
-      R$ 3,50 do produto daria R$ 0,11. A loja devolve dinheiro em cima do que pagou ao motoboy.
-      Neste pedido foram R$ 0,21 a mais; num pedido de R$ 60 com frete de R$ 8 são R$ 0,24 a mais,
-      todo dia, em toda loja.
-      **Decisão sua:** cashback sobre o produto (o normal no mercado) ou sobre o total? Me diga e
-      eu conserto — precisa de deploy.
+- [x] ✅ **Cashback DESLIGADO nas 5 lojas da Zirá — 04/11, por decisão do dono.** O teste tinha
+      mostrado que os 3% saíam sobre **R$ 10,50**, o total **com** o frete (R$ 0,32 em vez dos
+      R$ 0,11 que daria sobre o produto) — a loja devolvia dinheiro em cima do que pagou ao
+      motoboy. Em vez de escolher a base de cálculo, o dono mandou desligar.
+      **Feito:** `cashback_percentual` de **3% para 0%** nas lojas 18, 19, 20, 21 e 22. Zero é o
+      próprio desligamento (não existe campo "ativo" separado). Cor, cor secundária, logo e nome
+      ficaram intactos — o salvamento só grava o que vem preenchido.
+      **Provado ao vivo**, não só no banco: pedido CD-140 na loja 22 voltou `cashbackNovo = 0.0`,
+      e a taxa de entrega continuou entrando (R$ 10,50 com R$ 7,00 de frete). Cancelado em seguida.
+      **Nenhum cliente perdeu saldo:** as 5 lojas tinham **zero** clientes com cashback acumulado.
+      **Não toquei em cliente nenhum fora da Zirá:** Sorveteria da Rosa e Pizzaria Bella Napoli
+      seguem com 5%.
+      **O defeito do cálculo continua no código**, adormecido: se algum dia ligarem cashback em
+      qualquer loja, ele volta a incidir sobre o frete. Para consertar de verdade precisa de deploy.
 
 - [ ] **Nenhum dos 42 produtos das lojas novas controla estoque.** Tentei provar que o
       cancelamento devolve estoque e **não deu**: na loja 22, os 42 produtos estão com `estoque`
