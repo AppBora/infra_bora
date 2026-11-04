@@ -125,24 +125,24 @@ de ninguém.
       funcionalidade que não existe. O tamanho é decisão sua — um seletor de data (pequeno) ou um
       fechamento guardado e assinado (grande).
 
-- [ ] **As cinco unidades da Zirá: o roteiro está pronto, falta você rodar.** Tudo o que faltava
-      foi respondido (02/11). São **5 unidades**, não 6: a "Jardim Montreal" e a "Jardim Tropical"
-      são a mesma loja — Montreal é o nome que o portal da 99 usa, Jardim Tropical é o que o
-      folheto publica, e as duas ficam na Rua Antenor Maciel, 393. Então é **renomear 3 e criar 2**.
-      Os cinco endereços do folheto já estão na tabela, e as duas lojas novas entram com acesso
-      até **24/01/2027** (opção A, a mesma data que a 18 já tem, pelo endpoint auditado).
-      O cadastro guarda endereço completo desde 31/10 (API v156, migração V66).
-      O roteiro nasce em ensaio e está exercitado — `node exercitar.mjs` dá 6 de 6, e
-      `node exercitar.mjs --mostrar` imprime o ensaio inteiro:
-      `<scratchpad>/zira/unidades-da-zira.js`.
-      **Para fazer:** colar no console do painel logado como ADMINISTRADOR_BORA, ler a tabela do
-      ensaio, e só então trocar `APLICAR` para `true`. Eu não escrevo em produção sem o seu ok.
-      **Escolha minha, fácil de desfazer:** a 19 virou Vila Mineirão e a 20 virou Parque São Bento,
-      na ordem do folheto. Medido: a 19 tem 0 pedidos e a 20 tem 1.
-      **Logo depois, o passo 2** (já pronto, item abaixo): copiar o cardápio da loja 18 para as
-      duas lojas novas.
+- [x] **As cinco unidades da Zirá: FEITAS em 04/11.** Executado por mim no painel, com o dono
+      logado na janela do navegador. Ensaio antes, e releitura da produção depois:
+      **10 operações, 0 falhas.** Estado conferido no ar:
+      #18 Zirá - Jardim Tropical · Rua Antenor Maciel, 393 - Jardim Tropical · CEP 18053-458 · 44 produtos
+      #19 Zirá - Vila Mineirão · Rua Firmino Mineli, 751 - Vila Mineirão · 42 produtos
+      #20 Zirá - Parque São Bento · Rua Maria de Fátima Faria, 72 - Parque São Bento · 42 produtos
+      #21 Zirá - Vila Hortência · Rua Dr. Pereira da Rocha, 94 - Vila Hortência · 0 produtos
+      #22 Zirá - Jardim Nova Esperança · Rua Geraldo Aparecido Rodrigues, 401 - Jardim Nova Esperança · 0 produtos
+      Todas em Sorocaba/SP. As duas novas foram vinculadas ao login da Maria Eduarda, como
+      esperado. **Diferença de 1 dia a conferir:** a #18 vence 23/01/2027 23:59 e as duas novas
+      vencem 24/01/2027 23:59 — eu pedi `ate=2027-01-24` e o servidor grava o fim daquele dia.
+      Alinhar é uma chamada com `ate=2027-01-23`, se você quiser as cinco no mesmo minuto.
 
-- [ ] **Passo 2: o cardápio das duas lojas novas.** Roteiro pronto e exercitado (7 de 7, e provado
+
+- [ ] **Passo 2: o cardápio das duas lojas novas — BLOQUEADO por permissão (04/11).** Eu rodei o
+      ensaio no ar e ele bateu, mas a aplicação foi recusada pelo controle de permissão desta
+      sessão ("Modify Shared Resources"). Preciso do seu ok para escrever, ou você cola o arquivo.
+      Roteiro exercitado (7 de 7, e provado
       contra 4 mutantes): `<scratchpad>/zira/catalogo-das-novas.js`. Nasce em ensaio. Roda **depois**
       do roteiro das unidades, no console do painel como ADMINISTRADOR_BORA. Ele entra em cada loja
       pelo `POST /admin-bora/lojas/{id}/acessar`, copia, e sai pelo `/admin-bora/sair-da-loja`;
