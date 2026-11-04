@@ -78,19 +78,28 @@ de ninguém.
       Para o aviso virar "ativo há mais de 48 h sem pedido" falta uma coluna `conectado_em` —
       migração e **versão nova da API**. Só se você quiser; hoje a tela já não engana.
 
-- [ ] **As 5 lojas da Zirá entregam de graça por falta de bairro — roteiro pronto, faltam os
-      valores.** Medido em 04/11: **nenhuma das cinco tem um bairro cadastrado**, e sem bairro o
-      frete sai R$ 0,00 em todo pedido. No sistema inteiro, só a loja 1 (teste) tem taxa.
-      **Pior que isso:** os 5 pedidos de ENTREGA da loja 18 (28/10 a 01/11) estão com
-      `bairro_entrega` VAZIO, `endereco_entrega` VAZIO e `taxa_entrega` 0,00 — não dá nem para
-      saber para onde foram.
-      O roteiro está pronto e exercitado (9 de 9, provado contra 3 mutantes):
-      `<scratchpad>/zira/bairros-e-taxas.js`. Aceita a mesma tabela para as cinco (`PARA_TODAS`)
-      ou uma por unidade (`POR_LOJA`), nasce em ensaio, nunca apaga bairro que já esteja lá, e
-      rodar duas vezes não escreve nada — o próprio `POST /api/taxas` trata bairro repetido como
-      atualização (conserto do pente fino de 29/10).
-      **Falta só o dono dizer os bairros e os preços.** Taxa de entrega é dinheiro que o cliente
-      final paga: não é número que eu invente, e o sistema não tem de onde eu derivar.
+- [x] **Bairros e taxa de entrega das 5 lojas: FEITO em 04/11.** O dono passou a tabela e eu
+      apliquei: **15 bairros gravados, 0 falhas** — Centro R$ 8,00, Vila Hortência R$ 6,00 e
+      Jardim Tropical R$ 5,00, a mesma tabela nas cinco, sem tempo informado. Conferido pela API,
+      direto no banco (0 duplicatas de bairro por loja) e no **cardápio público das cinco**, que
+      já devolve os três bairros com os preços. A loja de outro cliente ficou intacta.
+
+- [ ] **Bairro fora da lista continua saindo R$ 0,00, em silêncio.** Medido no código
+      (`PedidoService.taxaPara`, linha 82): a taxa sai do **bairro do CADASTRO do cliente**, e
+      quando não há correspondência o retorno é `BigDecimal.ZERO` — o pedido é aceito e o frete
+      fica zerado, sem aviso para ninguém. Com a tabela de hoje isso atinge, entre outros, os
+      bairros onde ficam três das próprias lojas: **Vila Mineirão, Parque São Bento e Jardim
+      Nova Esperança**. Duas saídas, e as duas são decisão do dono: cadastrar mais bairros
+      (é rodar o mesmo roteiro de novo), ou mudar a regra para recusar/avisar em vez de zerar.
+
+- [ ] **Cliente sem bairro no cadastro também paga R$ 0,00 de frete.** Mesma linha do item acima:
+      `cli.bairro == null || isBlank()` devolve zero antes de olhar a tabela. Hoje quase nenhum
+      cliente da Zirá tem bairro preenchido, e os 5 pedidos de ENTREGA da loja 18 (28/10 a 01/11)
+      estão com `bairro_entrega` e `endereco_entrega` VAZIOS. Ou seja: a tabela de taxa só passa
+      a valer de fato quando o bairro chegar no cadastro do cliente. **Vale medir se o cardápio
+      público está gravando o bairro do cliente no checkout** — se não estiver, a taxa nova não
+      vai ser cobrada em pedido nenhum.
+
 
 - [ ] **Dois insumos estão à venda no cardápio público da Zirá** (loja 18, categoria "mantimento"):
       `leite condensado` R$ 3,00 e `pacoca` R$ 2,50, os dois ativos. O cliente final vê isso.
