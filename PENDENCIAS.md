@@ -137,10 +137,16 @@ de ninguém.
       vazio. Não é defeito do cancelamento — é que não há estoque para devolver. Veio assim da
       matriz (loja 18), junto com a falta de `custo` que já estava anotada.
 
-- [ ] **Rastro do teste na loja 22, para você decidir.** Ficaram: o pedido **139 CANCELADO** no
-      histórico (não conta como venda) e o cliente **"TESTE BORAHAPP - NAO ENTREGAR"** com tudo
-      zerado. Não removi: apagar cliente ligado a pedido pede a limpeza de dados de teste da loja
-      inteira, e isso é marreta grande demais para um registro zerado. **Me peça e eu tiro.**
+- [x] ✅ **Rastro dos testes apagado da loja 22 — 04/11.** Os 2 pedidos de teste (CD-139 e CD-140,
+      os dois já cancelados), seus 2 itens, as 2 linhas de histórico e o cliente
+      "TESTE BORAHAPP - NAO ENTREGAR" saíram. **A loja 22 voltou a zero pedidos e zero clientes.**
+      Usei o botão próprio da plataforma (limpeza de dados de teste), que apaga **só movimentação**
+      e exige digitar o nome exato da loja. Conferido no banco depois: **42 produtos, 6 bairros,
+      7 horários e a integração da 99 continuam no lugar**, com a cor e o cashback em 0%.
+      Estoque: nada a devolver — os 2 pedidos já estavam cancelados (a própria limpeza os deixa de
+      fora para não somar estoque que nunca saiu).
+      **Nenhuma outra loja foi tocada:** as 7 vendas reais da loja 18 (até 01/11) e o pedido de
+      07/09 da loja 20 continuam intactos.
 
 - [ ] **99Food da loja 1 (Sorveteria da Rosa): credencial da plataforma recusada.** Ativo, sem
       `client_secret`, e o polling volta recusado a cada 10 min. É problema **diferente** do de
