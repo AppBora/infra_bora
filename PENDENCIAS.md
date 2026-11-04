@@ -103,12 +103,11 @@ de ninguém.
       ou é de propósito (o comentário do código diz que o balconista pode combinar frete fora da
       tabela)? Vale a decisão do dono antes de eu mexer.
 
-- [ ] **As outras quatro lojas da Zirá abrem às 18h no cardápio; só a 18 abre às 13h.** Medido em
-      04/11: a loja 18 tem 13:00→23:00 nos sete dias (horário que alguém configurou), e as lojas
-      19, 20, 21 e 22 têm 18:00→23:00 — o padrão genérico que o `provisionamento.semear` grava.
-      Enquanto estiver assim, o cardápio dessas quatro recusa pedido antes das 18h com "A loja
-      está fechada agora". Copiar o horário da 18 para as outras é o mesmo tipo de roteiro do
-      cardápio, e é rápido — falta o dono dizer se 13h vale para todas.
+- [x] **Horário das 5 lojas igualado em 04/11.** A 18 tinha 13:00→23:00 nos sete dias e as outras
+      quatro tinham 18:00→23:00, o padrão genérico do `provisionamento.semear`. O dono autorizou
+      copiar: **4 lojas gravadas**, ensaio antes mostrando o "hoje" e o "ficaria" de cada uma.
+      Conferido no banco: as cinco com 7 dias, 13:00→23:00, todos abertos, **0 dias repetidos**,
+      e as lojas de outros clientes intactas (loja 1 em 09:00→23:59, loja 17 em 18:00→23:00).
 
 
 - [ ] **Dois insumos estão à venda no cardápio público da Zirá** (loja 18, categoria "mantimento"):
