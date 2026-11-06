@@ -17,14 +17,22 @@ Some isso com outro fato da mesma documentação: **no protocolo Open Delivery �
 
 Para o **Especialista de API / KAM** com quem você fala — o **Daniel** é o contato que está registrado aqui (veja `MENSAGEM-DANIEL-99.md`). **Eu não tenho o e-mail dele**; isso é com você.
 
-## ⚠️ Antes de enviar: faltam 3 números
+## ✅ Pronto para enviar — os 5 códigos estão completos
 
-O e-mail precisa do `shop_id` das 5 lojas. Eu tenho só 2 em mãos:
+Lidos um a um na tela do portal da 99 em **06/11/2026**, no campo **"ID da loja"** de cada
+estabelecimento, e cada um conferido com lupa dígito por dígito:
 
-- Montreal → `5764615393256407102`
-- Zona Norte → `5764608427259856166`
+| Loja no Bora | Nome na 99 | shop_id | Endereço que confirma |
+|---|---|---|---|
+| 18 | Açaí Zirá - Montreal | `5764615393256407102` | Rua Antenor Maciel, 393 |
+| 19 | Açaí Zirá - Zona Norte | `5764608427259856166` | R. Firmino Mineli, 751 - Jardim Hungares |
+| 20 | Açaí Zirá - São Bento | `5764614166724478604` | Rua Maria de Fátima Faria, 72 - Parque São Bento |
+| 21 | Açaí Zirá - Vila Hortência | `5764608491428513041` | Vila Hortência, CEP 18020-000 |
+| 22 | Açaí Zirá - Nova Esperança | `5764608368417965364` | Rua Geraldo Aparecido Rodrigues, 407 |
 
-Os das lojas **São Bento**, **Vila Hortência** e **Nova Esperança** estão gravados no banco de produção (escritos em 04/11), mas **o servidor está fora do ar** e não consigo ler. Assim que ele voltar eu completo em 1 minuto. Alternativa: eles aparecem na URL quando você abre cada loja no portal da 99 (`shopId=...`).
+> **Por que isto está escrito aqui e não só no banco:** em 06/11 a conta da AWS foi encerrada por
+> falta de pagamento e o servidor caiu. Esses códigos existiam **só** no banco de produção, e por
+> algumas horas não havia como lê-los. Agora existem em arquivo, versionado no git.
 
 ---
 
@@ -45,9 +53,9 @@ Os das lojas **São Bento**, **Vila Hortência** e **Nova Esperança** estão gr
 > |---|---|---|---|
 > | 1 | Açaí Zirá - Montreal | `5764615393256407102` | (igual ao shop_id) |
 > | 2 | Açaí Zirá - Zona Norte | `5764608427259856166` | (igual ao shop_id) |
-> | 3 | Açaí Zirá - São Bento | `______` | (igual ao shop_id) |
-> | 4 | Açaí Zirá - Vila Hortência | `______` | (igual ao shop_id) |
-> | 5 | Açaí Zirá - Nova Esperança | `______` | (igual ao shop_id) |
+> | 3 | Açaí Zirá - São Bento | `5764614166724478604` | (igual ao shop_id) |
+> | 4 | Açaí Zirá - Vila Hortência | `5764608491428513041` | (igual ao shop_id) |
+> | 5 | Açaí Zirá - Nova Esperança | `5764608368417965364` | (igual ao shop_id) |
 >
 > **Três perguntas objetivas, para não travar o trabalho de vocês:**
 >
@@ -78,5 +86,6 @@ Os das lojas **São Bento**, **Vila Hortência** e **Nova Esperança** estão gr
 | Identificador inexistente devolvia lista vazia | Medido: o apelido `zira-acaiteria` respondia 200 com lista vazia |
 | Mensagem de fechamento forçado | Lida na tela do app 99 Food em 06/11 (loja de teste do Bora) |
 | App ID `5764607707103889279` = `BR_P_BoraHapp` | Registrado em `PENDENCIAS.md` |
+| Os 5 `shop_id` | Lidos no campo "ID da loja" do portal da 99 em 06/11, um a um |
 
 **Não afirmei** que cumprimos a lista de pré-lançamento — porque não sei se cumprimos, e perguntar é mais rápido do que adivinhar.
