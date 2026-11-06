@@ -169,6 +169,112 @@ Prova final: um pedido de verdade feito no aplicativo da 99 caindo no painel da 
 
 ---
 
+## 📄 Adendo de 06/11 — a documentação oficial da 99 está aberta
+
+O dono perguntou se havia algum repositório no GitHub com essa integração. Achei alguns, mas achei
+coisa melhor: **o portal oficial da 99 abre sem login**.
+
+**https://developer-food.99app.com/pt-BR/openapi**
+
+É ele o "portal do integrador" que eu procurei de manhã sem achar. O menu de cima tem
+**Gerenciamento de aplicativo** (onde fica o App Secret) e **Documentos do desenvolvedor**.
+
+> A própria página diz que o conteúdo é confidencial, só para parceiro. Resumo aqui para uso
+> interno; não republicar.
+
+### O processo oficial tem 4 fases (lido na tela, 06/11)
+
+| Fase | O que é | Onde estamos |
+|---|---|---|
+| 1 | Contato comercial → **NDA assinado** → criar conta → **auditoria de qualificação** | feito (temos conta e apps) |
+| 2 | App de teste + loja de teste + desenvolvimento e QA | feito (loja `boraloja1` conectava) |
+| 3 | **Criar o App de Produção** — só depois de cumprir o "Before Going Live" — e pôr 1 ou 2 lojas piloto | o app `BR_P_BoraHapp` existe |
+| 4 | Expansão: adicionar as demais lojas | **travado aqui** |
+
+### 🔴 O achado que mais pesa: Open Delivery **não** faz vínculo por endpoint
+
+A 99 documenta **dois protocolos**, e publica uma tabela comparando (lida na tela, 06/11):
+
+| Recurso | 99Food | Open Delivery |
+|---|---|---|
+| **Vínculo de loja por endpoint** | ✅ | **❌** |
+| Endpoints de loja | ✅ | ❌ |
+| API financeira | ✅ | ❌ |
+| Atualizações frequentes | ✅ | ❌ |
+| Adicionais de vários níveis | ✅ | ❌ |
+| Atualizar um item só do cardápio | ✅ | ❌ |
+| Polling | ❌ | ✅ |
+| Arquitetura mais simples | ❌ | ✅ |
+| API de logística / endpoint de cardápio | ✅ | ✅ |
+
+**Nós falamos Open Delivery.** A 99 diz, com todas as letras, que o 99Food Protocol é o recomendado
+e que o Open Delivery é uma "camada de compatibilidade" onde eles **de propósito** deixaram recursos
+de fora. Isso explica o 403 de outra forma: **no nosso protocolo o vínculo não se faz por API** —
+tem de vir do portal ou da própria 99.
+
+> **Decisão que vai bater na sua mesa:** migrar para o 99Food Protocol. Não é urgente e não é hoje,
+> mas é o caminho que a 99 está investindo. Hoje perdemos: API financeira, vínculo por endpoint,
+> adicionais de vários níveis e atualização de item avulso do cardápio.
+
+### 🟢 O caminho que eu não conhecia: a 99 vincula as lojas para nós, por e-mail
+
+Está escrito na fase 4 do documento oficial — há **dois** modos:
+
+1. **Autoatendimento** (o que vinhamos tentando): link de autorização loja a loja, ou o lote pelo
+   **Tools Introduction > Store Management**.
+2. **Modo assistido pela 99:** mandar e-mail ao Especialista de API dizendo que quer vincular,
+   informando **país**, **app_id** e o **shop_id** de cada loja com o **app_shop_id** correspondente.
+   O time de Integração faz e avisa quando terminar.
+
+**Esse segundo caminho não depende de nenhuma tela funcionar.** Rascunho pronto em
+`EMAIL-99-VINCULAR-LOJAS.md`.
+
+### ⚠️ "Cada loja só pode estar vinculada a UM app de produção"
+
+Está escrito no documento oficial. Se alguma unidade da Zirá já estiver vinculada ao app de outro
+sistema de gestão, ela **não entra no nosso** enquanto não for desvinculada. Não sei se é o caso —
+e isso pode ser exatamente o motivo do 403.
+
+### A lista de pré-lançamento, item por item, contra o nosso código
+
+Li a página "Before Going Live" e conferi cada item no nosso código *(medido com busca no código,
+06/11)*:
+
+| Item da 99 | Exigência | No Bora |
+|---|---|---|
+| Token: obter e **renovar sozinho** ao expirar | obrigatório | ⚠️ não achei tratamento de "token expirado" |
+| Receber o webhook de pedido novo e responder | obrigatório | ✅ existe |
+| Ler números grandes (64 bits) sem arredondar | obrigatório | ✅ Java trata (o alerta deles é para Node) |
+| Mostrar **order_id e order_index** na tela e no cupom | obrigatório | ❌ `order_index` não existe no código |
+| Tratar `shop_paid_money` se a loja aceita dinheiro | obrigatório | ❌ não existe no código |
+| Tratar JSON diferente p/ entrega da 99 vs da loja | obrigatório | ⚠️ existe `entregaPeloCanal`, mas não conferi preço e endereço |
+| Tratar as **promoções** que vêm no pedido | obrigatório | ❌ não existe no código |
+| Ler a estrutura de preço inteira | obrigatório | ⚠️ não conferido |
+| Confirmar pedido pela API | obrigatório | ✅ existe |
+| Recusar/cancelar pela API | recomendado | ✅ existe |
+| Responder a todos os webhooks | obrigatório | ✅ existe |
+| Guardar o **request id** de cada chamada | recomendado | ✅ já gravamos no log |
+
+**Ressalva honesta:** essa lista está na seção **Common** e usa nomes de campo do **99Food
+Protocol** (`order_index`, `shop_paid_money`). **Não sei** se ela vale igual para quem integra por
+Open Delivery. Não vou dizer que estamos reprovados em 3 itens obrigatórios sem confirmar isso —
+é pergunta para a 99.
+
+### Os repositórios que achei (e por que não resolvem)
+
+| Repositório | O que tem | Serve? |
+|---|---|---|
+| `Kawa-Vinicius-Dev/pedeai` PR #13 | Open Delivery v1.7.1 para a 99: OAuth client credentials, polling de 30 s com acknowledgment, webhook assinado `X-App-Signature` | **Arquitetura idêntica à nossa** — mas o próprio PR diz que falta homologar "quando houver as credenciais". Parou no mesmo lugar. |
+| `biielFranca/hamburgueria-dispatch` PR #5 | diz que a 99 passou a usar protocolo próprio | Nota de um dev, não oficial. A documentação oficial mostra que os **dois** existem. |
+| `wesley956/PedeAqui` issue #934 | planejamento de 99Food como adaptador separado | só planejamento |
+| `allanpinon/integracao-99-entrega` | API da **99 Entrega** (logística) | outro produto, não é pedido |
+
+**Conclusão:** nenhum repositório público passou do ponto onde nós estamos. Todos param na
+homologação/credencial. **O que destrava é a 99, não código de terceiro** — e nossa arquitetura
+bate com a de quem seguiu a mesma especificação.
+
+---
+
 ## Resumo em 1 linha
 
 **O Bora está pronto, menos um colar de segredo. O que trava é a 99: a homologação não liberou o vínculo, e isso está provado pelo 403. E antes de qualquer coisa, o servidor precisa voltar.**
