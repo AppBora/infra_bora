@@ -12,6 +12,32 @@ nesse dia, não deduzido.
 
 ## 🔴 Agora
 
+- [ ] 🚨 **06/11: a conta da AWS foi encerrada por falta de pagamento e o servidor caiu.**
+      **Medido:** portas 22, 80 e 443 de `18.230.57.33` mudas; ping sem resposta; a credencial da
+      AWS guardada no PC devolvendo `InvalidClientTokenId`. O e-mail de
+      `billing-subscriptions@aws.com` às **10:23** confirmou: *"your Amazon Web Services account
+      has been closed"*. Conta **933793947259**.
+      **O painel enganava:** `dashboard.html` abria do cache do navegador, com TODOS os números em
+      traço e o Termômetro travado em "Carregando…". Casca sem dados é servidor morto.
+      **Resolvido pela metade:** o dono pagou; a tela de Pagamentos mostra **saldo R$ 0,00 e
+      nenhum pagamento devido**. A AWS disse que a liberação leva **até 24 h**.
+      **Falta:** confirmar que a instância do Lightsail voltou e que o Bora subiu junto.
+
+- [ ] 🔴 **Avisar a Zirá que as 5 lojas estão fora do ar.** Desde as ~10:23 de 06/11 o cardápio
+      público das 5 unidades não abre, e pode ficar assim até 07/11. **É recado seu, e é agora** —
+      elas não têm como saber, e cliente que tenta pedir e não consegue não volta.
+
+- [ ] 🔴 **Backup fora da AWS — esta semana quase custou tudo.** O `BORA_BACKUP_S3` nunca foi
+      definido, e o S3 fica na **mesma conta** que foi encerrada. Se a AWS tivesse apagado os
+      recursos, o banco das lojas ia junto e **não havia cópia em lugar nenhum**. O e-mail avisa:
+      passados 90 dias a conta não pode mais ser reaberta e a AWS apaga o que sobrou.
+      **Proposta:** dump do Postgres todo dia, guardado **fora da AWS**. Me autorize e eu monto.
+
+- [ ] 🔴 **Alarme de cobrança na AWS.** A produção morreu por falta de pagamento **sem ninguém
+      perceber** — descobrimos 4 h depois, e por acaso. Dá para ligar aviso de orçamento e alerta
+      de fatura em aberto, para o aviso chegar antes do corte, não depois.
+
+
 - [ ] **Trocar a chave de produção do Asaas.** Eu vazei a chave na sessão do dia 30/10, por um erro
       meu (carreguei o `api.env` com `source` e a mensagem de erro imprimiu a linha). Ela cobra os
       seus lojistas.
