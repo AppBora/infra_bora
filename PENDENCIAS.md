@@ -12,6 +12,31 @@ nesse dia, não deduzido.
 
 ## 🔴 Agora
 
+- [x] ~~**99Food da Zirá: o vínculo não existe.**~~ **FEITO em 06/11.** As **5 lojas estão vinculadas
+      em ambiente de produção** ao `BR_P_BoraHapp`, com token emitido na hora. O caminho e as
+      provas estão em [PASSO-A-PASSO-99FOOD.md](PASSO-A-PASSO-99FOOD.md).
+
+- [ ] 🔴 **Quando o servidor voltar: gravar o APPShopID no `merchant_id` das 5 lojas.** A 99
+      documenta que `ClientId = AppID_AppShopId`. Nós mandávamos o **ID do loja** — por isso o 403.
+      Não era bloqueio da 99, era defeito nosso.
+
+      | Loja | APPShopID a gravar |
+      |---|---|
+      | 18 Montreal | `zira-acaiteria` |
+      | 19 Zona Norte | `zira-zona-norte` |
+      | 20 São Bento | `zira-sao-bento` |
+      | 21 Vila Hortência | `zira-vila-hortencia` |
+      | 22 Nova Esperança | `zira-nova-esperanca` |
+
+      **Cuidado:** esse campo também roteia o webhook (`X-App-MerchantId`), e a documentação **não
+      diz** qual dos dois valores a 99 manda nesse cabeçalho. Vou **guardar os dois** e casar por
+      qualquer um — adivinhar aqui derruba pedido de verdade.
+
+- [ ] **Avisar a Zirá que a Vila Hortência está "Temporariamente fechado" na 99.** Lido na tela em
+      06/11. Status posto por alguém da loja, não é defeito — mas enquanto estiver assim ela não
+      recebe pedido da 99.
+
+
 - [ ] 🚨 **06/11: a conta da AWS foi encerrada por falta de pagamento e o servidor caiu.**
       **Medido:** portas 22, 80 e 443 de `18.230.57.33` mudas; ping sem resposta; a credencial da
       AWS guardada no PC devolvendo `InvalidClientTokenId`. O e-mail de

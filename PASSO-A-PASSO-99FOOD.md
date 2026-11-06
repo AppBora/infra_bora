@@ -275,6 +275,67 @@ bate com a de quem seguiu a mesma especificação.
 
 ---
 
+## ✅ 06/11, à tarde — O VÍNCULO FOI FEITO. E o 403 tinha outra causa.
+
+Tudo abaixo foi **lido na tela** em 06/11, entre 15h e 16h.
+
+### O portal do integrador existe, e você tem acesso
+
+**https://developer-food.99app.com** — login por telefone (`15998602332`), aba **"Entrar com código de verificação"**. O menu da esquerda tem **Gerenciamento de aplicativo**, **Gerenciamento da loja**, Monitoramento de pedidos, Monitoramento da API, Ambiente sandbox, Gerenciamento de permissões.
+
+### O caminho que funcionou (e por que a gente errava)
+
+A aba **Gerenciamento da loja → Vincular estabelecimento** só lista estabelecimentos que **já autorizaram** o aplicativo. Enquanto ninguém autoriza, ela mostra `暂无数据` ("sem dados"). **Era esse o "Sem dados" que a gente leu como bloqueio da plataforma**, em 28/09 e de novo na manhã de 06/11. Não era bloqueio: era uma tabela vazia esperando a autorização.
+
+A sequência certa:
+
+1. **Autorização de solicitação do lote** → gera um link de `merchant.99app.com`
+2. Abrir esse link **logado na conta do lojista** (você é Superadministrador da Zirá, então autorizou sozinho)
+3. **Etapa 1:** conceder as permissões — marcada só "integração de pedidos/itens/lojas/entregas"; **"integração financeira" deixada DESMARCADA** de propósito, porque a API financeira não existe no Open Delivery e daria acesso a dados que o Bora não usa
+4. **Etapa 2:** marcar os estabelecimentos → **Autorizar**
+5. Voltar ao portal do integrador, buscar por país + aplicativo + ID do loja → **Vincular** → digitar o **APPShopID**
+
+### As 5 lojas vinculadas, em ambiente de produção
+
+| Loja Bora | ID do loja (99) | **APPShopID** | Token válido até |
+|---|---|---|---|
+| 18 Montreal | `5764615393256407102` | `zira-acaiteria` | 08/11/2026 |
+| 19 Zona Norte | `5764608427259856166` | `zira-zona-norte` | 06/12/2026 |
+| 20 São Bento | `5764614166724478604` | `zira-sao-bento` | 06/12/2026 |
+| 21 Vila Hortência | `5764608491428513041` | `zira-vila-hortencia` | 06/12/2026 |
+| 22 Nova Esperança | `5764608368417965364` | `zira-nova-esperanca` | 06/12/2026 |
+
+A Montreal ficou fora do padrão de propósito: a linha de produção só oferece **"Desvincular"**, então renomeá-la exige desvincular e vincular de novo — e ela era o único termômetro vivo. **Decisão sua: mexer nela depois que as outras 4 estiverem provadas.**
+
+### 🔴 A causa real do 403 — era defeito NOSSO, não bloqueio deles
+
+Lido na documentação da 99, em **Open Delivery → Authorization API → Get Access Token**:
+
+> **"ClientId = AppID_AppShopId.** You can see all these datas on Application Management."
+> *"This token is unique for every shop not for application."*
+
+O nosso código (`OpenDeliveryClient.clientIdDaLoja`) monta `{app_id}_{merchant_id}`, e o nosso `merchant_id` guarda o **ID do loja**. Então, para a Montreal, nós mandávamos `5764607707103889279_5764615393256407102` quando o certo era `5764607707103889279_zira-acaiteria`. **Daí o 403.**
+
+**Correção de registro:** em 04/11 eu escrevi que `zira-acaiteria` era "apelido inventado". **Era o APPShopID de verdade**, cadastrado na 99 desde 09/10. O valor estava certo; o que estava errado era o aplicativo (o de teste, não o de produção) e, depois, a minha "correção", que trocou o APPShopID pelo ID do loja.
+
+### O que isso exige do Bora (quando o servidor voltar)
+
+1. `integracao_canal.merchant_id` das 5 lojas passa a guardar o **APPShopID**, não o ID do loja.
+2. **Atenção:** esse mesmo campo é a chave de roteamento do webhook (`X-App-MerchantId`). A documentação descreve esse cabeçalho só como *"unique identifier for the merchant across different systems"* — **não diz se é o APPShopID ou o ID do loja**. Não vou adivinhar: a solução é **guardar os dois** e o webhook casar por qualquer um deles.
+3. Colar o **App Secret** do `BR_P_BoraHapp` — continua sendo seu.
+
+### 🔶 Descoberta de lado: a Saipos
+
+Na lista de autorizados apareceram **9 registros**. Quatro são do **Sistema Saipos** (Saipos Serviços de Software Ltda), autorizados em **junho de 2026** nas mesmas 4 lojas. Não impediu o nosso vínculo — mas é informação comercial que você precisa ter.
+
+### O que a tarde matou de dúvida
+
+- As 4 lojas aparecem **Online / Aberto / "Durante o horário de funcionamento: Sim"**. O *"Loja fechada"* das 08h era **horário**, não bloqueio. A lista de pré-lançamento que fechou a loja de teste **não está travando a Zirá**.
+- A pergunta nº 1 do e-mail (formato do `app_shop_id`) está respondida.
+- O e-mail para a 99 **não é mais necessário para o vínculo**. Segue útil só para a pergunta da lista de pré-lançamento, se um dia ela nos atingir.
+
+---
+
 ## Resumo em 1 linha
 
 **O Bora está pronto, menos um colar de segredo. O que trava é a 99: a homologação não liberou o vínculo, e isso está provado pelo 403. E antes de qualquer coisa, o servidor precisa voltar.**
