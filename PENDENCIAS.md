@@ -84,12 +84,10 @@ de ninguém.
       **Eu não digito segredo — esse colar é seu.** Um colar só resolve as quatro, e conserta a
       loja 1 de quebra. Aviso: a loja 1 passa a usar o app de produção em vez do de teste.
 
-- [ ] **Confirmar qual unidade é a "Zona Norte" da 99.** Quatro das cinco casam por nome **e** por
-      endereço oficial dos Correios. A quinta eu fechei **por eliminação**: sobrou a loja 19
-      (Rua Firmino Mineli 751, que os Correios colocam no **Jardim Hungarês**) de um lado e a
-      "Zona Norte" do outro. Gravei o código `5764608427259856166` nela, mas está **PRONTO, não
-      conectado** — nenhum pedido corre risco até você confirmar.
-      **Caminho:** 99Food → Lista de lojas → Zona Norte → Configurações → ver o endereço.
+- [x] ~~**Confirmar qual unidade é a "Zona Norte" da 99.**~~ **RESOLVIDO em 06/11.** Li o
+      endereço na tela do portal da 99: *R. Firmino Mineli, 751 - Jardim Hungares, 18075-700*.
+      Bate com a **loja 19**. O código `5764608427259856166` está na loja certa. As 5 unidades
+      agora casam 1 a 1 **medidas**, nenhuma por eliminação.
 
 - [ ] 🔴 **Jardim Montreal e Jardim Hungarês não estão na lista de bairros de entrega.** O
       checkout **recusa** bairro fora da lista. Hoje, um cliente que mora na porta da loja 18 não
