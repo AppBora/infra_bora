@@ -56,7 +56,7 @@ Ele também está no ar, servido pelo Caddy junto com o painel:
 2. `python conferir.py` — tem que terminar em **COBERTURA COMPLETA**. Se acusar endpoint
    sem teste, escreva o teste; se acusar endpoint que não existe, corrija o `eps`.
 3. `python gerar.py` — reescreve `../ROTEIRO-DE-TESTE.html`.
-4. Para publicar: `scp ROTEIRO-DE-TESTE.html ubuntu@18.230.57.33:/home/ubuntu/bora/frontend/`
+4. Para publicar: `scp ROTEIRO-DE-TESTE.html ubuntu@56.126.177.18:/home/ubuntu/bora/frontend/`
    e confira o md5 do que é servido contra o local.
 
 ## Quando a aplicação ganhar um endpoint novo

@@ -26,13 +26,15 @@ explicação; os scripts, não.
 ## Conferir o que está instalado contra o repositório
 
 ```bash
-ssh -i ~/.ssh/bora-lightsail.pem ubuntu@18.230.57.33   'md5sum /home/ubuntu/backup-bora.sh /home/ubuntu/vigia-bora.sh /home/ubuntu/ensaio-de-restauracao.sh'
+ssh -i ~/.ssh/bora-lightsail.pem ubuntu@56.126.177.18   'md5sum /home/ubuntu/backup-bora.sh /home/ubuntu/vigia-bora.sh /home/ubuntu/ensaio-de-restauracao.sh'
 md5sum ../backup-bora.sh ../vigia-bora.sh ../ensaio-de-restauracao.sh
 ```
 
 Os md5 têm de bater. **Se não baterem, veja a quebra de linha antes de qualquer outra coisa:** script
 salvo em Windows vai com CRLF, e o bash do servidor morre na primeira linha com
-`$'': command not found`. Conferir com `tr -cd '' < arquivo | wc -c` — tem de ser `0`.
+`$'
+': command not found`. Conferir com `tr -cd '
+' < arquivo | wc -c` — tem de ser `0`.
 
 ## Por que isto está aqui
 

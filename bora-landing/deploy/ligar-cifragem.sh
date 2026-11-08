@@ -12,12 +12,12 @@
 # PASSO DE GUARDAR ficou pendente, e esse passo nao e opcional: nenhum backup do servidor contem
 # o api.env (conferido em 30/10). Para ler a chave uma vez e guardar no gerenciador de senhas:
 #
-#   ssh -i ~/.ssh/bora-lightsail.pem ubuntu@18.230.57.33 \
+#   ssh -i ~/.ssh/bora-lightsail.pem ubuntu@56.126.177.18 \
 #     "grep '^BORA_SEGREDO_COLUNAS=' /home/ubuntu/bora/api.env"
 #
 # Rodar este script de novo nao gera outra chave: ele ve que ja existe e para.
 #
-#   ssh -i ~/.ssh/bora-lightsail.pem ubuntu@18.230.57.33
+#   ssh -i ~/.ssh/bora-lightsail.pem ubuntu@56.126.177.18
 #   bash /home/ubuntu/ligar-cifragem.sh
 #
 # O QUE A CIFRA PROTEGE (medido em 23/10/2026, CifragemEmRepousoService.ALVOS):

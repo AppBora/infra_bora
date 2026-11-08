@@ -4,7 +4,7 @@
 >
 > Este texto descreve uma arquitetura que **nunca existiu em produção**: Container Service e Bucket/CDN, que nunca foram usados — o Container Service tinha limite 0 na conta.
 >
-> **A produção de verdade é:** uma instância Ubuntu no Lightsail (`bora-app`, 18.230.57.33) com dois
+> **A produção de verdade é:** uma instância Ubuntu no Lightsail (`bora-app`, 56.126.177.18) com dois
 > containers Docker — `api` (a imagem `bora-api`) e `caddy` (HTTPS automático + serve o frontend de
 > `/home/ubuntu/bora/frontend` + proxy para `api:8080`) — e o PostgreSQL gerenciado do Lightsail.
 >

@@ -26,7 +26,7 @@ set -euo pipefail
 TAG="${1:-}"
 [ -n "$TAG" ] || { echo "uso: $0 vNNN"; exit 1; }
 
-SRV="ubuntu@18.230.57.33"
+SRV="ubuntu@56.126.177.18"
 KEY="$HOME/.ssh/bora-lightsail.pem"
 BACKEND="$(cd "$(dirname "$0")/../../bora-fase-3-backend-java" && pwd)"
 TGZ="/tmp/bora-api-$TAG.tgz"

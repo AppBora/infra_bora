@@ -28,7 +28,7 @@ $ErrorActionPreference = 'Stop'
 $Destino  = 'C:\bora-backups'
 $Antigo   = 'C:\Users\user\OneDrive\Desktop\Bora\backups-bora'
 $Chave    = 'C:\Users\user\.ssh\bora-lightsail.pem'
-$Servidor = 'ubuntu@18.230.57.33'
+$Servidor = 'ubuntu@56.126.177.18'
 $Log      = Join-Path $Destino 'copias.log'
 $DiasQueGuardamos = 30
 

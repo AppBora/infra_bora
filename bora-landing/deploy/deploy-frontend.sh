@@ -50,7 +50,7 @@ for arg in "$@"; do
   esac
 done
 
-SRV="ubuntu@18.230.57.33"
+SRV="ubuntu@56.126.177.18"
 KEY="$HOME/.ssh/bora-lightsail.pem"
 # A pasta de destino sai por variavel para o proprio script poder ser EXERCITADO contra uma pasta
 # de teste no servidor antes de encostar em producao. Um script de deploy cujo caminho de envio

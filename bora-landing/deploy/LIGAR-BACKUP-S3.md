@@ -111,7 +111,7 @@ Por isso: primeiro prove que a permissão funciona, com o mesmo container que o 
 depois ligue a variável.
 
 ```bash
-ssh -i ~/.ssh/bora-lightsail.pem ubuntu@18.230.57.33
+ssh -i ~/.ssh/bora-lightsail.pem ubuntu@56.126.177.18
 
 # (a) listar o bucket — prova o s3:ListBucket
 docker run --rm --network host -e AWS_REGION=sa-east-1 amazon/aws-cli:latest \
@@ -131,7 +131,7 @@ voltar `AccessDenied`.
 Só depois do teste acima passar:
 
 ```bash
-ssh -i ~/.ssh/bora-lightsail.pem ubuntu@18.230.57.33
+ssh -i ~/.ssh/bora-lightsail.pem ubuntu@56.126.177.18
 echo 'BORA_BACKUP_S3=s3://bora-backups-938184885183/bora' | sudo tee -a /etc/environment
 ```
 
