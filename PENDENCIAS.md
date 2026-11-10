@@ -120,7 +120,7 @@ foi a lição de 09/10 e é por isso que eu meço o teste antes de confiar nele.
       contém o `flyway_schema_history`, então a V68 é pulada na restauração (medido).
 
 - [x] ~~**"Não consegui perguntar ao Asaas" é tratado como "o cliente não pagou".**~~
-      **CONSERTADO — aguardando o deploy da v157.** Commits `ea525f0` (backend) e `543fc72` (frontend). Teste novo, e o teste foi **mutado**: sem o conserto ele fica vermelho.
+      **CONSERTADO e NO AR na v157** (`ea525f0`, backend) e no frontend publicado (`543fc72`). Teste novo, e o teste foi **mutado**: sem o conserto ele fica vermelho.
       O booleano virou três estados (`PAGO`, `NAO_PAGO`, `NAO_CONSEGUI_PERGUNTAR`). Quem fica sem
       resposta **não é cancelado**: segue em espera — fora do faturamento e fora da cozinha — e a
       rodada seguinte (5 min) pergunta de novo.
@@ -137,7 +137,7 @@ foi a lição de 09/10 e é por isso que eu meço o teste antes de confiar nele.
       consegui perguntar"; no segundo caso, pular a rodada.
 
 - [x] ~~**O caminho real do webhook do Asaas roda SEM transação.**~~
-      **CONSERTADO — aguardando o deploy da v157.** Commits `ea525f0` (backend) e `543fc72` (frontend). Teste novo, e o teste foi **mutado**: sem o conserto ele fica vermelho.
+      **CONSERTADO e NO AR na v157** (`ea525f0`, backend) e no frontend publicado (`543fc72`). Teste novo, e o teste foi **mutado**: sem o conserto ele fica vermelho.
       O `@Transactional` foi para a sobrecarga de 6 parâmetros, a única que o controller chama.
       **Nenhum dos 60+ testes que chamam `processarWebhook` podia pegar isso:** todos chamam o
       serviço direto, sem proxy do Spring, e sem proxy a anotação não faz nada. O teste novo lê a
@@ -151,7 +151,7 @@ foi a lição de 09/10 e é por isso que eu meço o teste antes de confiar nele.
       estendido, ou o contrário.
 
 - [x] ~~**O 401 no polling não invalida o token em cache.**~~
-      **CONSERTADO — aguardando o deploy da v157.** Commits `ea525f0` (backend) e `543fc72` (frontend). Teste novo, e o teste foi **mutado**: sem o conserto ele fica vermelho.
+      **CONSERTADO e NO AR na v157** (`ea525f0`, backend) e no frontend publicado (`543fc72`). Teste novo, e o teste foi **mutado**: sem o conserto ele fica vermelho.
       O 401 numa chamada de recurso passa a jogar o token fora, e a rodada seguinte reautentica.
       **Só 401 — o 403 de propósito não conta:** ele quer dizer "o token vale, o recurso é que não é
       seu", e jogar o token fora ali faria reautenticar a cada 30 s para sempre. Não é hipótese: a
@@ -173,7 +173,7 @@ foi a lição de 09/10 e é por isso que eu meço o teste antes de confiar nele.
       continuava, e eu não conferi.
 
 - [x] ~~**O segredo do JWT falha ABERTO, com um valor publicado no repositório.**~~
-      **CONSERTADO — aguardando o deploy da v157.** Commits `ea525f0` (backend) e `543fc72` (frontend). Teste novo, e o teste foi **mutado**: sem o conserto ele fica vermelho.
+      **CONSERTADO e NO AR na v157** (`ea525f0`, backend) e no frontend publicado (`543fc72`). Teste novo, e o teste foi **mutado**: sem o conserto ele fica vermelho.
       Agora recusa a subida: vazio, valor de exemplo ou menos de 32 bytes. A mensagem diz o **nome**
       da variável e nunca o valor — e há teste para isso. O `RepetirPedidoService` usava o mesmo
       literal e também só avisava; passou a usar a mesma regra.
@@ -189,7 +189,7 @@ foi a lição de 09/10 e é por isso que eu meço o teste antes de confiar nele.
       Conserto: recusar a subida se o segredo for o padrão. O CORS e o WhatsApp já falham fechados.
 
 - [x] ~~**O card verde que mente.**~~
-      **CONSERTADO — aguardando o deploy da v157.** Commits `ea525f0` (backend) e `543fc72` (frontend). Teste novo, e o teste foi **mutado**: sem o conserto ele fica vermelho.
+      **CONSERTADO e NO AR na v157** (`ea525f0`, backend) e no frontend publicado (`543fc72`). Teste novo, e o teste foi **mutado**: sem o conserto ele fica vermelho.
       O chip e a **linha sempre visível** passam a dizer COM ERRO, SEM BUSCAR ou AUTORIZAÇÃO
       VENCIDA — o problema sai de dentro do corpo, que nasce fechado. A promessa "os pedidos chegam
       sozinhos" só aparece sem erro, buscando nos últimos 5 min e com pedido já recebido. E
@@ -256,7 +256,18 @@ na linha da loja 18, e as duas migrações o extraíram de lá.
 - **V69** (10/11) — o App ID. Extrai da própria loja 18, por subtração do `merchant_id`.
 - **v153** (commit `d87a98d`) — o `catch` do 401 passou a logar o que a 99 respondeu **e o
   `client_id` que saiu na chamada**. Foi essa linha que destravou o 99Food depois de dois meses.
-- **v155** no ar (commit `cea9974`, 16:34 de 10/11) — a V68 deixa de abortar em banco vazio, depois
+- **v157** no ar (commit `ea525f0`, 18:41 de 10/11) — os 5 consertos do pente fino: PIX pago não é
+  mais cancelado quando o Asaas não responde, o 401 do polling joga o token fora, o webhook do Asaas
+  roda em transação, o JWT recusa a subida sem segredo de verdade, e o card de Integrações conta a
+  saúde de agora. **Frontend publicado junto** (`543fc72`): os 98 arquivos com o mesmo sha256 no
+  servidor.
+  **E nele foi junto o `sw.js`, que estava commitado desde hoje de manhã e NUNCA tinha sido
+  publicado** — eu havia dito que esse conserto estava feito, e estava só no repositório. Medido
+  depois, em aba limpa: `guia-zira.html` e `cardapio-folha.html` com o service worker controlando,
+  **zero erro no console** e as fontes carregando.
+- **v156 não existe neste deploy.** Já havia uma imagem `v156` de 10 dias atrás, local e no servidor,
+  fora de ordem; reusar a etiqueta sobrescreveria aquela imagem e atrapalharia um rollback.
+- **v155** (commit `cea9974`, 16:34 de 10/11) — a V68 deixa de abortar em banco vazio, depois
   do `flyway repair`. Na subida, o Flyway validou as 69 migrações e **não executou nenhuma**.
   **O `-Dspring.flyway.target=67` não é mais necessário para rodar os ITs.**
 - **v154** (commit `08e3104`, 15:29 de 10/11) — os dois bloqueadores do cardápio público. A
