@@ -5,18 +5,100 @@ que você guardar hoje continua valendo no mês que vem. Aqui estão **só as a�
 onde clicar. A prova de cada uma — o que foi medido, quando e onde — está em
 [PENDENCIAS-2026-10-30.md](PENDENCIAS-2026-10-30.md).
 
-Última conferência contra a produção: **04/11/2026** (o bloco do 99Food; o resto, **30/10/2026**). Tudo marcado como pendente aqui foi medido
-nesse dia, não deduzido.
+Última conferência contra a produção: **10/11/2026** (99Food, servidor, backup e cifragem). Os itens de cadastro e operação seguem como foram medidos em **04/11**. Tudo marcado como pendente aqui foi medido, não deduzido.
 
 ---
 
 ## 🔴 Agora
 
+## ✅ Fechado em 08 e 10/11 — o 99Food da Zirá está funcionando
+
+**Medido em 10/11/2026 às 14:57 UTC, no banco de produção** (não na tela, que já mentiu antes):
+
+| Loja | Status | Token da 99 até | Último polling |
+|---|---|---|---|
+| 18 Montreal | CONECTADO | 16:28 | 21 s atrás |
+| 19 Zona Norte | **CONECTADO** | 18:25 | 21 s atrás |
+| 20 São Bento | **CONECTADO** | 18:25 | 21 s atrás |
+| 21 Vila Hortência | **CONECTADO** | 18:25 | 21 s atrás |
+| 22 Nova Esperança | **CONECTADO** | 18:25 | 21 s atrás |
+
+`ultimo_erro` limpo nas cinco. Zero recusa de credencial depois do conserto (a última foi
+14:50:21 UTC, antes dele). As quatro buscam pedido a cada 30 segundos.
+
+**A causa eram DOIS campos errados, não um.** A credencial da plataforma era inteira do aplicativo
+de **teste**: o App ID `5764607673624955027` no `client-id`, e no campo do segredo o **nome** do app
+de teste (`BR_T_BoraHapp`, 13 caracteres) em vez de um segredo. Os dois errados e coerentes entre
+si — por isso nenhuma verificação de "existe credencial salva?" pegava.
+
+Nada precisou ser digitado, e **ninguém precisou colar o App Secret**: o par certo estava guardado
+na linha da loja 18, e as duas migrações o extraíram de lá.
+
+- **V67** (08/11) — grava o APPShopID no `merchant_id` das 5 e guarda o ID numérico em
+  `shop_id_canal`; o webhook casa pelos dois.
+- **V68** (10/11) — o segredo. Copia o texto cifrado da loja 18, sem ninguém ver o valor em claro.
+- **V69** (10/11) — o App ID. Extrai da própria loja 18, por subtração do `merchant_id`.
+- **v153** no ar (commit `d87a98d`) — o `catch` do 401 passou a logar o que a 99 respondeu **e o
+  `client_id` que saiu na chamada**.
+
+**O que me custou dois meses, escrito aqui para não repetir:** eu conferi que o `client-id` da
+plataforma tinha 19 caracteres e começava com `5764607`, e **declarei que era o App ID certo**. Os
+dois App ID têm 19 dígitos e começam com `5764607`. Comparei um comprimento e chamei de identidade.
+Pior: **o App ID errado já estava escrito nesta própria lista desde 06/11** — *"aponta para outro
+aplicativo (`5764607673624955027`)"* —, e eu fui pela minha anotação em vez de medir. E nenhum log
+mostrava o campo que saía na chamada, porque o `catch` descartava tudo.
+
+A 99 responde **401 com corpo vazio**: logar só a resposta não resolveria nada. O que resolveu foi
+logar o campo **enviado**.
+
+---
+
+## ✅ Fechado em 08/11 — o servidor voltou
+
+- **IP estático definitivo: `56.126.177.18`** (o `18.230.57.33` e o `18.231.71.3` estão mortos).
+  Site em 200, `/actuator/health` em `UP`, `api` e `caddy` de pé, 0 linha de `ERROR` no log.
+- **Backup**: de 6 em 6 horas no servidor (verificado com `pg_restore`, não só `--list`), mais
+  cópia diária para **`C:\bora-backups`** nesta máquina — 146 dumps aqui, o último de hoje 10:55.
+  **Não vai para o OneDrive de propósito:** o dump tem telefone, endereço e CPF de todo cliente de
+  toda loja.
+- **Orçamento da AWS** ligado (US$ 45, avisos em 80% e 100%).
+- Os scripts de deploy apontavam para o IP morto desde 06/11 — corrigidos em 10 arquivos.
+
+---
+
+## 🔴 Novos, medidos em 10/11
+
+- [ ] 🔴 **Ligar MFA no usuário `adm` da AWS.** Ele tem `AdministratorAccess` **sem segundo fator**,
+      numa conta que guarda telefone, endereço e CPF dos clientes de todas as lojas. (A chave que
+      vazou em outubro, `AKIA5S2TU3Z5UVPCBVOV`, **já foi rotacionada** — conferido em 10/11: o `adm`
+      tem só a `AKIA5S2TU3Z5ZBXWDVWM`, de 01/07.)
+
+- [ ] **Quando o polling falha, o status NÃO é rebaixado — a loja fica verde.** Ainda aberto,
+      reconferido no código em 10/11: `marcarPollingFalhou` grava só hora e mensagem, e
+      `IntegracaoCanalRepository` não toca em `status`. O caminho inverso existe (sucesso promove
+      `ERRO` → `CONECTADO`), mas a queda não rebaixa. Então uma loja CONECTADO que comece a levar
+      403 na busca de pedido segue **verde**, com o motivo escondido num campo que ninguém lê.
+      É o mesmo "morre em silêncio" que custou dois meses no 99Food, e agora que as 5 lojas da Zirá
+      dependem desse canal, é a trava que eu ligaria primeiro. **O conserto é meu: código + deploy.
+      Me peça e eu subo.**
+
+- [ ] **O log conta cada 401 do 99Food duas vezes.** Efeito colateral da v153: a linha nova (com
+      `client_id` e corpo) foi acrescentada **ao lado** da antiga, não em lugar dela. Para contar
+      falhas use `grep -c "polling falhou para a loja"` (1 por evento) — e lembre que essa frase
+      também cobre o 403 da loja 1, que não é recusa de credencial.
+
+---
+
+
 - [x] ~~**99Food da Zirá: o vínculo não existe.**~~ **FEITO em 06/11.** As **5 lojas estão vinculadas
       em ambiente de produção** ao `BR_P_BoraHapp`, com token emitido na hora. O caminho e as
       provas estão em [PASSO-A-PASSO-99FOOD.md](PASSO-A-PASSO-99FOOD.md).
 
-- [ ] 🔴 **Quando o servidor voltar: gravar o APPShopID no `merchant_id` das 5 lojas.** A 99
+- [x] ~~**Gravar o APPShopID no `merchant_id` das 5 lojas.**~~ **FEITO em 08/11 (V67).** E o
+      `merchant_id` NAO era o campo principal: a loja 18 tem `client_id` proprio, que vai cru
+      para a 99 sem passar pelo `merchant_id` -- a V67 reescreve os dois. O texto original:
+
+- [x] **Quando o servidor voltar: gravar o APPShopID no `merchant_id` das 5 lojas.** A 99
       documenta que `ClientId = AppID_AppShopId`. Nós mandávamos o **ID do loja** — por isso o 403.
       Não era bloqueio da 99, era defeito nosso.
 
@@ -37,7 +119,12 @@ nesse dia, não deduzido.
       recebe pedido da 99.
 
 
-- [ ] 🚨 **06/11: a conta da AWS foi encerrada por falta de pagamento e o servidor caiu.**
+- [x] ~~**06/11: a conta da AWS foi encerrada e o servidor caiu.**~~ **RESOLVIDO.** Instancia e
+      banco de volta, IP estatico `56.126.177.18`, DNS apontado, site em 200 e health `UP`
+      (conferido 10/11). **Continua pendente so o e-mail de cobranca** (ver abaixo): o alarme
+      de orcamento NAO pega falta de pagamento. O original:
+
+- [x] **06/11: a conta da AWS foi encerrada por falta de pagamento e o servidor caiu.**
       **Medido:** portas 22, 80 e 443 de `18.230.57.33` mudas; ping sem resposta; a credencial da
       AWS guardada no PC devolvendo `InvalidClientTokenId`. O e-mail de
       `billing-subscriptions@aws.com` às **10:23** confirmou: *"your Amazon Web Services account
@@ -48,17 +135,34 @@ nesse dia, não deduzido.
       nenhum pagamento devido**. A AWS disse que a liberação leva **até 24 h**.
       **Falta:** confirmar que a instância do Lightsail voltou e que o Bora subiu junto.
 
-- [ ] 🔴 **Avisar a Zirá que as 5 lojas estão fora do ar.** Desde as ~10:23 de 06/11 o cardápio
+- [x] ~~**Avisar a Zirá que as 5 lojas estão fora do ar.**~~ **NAO SE APLICA MAIS:** o cardapio
+      das 5 esta no ar desde 08/11. Ficaram fora de 06/11 ~10:23 a 08/11 -- se voce nunca
+      avisou, vale um recado dizendo que voltou. O original:
+
+- [x] **Avisar a Zirá que as 5 lojas estão fora do ar.** Desde as ~10:23 de 06/11 o cardápio
       público das 5 unidades não abre, e pode ficar assim até 07/11. **É recado seu, e é agora** —
       elas não têm como saber, e cliente que tenta pedir e não consegue não volta.
 
-- [ ] 🔴 **Backup fora da AWS — esta semana quase custou tudo.** O `BORA_BACKUP_S3` nunca foi
+- [x] ~~**Backup fora da AWS.**~~ **FEITO em 08/11, na metade que importa:** dump de 6 em 6 h
+      no servidor + copia diaria para **`C:\bora-backups`** nesta maquina (146 dumps, o ultimo
+      hoje 10:55), verificada com `pg_restore`. **NAO vai para o OneDrive de proposito** -- o
+      dump tem telefone, endereco e CPF de todo cliente. **Falta o bucket S3:** o
+      `BORA_BACKUP_S3` segue indefinido e o script avisa em todo backup. O papel IAM da
+      instancia ja existe; falta bucket + politica de escrita, e nenhuma chave nova. O original:
+
+- [x] **Backup fora da AWS — esta semana quase custou tudo.** O `BORA_BACKUP_S3` nunca foi
       definido, e o S3 fica na **mesma conta** que foi encerrada. Se a AWS tivesse apagado os
       recursos, o banco das lojas ia junto e **não havia cópia em lugar nenhum**. O e-mail avisa:
       passados 90 dias a conta não pode mais ser reaberta e a AWS apaga o que sobrou.
       **Proposta:** dump do Postgres todo dia, guardado **fora da AWS**. Me autorize e eu monto.
 
-- [ ] 🔴 **Alarme de cobrança na AWS.** A produção morreu por falta de pagamento **sem ninguém
+- [x] ~~**Alarme de cobrança na AWS.**~~ **METADE FEITA em 08/11:** orcamento "BoraHapp - custo
+      mensal" (US$ 45, avisos em 80% real e 100% previsto). **ELE NAO PEGA FALTA DE PAGAMENTO**
+      -- so gasto em excesso. O que pegaria o caso de 06/11 e um contato de cobranca num e-mail
+      que voce LEIA; hoje vai para `app-bora@hotmail.com`. **Me diga qual e-mail voce le de
+      verdade e eu ponho.** O original:
+
+- [x] **Alarme de cobrança na AWS.** A produção morreu por falta de pagamento **sem ninguém
       perceber** — descobrimos 4 h depois, e por acaso. Dá para ligar aviso de orçamento e alerta
       de fatura em aberto, para o aviso chegar antes do corte, não depois.
 
@@ -80,10 +184,16 @@ nesse dia, não deduzido.
       lugar no mundo. Leia uma vez:
 
       ```bash
-      ssh -i ~/.ssh/bora-lightsail.pem ubuntu@18.230.57.33 "grep '^BORA_SEGREDO_COLUNAS=' /home/ubuntu/bora/api.env"
+      ssh -i ~/.ssh/bora-lightsail.pem ubuntu@56.126.177.18 "grep '^BORA_SEGREDO_COLUNAS=' /home/ubuntu/bora/api.env"
       ```
 
-- [ ] **2º — e só depois disso: cifrar as 28 credenciais que já estavam gravadas.**
+- [ ] 🔴 **2º — e só depois disso: cifrar as credenciais que já estavam gravadas.**
+      **Medido em 10/11: sao 20** (eram 28 em 30/10 -- 8 se cifraram sozinhas ao serem
+      regravadas no uso normal). Por coluna: 9 `webhook_token`, 4 `client_secret`, 4 de
+      `config_plataforma`, 1 `access_token`, 1 `refresh_token`. **Entre elas o
+      `client-secret` do iFood da plataforma, 99 caracteres em texto puro** -- a credencial que
+      autoriza pedido em nome de TODAS as lojas. Sai em todo `pg_dump`, inclusive nos 146 que
+      estao nesta maquina. O texto original:
       **Caminho:** painel → Configurações → Plataforma → "Credenciais no banco" →
       **"Cifrar o que já está gravado"**. Clicar duas vezes não estraga nada.
       Ligar a chave protege o que for gravado **daqui para frente**; essas 28 continuam em texto
@@ -100,7 +210,14 @@ de ninguém.
       **não tem Merchant ID**. Nenhum pedido do iFood entra nessa loja.
       **Caminho:** Integrações → iFood → Conectar, e autorizar no portal.
 
-- [ ] 🔴 **99Food da Zirá: o vínculo não existe, e agora está PROVADO.** Em 04/11 li a tela do
+- [x] ~~**99Food da Zirá: o vínculo não existe.**~~ **SUPERADO.** O vinculo foi feito em
+      06/11 (as 5 autorizadas e vinculadas ao `BR_P_BoraHapp`) e as 5 estao buscando pedido
+      desde 10/11 -- ver o bloco no topo desta lista. O 403 de 04/11 descrito abaixo tinha
+      DUAS causas nossas somadas, nao falta de vinculo: o `merchant_id` levava o ID numerico
+      no lugar do APPShopID (V67) e a credencial da plataforma era do app de teste (V68+V69).
+      O texto original, que valia com o que se sabia naquele dia:
+
+- [x] **99Food da Zirá: o vínculo não existe, e agora está PROVADO.** Em 04/11 li a tela do
       portal da 99 (você logado como **Superadministrador**, José Camilo) e gravei no Bora o código
       real de cada uma das 5 unidades. A 99 passou a responder, a cada consulta:
       `403 "User is forbidden to access this resource"`.
@@ -124,7 +241,12 @@ de ninguém.
       propósito: nesse estado o Bora tenta de novo a cada 10 min, então elas se acertam **sozinhas**
       assim que o App Secret entrar. Ninguém precisa clicar em nada depois.
 
-- [ ] 🔴 **Colar o App Secret do `BR_P_BoraHapp` — é o que trava as lojas 19 a 22.** A credencial
+- [x] ~~**Colar o App Secret do `BR_P_BoraHapp`.**~~ **FEITO em 10/11, e voce nao precisou
+      colar nada** (V68 + V69). **Esta lista estava CERTA e eu nao li:** o App ID errado
+      (`5764607673624955027`) ja estava escrito aqui desde 06/11. Eram DOIS campos errados,
+      nao um. A loja 1 passou a usar o app de producao, como este item avisava. O original:
+
+- [x] **Colar o App Secret do `BR_P_BoraHapp` — é o que trava as lojas 19 a 22.** A credencial
       da plataforma salva em 09/10 aponta para outro aplicativo (`5764607673624955027`) e tem 13
       caracteres; é ela que a 99 recusa na loja 1 todo dia. O par que funciona está guardado dentro
       da loja 18, no app de produção. As lojas 19-22 não têm credencial própria: herdam a da
@@ -197,7 +319,12 @@ de ninguém.
       **Nenhuma outra loja foi tocada:** as 7 vendas reais da loja 18 (até 01/11) e o pedido de
       07/09 da loja 20 continuam intactos.
 
-- [ ] **99Food da loja 1 (Sorveteria da Rosa): credencial da plataforma recusada.** Ativo, sem
+- [ ] **99Food da loja 1 (Sorveteria da Rosa): agora e 403, nao mais 401.** **Medido em 10/11,
+      depois da V68+V69:** ela **recebe token** da 99 -- prova de que a credencial esta certa --
+      e leva `403 "User is forbidden to access this resource"` **com `request_id`** na busca de
+      pedido. E a loja de teste do Bora, nao um estabelecimento vinculado ao app de producao:
+      erro de autorizacao, nao de credencial. **Nao e defeito nosso.** Se um dia precisar falar
+      com a 99 sobre ela, o `request_id` sai no log. O texto original: Ativo, sem
       `client_secret`, e o polling volta recusado a cada 10 min. É problema **diferente** do de
       cima, e na loja de QA.
       **Caminho:** Configurações → 🔑 Credencial do app BoraHapp nos marketplaces.
