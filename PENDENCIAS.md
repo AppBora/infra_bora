@@ -119,20 +119,46 @@ foi a lição de 09/10 e é por isso que eu meço o teste antes de confiar nele.
       Recuperação de desastre a partir do backup **não** estava em risco em nenhum momento: o dump
       contém o `flyway_schema_history`, então a V68 é pulada na restauração (medido).
 
-- [ ] 🔴 **"Não consegui perguntar ao Asaas" é tratado como "o cliente não pagou", e o pedido pago é
+- [x] ~~**"Não consegui perguntar ao Asaas" é tratado como "o cliente não pagou".**~~
+      **CONSERTADO — aguardando o deploy da v157.** Commits `ea525f0` (backend) e `543fc72` (frontend). Teste novo, e o teste foi **mutado**: sem o conserto ele fica vermelho.
+      O booleano virou três estados (`PAGO`, `NAO_PAGO`, `NAO_CONSEGUI_PERGUNTAR`). Quem fica sem
+      resposta **não é cancelado**: segue em espera — fora do faturamento e fora da cozinha — e a
+      rodada seguinte (5 min) pergunta de novo.
+      **E havia um teste trancando o defeito**, com a justificativa *"melhor cancelar um checkout
+      abandonado do que liberar comida de graça"*. A escolha nunca foi essa: não cancelar não libera
+      nada. Adiar custa uma rodada; cancelar venda paga é irreversível. O teste foi reescrito com o
+      motivo no lugar.
+      O texto original:
+      **"Não consegui perguntar ao Asaas" é tratado como "o cliente não pagou", e o pedido pago é
       cancelado.** Confirmado por mim: `PixService.cobrancaFoiPaga` devolve `false` no
       `catch (Exception e)` — timeout, 429, 5xx e chave revogada dão o mesmo que "não pago". O
       `CobradorDePixService` segue para `cancelarVencidos`, que cancela, devolve estoque e cashback e
       avisa o cliente do cancelamento. Conserto: separar "o Asaas disse que não pagou" de "não
       consegui perguntar"; no segundo caso, pular a rodada.
 
-- [ ] 🔴 **O caminho real do webhook do Asaas roda SEM transação.** Confirmado por mim: o
+- [x] ~~**O caminho real do webhook do Asaas roda SEM transação.**~~
+      **CONSERTADO — aguardando o deploy da v157.** Commits `ea525f0` (backend) e `543fc72` (frontend). Teste novo, e o teste foi **mutado**: sem o conserto ele fica vermelho.
+      O `@Transactional` foi para a sobrecarga de 6 parâmetros, a única que o controller chama.
+      **Nenhum dos 60+ testes que chamam `processarWebhook` podia pegar isso:** todos chamam o
+      serviço direto, sem proxy do Spring, e sem proxy a anotação não faz nada. O teste novo lê a
+      anotação por **reflexão**, na assinatura exata do controller, e reprova sobrecarga nova sem
+      anotação.
+      O texto original:
+      **O caminho real do webhook do Asaas roda SEM transação.** Confirmado por mim: o
       `@Transactional` da linha 380 aplica-se à sobrecarga de 5 parâmetros, cujo próprio javadoc diz
       *"o webhook de verdade NÃO usa esta sobrecarga"*. A de 6 parâmetros, que
       `AsaasWebhookController:117` chama, não tem anotação. Pagamento registrado sem acesso
       estendido, ou o contrário.
 
-- [ ] 🔴 **O 401 no polling não invalida o token em cache, e a tela fica verde.** Confirmado por mim:
+- [x] ~~**O 401 no polling não invalida o token em cache.**~~
+      **CONSERTADO — aguardando o deploy da v157.** Commits `ea525f0` (backend) e `543fc72` (frontend). Teste novo, e o teste foi **mutado**: sem o conserto ele fica vermelho.
+      O 401 numa chamada de recurso passa a jogar o token fora, e a rodada seguinte reautentica.
+      **Só 401 — o 403 de propósito não conta:** ele quer dizer "o token vale, o recurso é que não é
+      seu", e jogar o token fora ali faria reautenticar a cada 30 s para sempre. Não é hipótese: a
+      loja 1 responde 403 em produção hoje.
+      Medido com **servidor HTTP de verdade**, não com mock do `RestClient`.
+      O texto original:
+      **O 401 no polling não invalida o token em cache, e a tela fica verde.** Confirmado por mim:
       o `catch` só grava hora e mensagem. Se o canal revogar o token antes do vencimento, o poller
       insiste com o token morto por até **1 h** na 99 e **6 h** no iFood. Ameaça direta ao 99Food das
       5 lojas da Zirá, que começou a funcionar hoje.
@@ -146,14 +172,38 @@ foi a lição de 09/10 e é por isso que eu meço o teste antes de confiar nele.
       que o ERR_FAILED estava resolvido** — estava para mesma origem; para recurso de fora,
       continuava, e eu não conferi.
 
-- [ ] 🟠 **O segredo do JWT falha ABERTO, com um valor publicado no repositório.** Confirmado por
+- [x] ~~**O segredo do JWT falha ABERTO, com um valor publicado no repositório.**~~
+      **CONSERTADO — aguardando o deploy da v157.** Commits `ea525f0` (backend) e `543fc72` (frontend). Teste novo, e o teste foi **mutado**: sem o conserto ele fica vermelho.
+      Agora recusa a subida: vazio, valor de exemplo ou menos de 32 bytes. A mensagem diz o **nome**
+      da variável e nunca o valor — e há teste para isso. O `RepetirPedidoService` usava o mesmo
+      literal e também só avisava; passou a usar a mesma regra.
+      **Conferido ANTES de commitar:** `BORA_JWT_SECRET` existe em produção, 64 bytes, não começa
+      com `troque-`, e o processo no ar a enxerga. Sem essa conferência, este conserto derrubaria a
+      API no deploy.
+      O texto original:
+      **O segredo do JWT falha ABERTO, com um valor publicado no repositório.** Confirmado por
       mim: sem `BORA_JWT_SECRET` a API sobe com `troque-este-segredo-...` e só emite um `log.warn`.
       Quem conhece o repositório forja token de qualquer usuário, inclusive do admin da plataforma. A
       variável existe em produção hoje (conferida pelo nome). **Neste projeto isso não é teórico:** já
       aconteceu a chave de cifragem parecer ausente porque `docker restart` não relê o `--env-file`.
       Conserto: recusar a subida se o segredo for o padrão. O CORS e o WhatsApp já falham fechados.
 
-- [ ] 🟠 **O card verde que mente, agora medido na tela.** Com `ultimoErro="HTTP 403"` e última busca
+- [x] ~~**O card verde que mente.**~~
+      **CONSERTADO — aguardando o deploy da v157.** Commits `ea525f0` (backend) e `543fc72` (frontend). Teste novo, e o teste foi **mutado**: sem o conserto ele fica vermelho.
+      O chip e a **linha sempre visível** passam a dizer COM ERRO, SEM BUSCAR ou AUTORIZAÇÃO
+      VENCIDA — o problema sai de dentro do corpo, que nasce fechado. A promessa "os pedidos chegam
+      sozinhos" só aparece sem erro, buscando nos últimos 5 min e com pedido já recebido. E
+      "Recebendo pedidos" passou a vir com a **data do último**, porque o contador é acumulado desde
+      sempre.
+      **Achado novo, que ninguém tinha visto:** o `GET /api/integracoes` **não mandava
+      `tokenExpiraEm`**, e o card depende dele. O aviso "a autorização do iFood venceu", escrito em
+      25/10 para o caso da Pizzaria, lia `undefined` e **nunca aparecia**. O conserto de 25/10 estava
+      inerte na tela para a qual foi feito.
+      **Isto NÃO tem teste automático** — o projeto não tem runner de JS. A prova é a renderização no
+      navegador, com 5 estados medidos, mais uma mutação que devolve o verde. Quem mexer aqui tem de
+      abrir a tela.
+      O texto original:
+      **O card verde que mente, agora medido na tela.** Com `ultimoErro="HTTP 403"` e última busca
       há 3 h, o chip fica **verde**, a caixa diz *"A busca está rodando e não dá erro"* e o
       "Último erro" fica **335 px abaixo da dobra**. Com `pedidosRecebidos > 0` o cabeçalho vira
       "🟢 Recebendo pedidos" — contador acumulado desde sempre, não sinal de agora.
