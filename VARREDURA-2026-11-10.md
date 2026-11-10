@@ -437,6 +437,11 @@ regressão, rodou **54**.
 
 **Os 2 FALHOU são os dois bloqueadores no topo deste relatório.**
 
+> **FECHADO depois deste relatório:** a V68 foi corrigida e está no ar na **v155** (`cea9974`),
+> depois de um `flyway repair` autorizado pelo dono. Os **211 ITs passam em banco vazio sem o
+> `-Dspring.flyway.target=67`** — então a frase abaixo descreve o estado de antes, não o de agora.
+> Detalhe da conferência do repair em [PENDENCIAS.md](PENDENCIAS.md).
+
 **Terceira confirmação independente do problema da V68:** ele só conseguiu rodar os 211 testes de
 integração com `-Dspring.flyway.target=67`. Sem isso, os 211 dão erro. *"O comando de rodar ITs
 documentado no `pom.xml` não funciona hoje."* Logo, **a V68 e a V69 não foram exercitadas por ele**.

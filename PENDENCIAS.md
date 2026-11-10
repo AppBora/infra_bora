@@ -80,14 +80,43 @@ foi a lição de 09/10 e é por isso que eu meço o teste antes de confiar nele.
       SUSPEITA não testada: `bairro_entrega` (varchar 100) tem o mesmo desenho na linha seguinte.
       — **a suspeita do QA estava certa, e eu confirmei medindo.**
 
-- [ ] 🔴 **A V68 transforma migração de dado em pré-condição de boot, e eu não posso editá-la.**
+- [x] ~~**A V68 transforma migração de dado em pré-condição de boot, e eu não posso editá-la.**~~
+      **CONSERTADA e no ar na v155** (`cea9974`). Você autorizou o `flyway repair`; ele rodou às
+      16:32 de 10/11 e a v155 subiu em seguida.
+      **A prova é em banco VAZIO, que é onde o defeito morava:** os **211 ITs passam sem o
+      `-Dspring.flyway.target=67`**, migrando até a V69, com as duas migrações saindo pelo caminho
+      "nada a fazer". Ambiente novo do zero volta a subir.
+      **Como eu conferi o repair em vez de confiar nele:** medi primeiro o checksum que o Flyway *da
+      própria aplicação* calcula para o arquivo novo (`1768862649`), rodando os ITs contra um
+      Postgres vazio — e usei a **V67 e a V69 como controle**: arquivos intocados, mesmo checksum
+      nos dois lados. Logo eu tinha o valor esperado **antes** de mexer na produção. O repair
+      (`flyway/flyway:10.10.0`, a mesma versão do jar) reparou **só a versão 68**, para exatamente
+      esse valor. Diff da tabela inteira: **uma linha** mudou, as outras 68 idênticas, 69 linhas, 0
+      falhas. Backup antes (`bora-20261110-1928.dump`, lido inteiro pelo `pg_restore`).
+      **E a validação foi provada pela própria aplicação:** na subida da v155 o Flyway registrou
+      *"Successfully validated 69 migrations"* e *"Schema is up to date. No migration necessary"* —
+      ou seja, o texto novo da V68 **não tocou dado de produção**, e o próximo deploy não vai falhar
+      na validação.
+      **Um segundo defeito que ninguém tinha apontado:** os dois `UPDATE` de token estavam **fora**
+      do bloco e rodavam sempre, inclusive nos caminhos de "nada a fazer". Em todo deploy futuro
+      zerariam o token das integrações sem credencial própria, forçando um ciclo de login novo em
+      produção sem motivo. Foram para dentro, e só rodam quando o segredo muda de fato.
+      **Uma coisa que eu tinha escrito errado no próprio arquivo:** o comentário da V68 afirmava que
+      `5764607707103889279` era *"o mesmo que está em `credencial.opendelivery.client-id`"*. Não era
+      — aquele campo guardava o App ID do app de **teste**. Conferi 19 dígitos e o prefixo `5764607`
+      e declarei identidade. Foi por causa dessa frase que a V68 saiu achando que bastava consertar o
+      segredo. O arquivo agora registra o erro em vez de repetir a afirmação.
+      **O que isso custou, e é o preço de eu ter escrito a guarda errada:** a produção foi corrigida
+      pelo arquivo **antigo**, e nenhum banco vai executar o texto novo em cima dela. Quem garante
+      que o novo está certo é o banco vazio — os ITs e um ambiente novo —, não a produção.
+      O texto original, do que foi medido antes:
       Erro meu, de hoje. Três agentes confirmaram, dois por reprodução: com Postgres vazio a V68
       aborta e **todos os testes de integração falham** (o QA de API só conseguiu rodar os 211 ITs
       com `-Dspring.flyway.target=67`). Ambiente novo do zero também quebra.
       **A V69 já está corrigida** (commit `f8f82b9`), ensaiada em 3 cenários. A **V68 não pode ser
       editada**: está gravada como aplicada e o Flyway valida checksum — mudar o arquivo faz o
       próximo deploy falhar na validação. Consertar exige um **`flyway repair`** na produção.
-      **Decisão sua.** Recuperação de desastre a partir do backup **não** está em risco: o dump
+      Recuperação de desastre a partir do backup **não** estava em risco em nenhum momento: o dump
       contém o `flyway_schema_history`, então a V68 é pulada na restauração (medido).
 
 - [ ] 🔴 **"Não consegui perguntar ao Asaas" é tratado como "o cliente não pagou", e o pedido pago é
@@ -177,7 +206,10 @@ na linha da loja 18, e as duas migrações o extraíram de lá.
 - **V69** (10/11) — o App ID. Extrai da própria loja 18, por subtração do `merchant_id`.
 - **v153** (commit `d87a98d`) — o `catch` do 401 passou a logar o que a 99 respondeu **e o
   `client_id` que saiu na chamada**. Foi essa linha que destravou o 99Food depois de dois meses.
-- **v154** no ar (commit `08e3104`, 15:29 de 10/11) — os dois bloqueadores do cardápio público. A
+- **v155** no ar (commit `cea9974`, 16:34 de 10/11) — a V68 deixa de abortar em banco vazio, depois
+  do `flyway repair`. Na subida, o Flyway validou as 69 migrações e **não executou nenhuma**.
+  **O `-Dspring.flyway.target=67` não é mais necessário para rodar os ITs.**
+- **v154** (commit `08e3104`, 15:29 de 10/11) — os dois bloqueadores do cardápio público. A
   V69 rodou neste deploy pelo caminho "nada a fazer", como eu havia medido antes de subir: o App ID
   já era o certo, e **nenhum token das 5 lojas foi zerado** (conferido depois, as 5 seguem
   CONECTADO).
