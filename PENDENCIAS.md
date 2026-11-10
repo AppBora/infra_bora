@@ -5,11 +5,111 @@ que você guardar hoje continua valendo no mês que vem. Aqui estão **só as a�
 onde clicar. A prova de cada uma — o que foi medido, quando e onde — está em
 [PENDENCIAS-2026-10-30.md](PENDENCIAS-2026-10-30.md).
 
-Última conferência contra a produção: **10/11/2026** (99Food, servidor, backup e cifragem). Os itens de cadastro e operação seguem como foram medidos em **04/11**. Tudo marcado como pendente aqui foi medido, não deduzido.
+Última conferência contra a produção: **10/11/2026** — e nesse dia rodou a **varredura dos 15 agentes na aplicação inteira** ([VARREDURA-2026-11-10.md](VARREDURA-2026-11-10.md)). Os itens de cadastro e operação seguem como foram medidos em **04/11**. Tudo marcado como pendente aqui foi medido, não deduzido.
 
 ---
 
 ## 🔴 Agora
+
+## 🔴🔴 Varredura de 10/11 — os 2 que impedem liberação
+
+Relatório inteiro, com os três níveis de confiança, em
+[VARREDURA-2026-11-10.md](VARREDURA-2026-11-10.md). **15 agentes, aplicação inteira.** O QA de API
+**não liberou**, e eu concordo. Os dois estão no ar na v153, no cardápio público, onde o cliente
+final está.
+
+- [ ] 🔴 **Pedido com código de promoção dá 500 DEPOIS de gravar o pedido, e o uso nunca é contado.**
+      Medido pelo QA contra a API real: duas chamadas, dois pedidos gravados **com desconto**, e
+      `promocao.usos` continuou **0**. O cliente vê erro e tenta de novo → **pedido duplicado**; e o
+      limite de usos **nunca fecha** → desconto sem teto.
+      **Mecanismo (um conserto quebrou outro):** `somarUmUso` é `@Modifying(flushAutomatically=true)`
+      e o flush exige transação. O `POST /loja/{id}/pedido` perdeu o `@Transactional` de propósito
+      (conserto de 26/10), e `DescontoService.contabilizarUso:107` roda no passo 2, fora do
+      `tx.execute`. Estoura `TransactionRequiredException`.
+      **Por que 1345 testes verdes não pegaram:** `DescontoNoCheckoutIT` é `@DataJpaTest` (roda
+      DENTRO de uma transação) e o outro teste usa mock do repositório. É a lição de 09/10 de novo —
+      os testes verificaram a lógica, não a premissa em volta.
+      **Conserto é meu, pequeno:** `@Transactional` em `contabilizarUso`, ou somar o uso dentro do
+      `tx.execute`. Precisa de deploy. **Me peça e eu subo.**
+
+- [ ] 🔴 **Endereço com mais de 500 caracteres no cardápio público perde o pedido inteiro.**
+      Medido pelo QA: 500 com `value too long for type character varying(500)`.
+      `PublicController.java:576` grava `endereco.trim()` **sem** `LarguraDeColuna`; o caminho de
+      marketplace (`PedidoService.java:418`) usa `encurtarAvisando`.
+      **É regressão de defeito que este roteiro marca como resolvido:** o conserto da v126 cobriu o
+      marketplace e deixou o cardápio — e o comentário do próprio código diz *"o Postgres recusava o
+      INSERT e o PEDIDO INTEIRO se perdia, com o entregador a caminho"*. Mesmo estrago, no caminho
+      onde o cliente de verdade digita.
+      SUSPEITA não testada: `bairro_entrega` (varchar 100) tem o mesmo desenho na linha seguinte.
+      **Conserto é meu, pequeno.** Precisa de deploy.
+
+- [ ] 🔴 **A V68 transforma migração de dado em pré-condição de boot, e eu não posso editá-la.**
+      Erro meu, de hoje. Três agentes confirmaram, dois por reprodução: com Postgres vazio a V68
+      aborta e **todos os testes de integração falham** (o QA de API só conseguiu rodar os 211 ITs
+      com `-Dspring.flyway.target=67`). Ambiente novo do zero também quebra.
+      **A V69 já está corrigida** (commit `f8f82b9`), ensaiada em 3 cenários. A **V68 não pode ser
+      editada**: está gravada como aplicada e o Flyway valida checksum — mudar o arquivo faz o
+      próximo deploy falhar na validação. Consertar exige um **`flyway repair`** na produção.
+      **Decisão sua.** Recuperação de desastre a partir do backup **não** está em risco: o dump
+      contém o `flyway_schema_history`, então a V68 é pulada na restauração (medido).
+
+- [ ] 🔴 **"Não consegui perguntar ao Asaas" é tratado como "o cliente não pagou", e o pedido pago é
+      cancelado.** Confirmado por mim: `PixService.cobrancaFoiPaga` devolve `false` no
+      `catch (Exception e)` — timeout, 429, 5xx e chave revogada dão o mesmo que "não pago". O
+      `CobradorDePixService` segue para `cancelarVencidos`, que cancela, devolve estoque e cashback e
+      avisa o cliente do cancelamento. Conserto: separar "o Asaas disse que não pagou" de "não
+      consegui perguntar"; no segundo caso, pular a rodada.
+
+- [ ] 🔴 **O caminho real do webhook do Asaas roda SEM transação.** Confirmado por mim: o
+      `@Transactional` da linha 380 aplica-se à sobrecarga de 5 parâmetros, cujo próprio javadoc diz
+      *"o webhook de verdade NÃO usa esta sobrecarga"*. A de 6 parâmetros, que
+      `AsaasWebhookController:117` chama, não tem anotação. Pagamento registrado sem acesso
+      estendido, ou o contrário.
+
+- [ ] 🔴 **O 401 no polling não invalida o token em cache, e a tela fica verde.** Confirmado por mim:
+      o `catch` só grava hora e mensagem. Se o canal revogar o token antes do vencimento, o poller
+      insiste com o token morto por até **1 h** na 99 e **6 h** no iFood. Ameaça direta ao 99Food das
+      5 lojas da Zirá, que começou a funcionar hoje.
+      **Armadilha de leitura:** `ultimo_polling_em` é gravado **também na falha** — "último polling
+      21 s atrás" prova que *tentou*, não que *funcionou*.
+
+- [x] ~~**O service worker derrubava as fontes do guia da Zirá.**~~ **CONSERTADO hoje** (`479f55f`).
+      Medido pelo QA de tela em produção: `ERR_FAILED`, request de 0 byte, fontes vazias em
+      `guia-zira.html` e `cardapio-folha.html`. O `sw.js` interceptava toda origem e a CSP
+      `connect-src 'self'` bloqueava o fetch de dentro dele. **Eu reescrevi esse arquivo hoje e disse
+      que o ERR_FAILED estava resolvido** — estava para mesma origem; para recurso de fora,
+      continuava, e eu não conferi.
+
+- [ ] 🟠 **O segredo do JWT falha ABERTO, com um valor publicado no repositório.** Confirmado por
+      mim: sem `BORA_JWT_SECRET` a API sobe com `troque-este-segredo-...` e só emite um `log.warn`.
+      Quem conhece o repositório forja token de qualquer usuário, inclusive do admin da plataforma. A
+      variável existe em produção hoje (conferida pelo nome). **Neste projeto isso não é teórico:** já
+      aconteceu a chave de cifragem parecer ausente porque `docker restart` não relê o `--env-file`.
+      Conserto: recusar a subida se o segredo for o padrão. O CORS e o WhatsApp já falham fechados.
+
+- [ ] 🟠 **O card verde que mente, agora medido na tela.** Com `ultimoErro="HTTP 403"` e última busca
+      há 3 h, o chip fica **verde**, a caixa diz *"A busca está rodando e não dá erro"* e o
+      "Último erro" fica **335 px abaixo da dobra**. Com `pedidosRecebidos > 0` o cabeçalho vira
+      "🟢 Recebendo pedidos" — contador acumulado desde sempre, não sinal de agora.
+      Dá para consertar só no front, sem esperar o backend: se há `ultimoErro`, ou se
+      `ultimoPollingEm` tem mais de ~5 min, trocar chip, linha e caixa.
+
+- [ ] **O freio de login pode ser contornado por cabeçalho.** O QA mediu local, sem o Caddy na
+      frente: 6 erros com `X-Forwarded-For` diferentes e a 7ª com a senha certa **entrou**. O
+      `FreioDeTentativas` lê o **último salto** por desenho, e o `Caddyfile` **não tem
+      `trusted_proxies`**. O QA não reconferiu o comportamento real do Caddy — **vale medir**, porque
+      é o freio que protege toda conta de lojista.
+
+- [ ] **AWS Business Support+ custa R$ 162/mês** (43% da conta de R$ 373) e a própria API da AWS diz
+      que o plano não dá acesso ao suporte. O custo total está **dentro do teto** de R$ 800, com
+      folga de R$ 427. Decisão sua manter ou voltar ao Basic.
+
+- [ ] **A apresentação comercial e a ficha de cadastro em PDF dizem que o iFood e o 99Food estão "em
+      homologação"**, com "situação em 30 de setembro". O iFood recebe pedido real desde 19/09 e o
+      99Food está em 5 lojas desde hoje. **A landing está certa** — o erro migrou para os dois
+      documentos que vão direto ao cliente. É o mesmo erro de 09/10, em lugar novo.
+
+---
 
 ## ✅ Fechado em 08 e 10/11 — o 99Food da Zirá está funcionando
 

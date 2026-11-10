@@ -19,6 +19,54 @@ outras rodadas vários achados eram falsos. Então aqui há três níveis, e a d
 
 ## 1. CONFIRMADO por mim, em ordem de gravidade
 
+### 🔴🔴 OS DOIS QUE IMPEDEM LIBERAÇÃO — achados pelo QA de API, confirmados por mim
+
+O QA de API **não liberou** a aplicação, e com razão. Os dois são HTTP 500 no cardápio público, que é
+onde o cliente final está, e os dois estão no ar na v153.
+
+#### A. Pedido com código de promoção dá 500 **depois** de gravar o pedido, e o uso nunca é contado
+
+Medido pelo QA contra a API real (local): `POST /public/loja/2/pedido` com `"cupom":"LIM1"` devolveu
+**500 nas duas chamadas**. No banco ficaram os pedidos 36 e 37, **ambos com o desconto aplicado**, e
+`promocao.usos` continuou **0** — o limite de 1 uso nunca fecha.
+
+O cliente vê erro e tenta de novo: **pedido duplicado**. E a loja concede desconto sem limite.
+
+**Mecanismo, confirmado por mim — um conserto quebrou outro:**
+
+- `PromocaoRepository.somarUmUso` é `@Modifying(clearAutomatically = true, flushAutomatically = true)`.
+  O flush **exige transação ativa**.
+- `DescontoService.contabilizarUso:107` o chama sem `@Transactional`.
+- O `POST /loja/{lojaId}/pedido` **perdeu o `@Transactional` de propósito** — conserto de 26/10, para
+  que a recusa no meio do laço de itens não deixasse pedido pela metade. A transação que restou é o
+  `tx.execute` do passo 1.
+- `contabilizarUso` roda no passo 2, **fora** desse `tx.execute`. Sem transação, o flush estoura:
+  `TransactionRequiredException: cannot reliably process 'flush' call`.
+
+**Por que 1345 testes verdes não pegaram** — e esta é a lição de 09/10 outra vez:
+`DescontoNoCheckoutIT` é `@DataJpaTest`, que **roda dentro de uma transação**, e
+`PromocaoDaDescontoDeVerdadeTest` usa **mock do repositório**. Nenhum dos dois exercita o caminho
+real, que é justamente o que não tem transação. Os testes verificaram a lógica; a premissa em volta
+dela é que estava errada.
+
+Conserto: `@Transactional` em `contabilizarUso` (chamada de outro bean, então o proxy se aplica), ou
+somar o uso dentro do `tx.execute`.
+
+#### B. Endereço com mais de 500 caracteres no cardápio público perde o pedido inteiro
+
+Medido pelo QA: 500 com `value too long for type character varying(500)` no insert de
+`pedido.endereco_entrega`.
+
+`PublicController.java:576` grava `p.enderecoEntrega = endereco.trim()` **sem passar por
+`LarguraDeColuna`**. O caminho de marketplade (`PedidoService.java:418`) usa `encurtarAvisando`.
+
+**É regressão de um defeito que o roteiro marca como resolvido.** O conserto da v126 cobriu o
+caminho de marketplace e deixou o do cardápio — e o comentário do próprio código, no caminho
+consertado, diz: *"o Postgres recusava o INSERT e o PEDIDO INTEIRO se perdia, com o entregador a
+caminho"*. É o mesmo estrago, no caminho onde o **cliente de verdade** digita o endereço.
+
+SUSPEITA do QA, não testada: `bairro_entrega` (varchar 100) tem o mesmo desenho na linha seguinte.
+
 ### 1.1 🔴 Minhas migrações V68 e V69 transformavam migração de dado em pré-condição de boot
 
 **Erro meu, de hoje.** As duas tinham `IF v_quantas <> 1 THEN RAISE EXCEPTION`. O tech-lead
@@ -348,6 +396,46 @@ que confundiu o diagnóstico em 06/11 não aparece mais.
 do lojista**, o diagnóstico interno *"o 99Food da loja 1 … client_secret de 13 caracteres"*. É texto
 de plataforma vazando para quem não deveria vê-lo, e além disso ficou desatualizado hoje — a causa
 real era o App ID. SUSPEITA: o QA não abriu a aba Plataforma (exige papel de administrador).
+
+### 5.4 QA de API, regra e permissão — **não liberou**
+
+**Como rodou, que é o que dá valor ao "passou":** em produção, só **6 GET sem login**
+(`/actuator/health` 200, `/viva` 200, `/api/health` 401, `/api/integracoes` 401,
+`/admin-bora/clientes` 401, `/admin-bora/config` 401). Todo o resto rodou **local**, contra o jar da
+árvore atual, com Postgres 16 descartável, contas que ele mesmo criou, um servidor **falso** da 99Food
+em Python, e com a cifragem e o corte por falta de pagamento **ligados**, como em produção.
+
+Então **"PASSOU" significa "executei contra a API local real"** — não significa "passou em produção".
+
+**Números:** 99 itens executados — **97 PASSOU, 2 FALHOU**, 33 NÃO EXECUTADO. Dos 130 itens de
+regressão, rodou **54**.
+
+**Os 2 FALHOU são os dois bloqueadores no topo deste relatório.**
+
+**Terceira confirmação independente do problema da V68:** ele só conseguiu rodar os 211 testes de
+integração com `-Dspring.flyway.target=67`. Sem isso, os 211 dão erro. *"O comando de rodar ITs
+documentado no `pom.xml` não funciona hoje."* Logo, **a V68 e a V69 não foram exercitadas por ele**.
+
+**Mais dois achados que pedem decisão, não bloqueiam:**
+
+- **E.6:** dois "Recebi o pagamento" simultâneos → um 200 e outro **500** (duplicate key), em vez do
+  409 que pergunta. Não duplicou o pagamento, mas o usuário vê erro cru. Aconteceu em 2 de 3 rodadas
+  com 2 threads; no ritmo humano o 409 funciona.
+- **1.5 — o freio de login pode ser contornado:** local, sem o Caddy na frente, 6 erros com
+  `X-Forwarded-For` diferentes e a 7ª tentativa com a senha certa **entrou**. O `FreioDeTentativas`
+  lê o **último salto** do cabeçalho por desenho, então o freio só segura se o Caddy sobrescrever o
+  cabeçalho — e o `Caddyfile` **não tem `trusted_proxies`**. O QA não reconferiu o comportamento real
+  do Caddy. Vale medir, porque é o freio que protege toda conta de lojista.
+
+**Observações de permissão que ele mediu de passagem:** o `GET /admin-bora/lojas` devolve a entidade
+`Loja` inteira (inclui `asaasSubcontaId`, `asaasWalletId`, `asaasOnboardingUrl`) — só o admin de
+plataforma vê, mas é mais dado do que a tela precisa. E o **GERENTE vê o `webhookPath` com o token em
+claro** (25.8).
+
+**Efeito colateral que ele avisou, e é justo registrar:** ao testar o webhook do WhatsApp com
+assinatura válida, a aplicação local chamou o `graph.facebook.com` com credencial falsa e levou 401.
+Sem efeito, mas foi uma chamada de rede a terceiro. E um container Postgres que não era dele
+desapareceu durante a primeira corrida, derrubando-a.
 
 ---
 
