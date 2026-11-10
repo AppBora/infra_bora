@@ -19,7 +19,32 @@ outras rodadas vários achados eram falsos. Então aqui há três níveis, e a d
 
 ## 1. CONFIRMADO por mim, em ordem de gravidade
 
-### 🔴🔴 OS DOIS QUE IMPEDEM LIBERAÇÃO — achados pelo QA de API, confirmados por mim
+### ✅ OS DOIS QUE IMPEDIAM A LIBERAÇÃO — **consertados e no ar na v154** (`08e3104`, 15:29 de 10/11)
+
+> **Fechados depois que este relatório foi escrito.** O diagnóstico abaixo fica como estava, porque é
+> o que explica o defeito. O que mudou está aqui em cima.
+>
+> **Como foi provado — e não é "o teste passou":** subi a API de verdade contra um Postgres de
+> verdade, com o mesmo código que está no ar, e medi pelo HTTP: pedido com o código `PROVA10` → 200
+> com `promocao.usos` = **1**; o mesmo código outra vez → **400** (o teto de 1 uso agora fecha);
+> endereço de **21.600** caracteres → 200, gravado cortado em 500, pedido existe. 1348 testes de
+> unidade e 211 de integração passando.
+>
+> **Os 5 testes novos foram mutados um por um** e cada um fica vermelho sem o conserto: 923 contra
+> 500, 307 contra 100, 306 contra 160. Teste verde com cenário que não existe não prova nada.
+>
+> **O defeito B era maior do que o QA mediu — e maior do que eu escrevi aqui embaixo.** Eram **três**
+> gravações sem corte, não uma, e todas dentro da **mesma transação** que grava o pedido, então
+> consertar só a linha medida deixaria o 500 de pé pela segunda recusa: `pedido.endereco_entrega`
+> (500), `pedido.bairro_entrega` (100) e — num caminho que o QA não tocou —
+> `cliente.nome` (160) e `cliente.endereco` (500), dentro do
+> `FidelidadeService.identificarPeloTelefone`, este último **sem nem um `trim()`**. Um **nome** de
+> 200 caracteres também derrubava a venda. E a SUSPEITA do QA sobre o bairro estava certa: ele não
+> tinha proteção nenhuma, porque a conferência contra a tabela de taxas só roda quando a loja **tem**
+> bairro cadastrado — e loja sem bairro cadastrado existe em produção, que é por que ela entrega de
+> graça.
+
+### O diagnóstico, como estava quando a varredura fechou
 
 O QA de API **não liberou** a aplicação, e com razão. Os dois são HTTP 500 no cardápio público, que é
 onde o cliente final está, e os dois estão no ar na v153.

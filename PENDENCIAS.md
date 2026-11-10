@@ -11,14 +11,34 @@ onde clicar. A prova de cada uma — o que foi medido, quando e onde — está e
 
 ## 🔴 Agora
 
-## 🔴🔴 Varredura de 10/11 — os 2 que impedem liberação
+## Varredura de 10/11 — os 2 bloqueadores estão CONSERTADOS e no ar
 
 Relatório inteiro, com os três níveis de confiança, em
 [VARREDURA-2026-11-10.md](VARREDURA-2026-11-10.md). **15 agentes, aplicação inteira.** O QA de API
-**não liberou**, e eu concordo. Os dois estão no ar na v153, no cardápio público, onde o cliente
-final está.
+não havia liberado por causa de dois HTTP 500 no cardápio público. **Os dois subiram na v154**
+(commit `08e3104`), às 15:29 de 10/11.
 
-- [ ] 🔴 **Pedido com código de promoção dá 500 DEPOIS de gravar o pedido, e o uso nunca é contado.**
+**Como eu provei, e não é "o teste passou":** subi a API de verdade contra um Postgres de verdade,
+com o mesmo código que está no ar, e medi pelo HTTP:
+
+| o que eu mandei | o que voltou |
+|---|---|
+| pedido com o código `PROVA10` | **200**, `promocao.usos` virou **1** |
+| o mesmo código outra vez (teto é 1 uso) | **400 "Cupom inválido ou vencido"** — o teto agora fecha |
+| endereço de **21.600** caracteres | **200**, gravado cortado em 500, pedido existe |
+| bairro de 2.400 / nome de 1.800 | gravados em 100 e 160, pedido existe |
+
+E os 5 testes novos foram **mutados um por um**: sem o conserto cada um fica vermelho (923 contra
+500, 307 contra 100, 306 contra 160). Teste verde com cenário que não existe não prova nada — essa
+foi a lição de 09/10 e é por isso que eu meço o teste antes de confiar nele.
+
+- [x] ~~**Pedido com código de promoção dá 500 DEPOIS de gravar o pedido.**~~ **CONSERTADO e no ar
+      na v154** (`08e3104`). O `DescontoService` passou a abrir a própria transação, curta, e o
+      `try` ficou **fora** dela — engolir por dentro só mudaria o estouro de lugar, porque o commit
+      estouraria no lugar dele. O javadoc do método sempre prometeu *"não faz o pedido falhar"*; era
+      essa promessa que estava quebrada, no pior momento possível. Medido: 200, `usos = 1`, e a
+      segunda tentativa recusada com 400.
+      O texto original, do que foi medido antes:
       Medido pelo QA contra a API real: duas chamadas, dois pedidos gravados **com desconto**, e
       `promocao.usos` continuou **0**. O cliente vê erro e tenta de novo → **pedido duplicado**; e o
       limite de usos **nunca fecha** → desconto sem teto.
@@ -29,10 +49,27 @@ final está.
       **Por que 1345 testes verdes não pegaram:** `DescontoNoCheckoutIT` é `@DataJpaTest` (roda
       DENTRO de uma transação) e o outro teste usa mock do repositório. É a lição de 09/10 de novo —
       os testes verificaram a lógica, não a premissa em volta.
-      **Conserto é meu, pequeno:** `@Transactional` em `contabilizarUso`, ou somar o uso dentro do
-      `tx.execute`. Precisa de deploy. **Me peça e eu subo.**
+      **Por que o mock não pegava:** o `PromocaoDaDescontoDeVerdadeTest` dubla o repositório, então
+      nunca chega a exigir transação. O teste novo prova a **estrutura**, que é o que dá para provar
+      com mock: um `inOrder` exige que a transação seja aberta **antes** do incremento. Quem tirar o
+      `TransactionTemplate` reprova.
 
-- [ ] 🔴 **Endereço com mais de 500 caracteres no cardápio público perde o pedido inteiro.**
+- [x] ~~**Endereço com mais de 500 caracteres no cardápio público perde o pedido inteiro.**~~
+      **CONSERTADO e no ar na v154** (`08e3104`).
+      **E era maior do que o QA mediu: eram TRÊS gravações, não uma.** Todas dentro da **mesma**
+      transação que grava o pedido — então consertar só a linha que ele mediu deixaria o 500 de pé
+      pela segunda recusa, com a venda perdida do mesmo jeito:
+      1. `pedido.endereco_entrega` (varchar 500), em `PublicController` — a que o QA achou;
+      2. `pedido.bairro_entrega` (varchar 100), a linha seguinte. **Não estava protegido por
+         validação nenhuma:** a conferência contra a tabela de taxas só acontece quando a loja
+         **tem** bairro cadastrado, e loja sem bairro cadastrado existe em produção — é justamente
+         por isso que ela entrega de graça;
+      3. `cliente.nome` (varchar 160) e `cliente.endereco` (varchar 500), dentro do
+         `FidelidadeService.identificarPeloTelefone`, que roda no mesmo `tx.execute`. O endereço ia
+         **sem nem um `trim()`**. Um **nome** de 200 caracteres derrubava a venda por aqui — caminho
+         que o QA não chegou a testar.
+      Medido depois do conserto: 21.600 caracteres de endereço → 200, gravado em 500, pedido existe.
+      O texto original, do que foi medido antes:
       Medido pelo QA: 500 com `value too long for type character varying(500)`.
       `PublicController.java:576` grava `endereco.trim()` **sem** `LarguraDeColuna`; o caminho de
       marketplace (`PedidoService.java:418`) usa `encurtarAvisando`.
@@ -41,7 +78,7 @@ final está.
       INSERT e o PEDIDO INTEIRO se perdia, com o entregador a caminho"*. Mesmo estrago, no caminho
       onde o cliente de verdade digita.
       SUSPEITA não testada: `bairro_entrega` (varchar 100) tem o mesmo desenho na linha seguinte.
-      **Conserto é meu, pequeno.** Precisa de deploy.
+      — **a suspeita do QA estava certa, e eu confirmei medindo.**
 
 - [ ] 🔴 **A V68 transforma migração de dado em pré-condição de boot, e eu não posso editá-la.**
       Erro meu, de hoje. Três agentes confirmaram, dois por reprodução: com Postgres vazio a V68
@@ -138,8 +175,12 @@ na linha da loja 18, e as duas migrações o extraíram de lá.
   `shop_id_canal`; o webhook casa pelos dois.
 - **V68** (10/11) — o segredo. Copia o texto cifrado da loja 18, sem ninguém ver o valor em claro.
 - **V69** (10/11) — o App ID. Extrai da própria loja 18, por subtração do `merchant_id`.
-- **v153** no ar (commit `d87a98d`) — o `catch` do 401 passou a logar o que a 99 respondeu **e o
-  `client_id` que saiu na chamada**.
+- **v153** (commit `d87a98d`) — o `catch` do 401 passou a logar o que a 99 respondeu **e o
+  `client_id` que saiu na chamada**. Foi essa linha que destravou o 99Food depois de dois meses.
+- **v154** no ar (commit `08e3104`, 15:29 de 10/11) — os dois bloqueadores do cardápio público. A
+  V69 rodou neste deploy pelo caminho "nada a fazer", como eu havia medido antes de subir: o App ID
+  já era o certo, e **nenhum token das 5 lojas foi zerado** (conferido depois, as 5 seguem
+  CONECTADO).
 
 **O que me custou dois meses, escrito aqui para não repetir:** eu conferi que o `client-id` da
 plataforma tinha 19 caracteres e começava com `5764607`, e **declarei que era o App ID certo**. Os
