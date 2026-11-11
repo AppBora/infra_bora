@@ -482,8 +482,19 @@ logar o campo **enviado**.
       para usar 7 de 32, e o token completo já está em claro nos 146 dumps desta mesma máquina,
       então o risco a mais é praticamente nulo — mas foi contra a minha própria regra de nunca
       imprimir valor de segredo, nem em parte, e quem decide se isso basta para trocar é você.
-      Trocar é um clique: painel → a loja 18 → recebimento Asaas → religar o webhook (o
-      `AsaasSubcontaService` gera um token novo e o regrava já cifrado).
+      **O clique é seu, e não meu:** o `POST /api/recebimento/webhook` exige papel
+      ADMINISTRADOR_LOJA e age sobre a loja do próprio login (`ctx.lojaId()`) — não existe
+      caminho de ADMINISTRADOR_BORA para o webhook de uma loja, e eu não entro em conta de
+      ninguém nem forjo token. Caminho: entrar como a loja 18 → **Recebimento** →
+      **"Religar aviso de pagamento"**. O token novo nasce já cifrado.
+      **Lendo esse fluxo para te dar o caminho, achei um defeito NELE, e ele está consertado
+      (commit `ca3d774`):** a guarda que decidia se religar deu certo era
+      `token == null || isBlank()`, o que funciona só na primeira vez. No religar o campo tem o
+      token velho: se o Asaas recusa a criação, a exceção vai só para o log, o token velho
+      continua ali, a guarda não dispara e você recebe 200 — **com o webhook antigo já apagado**,
+      porque ele é removido ANTES da criação. O clique que existe para consertar o aviso de
+      pagamento era capaz de apagá-lo e dizer que deu certo. Agora a guarda exige que o token
+      tenha **mudado**, e a mensagem diz em que estado a loja ficou.
 
 O 1º item continua seu: eu não leio nem guardo a chave.
 
