@@ -421,20 +421,45 @@ logar o campo **enviado**.
       ssh -i ~/.ssh/bora-lightsail.pem ubuntu@56.126.177.18 "grep '^BORA_SEGREDO_COLUNAS=' /home/ubuntu/bora/api.env"
       ```
 
-- [ ] 🔴 **2º — e só depois disso: cifrar as credenciais que já estavam gravadas.**
-      **Medido em 10/11: sao 20** (eram 28 em 30/10 -- 8 se cifraram sozinhas ao serem
-      regravadas no uso normal). Por coluna: 9 `webhook_token`, 4 `client_secret`, 4 de
-      `config_plataforma`, 1 `access_token`, 1 `refresh_token`. **Entre elas o
-      `client-secret` do iFood da plataforma, 99 caracteres em texto puro** -- a credencial que
-      autoriza pedido em nome de TODAS as lojas. Sai em todo `pg_dump`, inclusive nos 146 que
-      estao nesta maquina. O texto original:
-      **Caminho:** painel → Configurações → Plataforma → "Credenciais no banco" →
-      **"Cifrar o que já está gravado"**. Clicar duas vezes não estraga nada.
-      Ligar a chave protege o que for gravado **daqui para frente**; essas 28 continuam em texto
-      puro até esse clique, e saem em todo backup do banco.
+- [x] ~~**2º — cifrar as credenciais que já estavam gravadas.**~~
+      **FEITO em 11/11/2026, 13:11 UTC. 20 cifradas numa transação, em 1 segundo. Agora são 39
+      cifradas e 0 em texto puro** nas 6 colunas que passam pelo cifrador.
+      Por coluna: 6 `config_plataforma.valor`, 4 `client_secret`, 8 `webhook_token`,
+      1 `access_token`, 1 `refresh_token`. Entre elas o `client-secret` do iFood **e** o da 99 da
+      plataforma — as credenciais que autorizam pedido em nome de TODAS as lojas.
+      **Sem o botão, e sem entrar na sua conta.** O endpoint da tela exige login de administrador,
+      então a cifragem foi feita por fora, por um programa que usa o
+      `SegredoGuardado.java` **do backend, conferido por md5** — nada de reimplementar cripto. Ele
+      está no repositório, em `bora-landing/deploy/cifrar-credenciais/`, com o LEIAME.
+      **Como eu soube que não ia estragar nada, antes de gravar:** a chave que eu tinha na mão
+      **abriu os 19 valores que a própria API já havia cifrado**. O GCM autentica o conteúdo —
+      chave errada não abre, estoura. Então era a chave da API, provado, sem precisar de cópia em
+      texto puro para poder voltar atrás. Depois disso, cada um dos 20 foi cifrado e decifrado de
+      volta em memória e tinha de voltar igual (isso pega o caminho silencioso do conversor: quando
+      a cifra falha por dentro, ele **devolve o texto puro** e só grita no log).
+      **Medido depois:** 2 segundos após o commit, as 5 lojas da Zirá e o iFood da loja 1 buscaram
+      pedido normalmente, `ultimo_erro` vazio, **0 erro no log da API** — ela lendo as credenciais
+      já cifradas. E rodar de novo acha 0: é idempotente.
+      O texto original:
+      **Medido em 10/11: sao 20.** Caminho: painel → Configurações → Plataforma →
+      "Credenciais no banco" → "Cifrar o que já está gravado".
 
-O botão é seu, e não meu, por um motivo só: exige login de administrador, e eu não entro em conta
-de ninguém.
+- [ ] 🟠 **3º — a 21ª credencial: `loja.asaas_webhook_token` precisa do deploy da v158.**
+      Achada **durante** a cifragem das 20: varri o `information_schema` inteiro atrás de coluna
+      com cara de segredo, justamente para não cifrar 20 e deixar a 21ª saindo no `pg_dump` de todo
+      dia. É a única, e tem 1 valor gravado, em claro.
+      Ela nunca teve `@Convert(SegredoGuardado)` — e **o teste de cobertura não podia pegar isso**,
+      porque olhava o caminho inverso: cobrava que toda coluna *com* a anotação estivesse na lista
+      do serviço, não que toda coluna de segredo tivesse a anotação. Coluna que nunca ganhou a
+      anotação não entra em lista nenhuma e por isso não entrava em teste nenhum. O teste passou a
+      cobrar os dois lados (commit `8f88a65`).
+      **Está commitado e NÃO está no ar** — e aqui a ordem não é detalhe: **cifrar antes do deploy
+      quebraria o aviso de PIX pago dessa loja, em silêncio**, porque a v157 leria o `enc:v1:...`
+      cru e o compararia com o token que o Asaas manda. Primeiro a v158, depois o `aplicar`.
+      Falta só: **o deploy da v158** (o modo automático bloqueou a subida e é você que libera) e
+      rodar `/home/ubuntu/cifrar/rodar.sh aplicar` depois dele.
+
+O 1º item continua seu: eu não leio nem guardo a chave.
 
 ---
 
