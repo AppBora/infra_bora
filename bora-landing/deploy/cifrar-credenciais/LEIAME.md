@@ -68,3 +68,17 @@ depois o `aplicar`.
 cifrado; depois do commit, 39 cifradas e 0 em texto puro. Dois segundos depois, as 5 lojas da Zirá e
 o iFood da loja 1 buscaram pedido normalmente, com 0 erro no log — a API lendo as credenciais já
 cifradas.
+
+**11/11/2026, mais tarde** — a 21ª, `loja.asaas_webhook_token` da loja 18, **depois** do deploy da
+v158 (a ordem da seção acima). Ficaram 40 cifradas e 0 em texto puro.
+
+A prova de que a API passou a ler o valor **decifrado**, e não o `enc:v1:` cru, foi um teste que
+**distingue as duas coisas**: mandar no webhook do PIX o próprio texto cifrado como token. Na v157
+isso seria **aceito** (200); na v158 voltou **401 "Token inválido"**. Um 401 sozinho não provaria
+nada — token errado dá 401 de qualquer jeito —; prova porque na versão errada o mesmo request dava
+200. Vale como molde para qualquer coluna cifrada que seja **comparada** em vez de apenas lida.
+
+E duas armadilhas que custaram tempo: dentro do container **não existe o prefixo `/api`** (o Caddy
+é que o remove), então `/api/public/...` cai em "Não autenticado" e devolve 401 sem chegar ao
+método — por isso o teste acima lê o **corpo** da resposta, não só o código. E os dumps antigos
+continuam com as credenciais em texto puro: cifrar o banco não limpa backup nenhum.

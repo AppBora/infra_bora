@@ -5,7 +5,7 @@ que você guardar hoje continua valendo no mês que vem. Aqui estão **só as a�
 onde clicar. A prova de cada uma — o que foi medido, quando e onde — está em
 [PENDENCIAS-2026-10-30.md](PENDENCIAS-2026-10-30.md).
 
-Última conferência contra a produção: **10/11/2026** — e nesse dia rodou a **varredura dos 15 agentes na aplicação inteira** ([VARREDURA-2026-11-10.md](VARREDURA-2026-11-10.md)). Os itens de cadastro e operação seguem como foram medidos em **04/11**. Tudo marcado como pendente aqui foi medido, não deduzido.
+Última conferência contra a produção: **11/11/2026** — nesse dia a **v158 subiu** e as credenciais do banco ficaram **40 cifradas / 0 em texto puro**. Antes disso, em 10/11 — e nesse dia rodou a **varredura dos 15 agentes na aplicação inteira** ([VARREDURA-2026-11-10.md](VARREDURA-2026-11-10.md)). Os itens de cadastro e operação seguem como foram medidos em **04/11**. Tudo marcado como pendente aqui foi medido, não deduzido.
 
 ---
 
@@ -444,7 +444,18 @@ logar o campo **enviado**.
       **Medido em 10/11: sao 20.** Caminho: painel → Configurações → Plataforma →
       "Credenciais no banco" → "Cifrar o que já está gravado".
 
-- [ ] 🟠 **3º — a 21ª credencial: `loja.asaas_webhook_token` precisa do deploy da v158.**
+- [x] ~~**3º — a 21ª credencial: `loja.asaas_webhook_token`.**~~
+      **FEITA em 11/11/2026: v158 no ar às 15:40 UTC (commit `8f88a65`), cifragem às 15:41.
+      Agora são 40 cifradas e 0 em texto puro.** É a loja 18, Zirá — Montreal.
+      **A prova de que a API lê o valor DECIFRADO, e não o `enc:v1:` cru**, foi um teste que
+      distingue as duas coisas: mandei no webhook do PIX o próprio texto cifrado como token.
+      Na v157 ele teria sido **aceito** (200); na v158 voltou **401 "Token inválido"** — a
+      mensagem do próprio método, com um controle de loja inexistente respondendo
+      "Loja não encontrada" para provar que o caminho chega lá. E o
+      `/public/loja/18/cardapio` responde 200 com 41 KB, o que prova que o conversor decifra na
+      leitura sem estourar. V70 aplicada (a coluna virou `text`), 0 erro no log.
+      O texto original:
+      **Faltava o deploy da v158** e rodar `rodar.sh aplicar` depois dele.
       Achada **durante** a cifragem das 20: varri o `information_schema` inteiro atrás de coluna
       com cara de segredo, justamente para não cifrar 20 e deixar a 21ª saindo no `pg_dump` de todo
       dia. É a única, e tem 1 valor gravado, em claro.
@@ -456,8 +467,23 @@ logar o campo **enviado**.
       **Está commitado e NÃO está no ar** — e aqui a ordem não é detalhe: **cifrar antes do deploy
       quebraria o aviso de PIX pago dessa loja, em silêncio**, porque a v157 leria o `enc:v1:...`
       cru e o compararia com o token que o Asaas manda. Primeiro a v158, depois o `aplicar`.
-      Falta só: **o deploy da v158** (o modo automático bloqueou a subida e é você que libera) e
-      rodar `/home/ubuntu/cifrar/rodar.sh aplicar` depois dele.
+      A ferramenta já saiu do servidor.
+
+- [ ] 🟠 **4º — os 66 dumps do servidor (e os 146 desta máquina) ainda têm as
+      credenciais em TEXTO PURO.** Cifrar o banco não limpa backup nenhum: o dump das 15:40 de
+      hoje — que eu restaurei num Postgres descartável para medir uma coisa — ainda traz o
+      token da loja 18 em claro, e os do servidor vão até 27/10. Isso tem um lado bom (existe
+      caminho de volta se a chave se perder) e um lado ruim (quem pegar um dump antigo pega as
+      credenciais). Daqui para frente os dumps nascem cifrados; o que fazer com os antigos é
+      decisão sua: apagar os anteriores a 11/11, ou guardá-los como se fossem a própria chave.
+
+- [ ] 🟡 **5º — regerar o webhook da loja 18 no Asaas, por minha causa.** Medindo o dump
+      de controle eu imprimi os **7 primeiros caracteres** do token antigo dela (de 32). Não dá
+      para usar 7 de 32, e o token completo já está em claro nos 146 dumps desta mesma máquina,
+      então o risco a mais é praticamente nulo — mas foi contra a minha própria regra de nunca
+      imprimir valor de segredo, nem em parte, e quem decide se isso basta para trocar é você.
+      Trocar é um clique: painel → a loja 18 → recebimento Asaas → religar o webhook (o
+      `AsaasSubcontaService` gera um token novo e o regrava já cifrado).
 
 O 1º item continua seu: eu não leio nem guardo a chave.
 
