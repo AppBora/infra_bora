@@ -9,6 +9,35 @@ onde clicar. A prova de cada uma — o que foi medido, quando e onde — está e
 
 ---
 
+## Conferido contra a produção em 11/11/2026, 20h — item por item
+
+Medição, não releitura de anotação. **Dos 17 itens que davam para medir, 15 continuam como
+estavam, 1 mudou de número e 1 fechou.** Nada envelheceu para melhor sozinho.
+
+| item | o que eu medi hoje |
+|---|---|
+| freio de login por cabeçalho | **FECHADO**: 8 logins com 8 `X-Forwarded-For` → 401×5 e depois **429** na 6ª. Não é contornável |
+| iFood da loja 17 | `ativo=true`, **ultimo_polling = NUNCA**, token expirou **07/10/2026**, 0 pedidos |
+| bairros da loja 18 | tem 6 (Centro, Jd Nova Esperança, Jd Tropical, Pq São Bento, Vila Hortência, Vila Mineirão). **"Jardim Montreal" e "Jardim Hungarês" não existem em loja nenhuma** |
+| estoque nas lojas da Zirá | loja 18: 44 produtos, **2** com estoque. Lojas 19 a 22: 42 produtos cada, **0** |
+| custo dos produtos | loja 18: 44 produtos, **0 com custo gravado** |
+| insumos no cardápio | loja 18, categoria "mantimento": **2 produtos ATIVOS** no cardápio público |
+| contas de teste | **4 ativas** (a nota dizia 5): 3 GERENTE + 1 OPERADOR |
+| CNPJ das empresas | empresa 2 (Pizzaria Bella Napoli) **sem CNPJ**; as outras duas têm |
+| taxa do PIX | `ASAAS_TAXA_PERCENTUAL = 0` no servidor; **loja 18 tem `split_percentual = 0.50`**, as outras 6 ficam no global, ou seja em zero |
+| vencimento das lojas | 19 e 20 com `acesso_ate = NULL` (**nunca vencem**); 18, 21 e 22 vencem em 24–25/01/2027 |
+| sujeira no banco | **7** `pedido_item` órfãos, **5** pedidos apontando para cliente apagado |
+| forma de pagamento | loja 1: **"Vale Refeicao" x2** |
+| loja de QA | loja 1 tem **28 dos 43 pedidos** do banco — é a maior "loja" da produção |
+| taxa fora da lista | `PedidoService:89` devolve `BigDecimal.ZERO` para bairro fora da lista — confirmado no código |
+| "em homologação" | aparece em **10 arquivos**, entre eles a apresentação comercial e o gerador da ficha de cadastro |
+
+**Dois itens se cruzam e viram um defeito vivo:** a loja chamada **Zirá — Montreal** não tem o bairro
+Montreal na própria lista de entrega, e `taxaPara` devolve **R$ 0,00 em silêncio** para bairro fora da
+lista. Quem mora no bairro da própria loja recebe **de graça**, e nada acusa.
+
+---
+
 ## 🔴 Agora
 
 ## Varredura de 10/11 — os 2 bloqueadores estão CONSERTADOS e no ar
@@ -210,7 +239,16 @@ foi a lição de 09/10 e é por isso que eu meço o teste antes de confiar nele.
       Dá para consertar só no front, sem esperar o backend: se há `ultimoErro`, ou se
       `ultimoPollingEm` tem mais de ~5 min, trocar chip, linha e caixa.
 
-- [ ] **O freio de login pode ser contornado por cabeçalho.** O QA mediu local, sem o Caddy na
+- [x] ~~**O freio de login pode ser contornado por cabeçalho.**~~ **FECHADO em 11/11/2026 — e
+      fechado MEDINDO, não relendo nota.** Oito tentativas de login em `https://borahapp.com.br`,
+      através do Caddy, com e-mail inexistente e **oito `X-Forwarded-For` diferentes**:
+      401, 401, 401, 401, 401, **429, 429, 429** — o freio travou na 6ª. Ou seja: o Caddy
+      **descarta** o cabeçalho que o cliente manda (v2.11.4, sem `trusted_proxies`, os dois
+      conferidos hoje no container), o balde é um só e **não dá para contornar**. O que o QA mediu
+      era local, sem o Caddy na frente — como o próprio item suspeitava. Volta a importar no dia em
+      que entrar `trusted_proxies`, um CDN ou outro proxy antes do Caddy; nesse dia o
+      `FreioDeTentativas.origem` precisa pular tantos saltos quantos forem os proxies confiáveis.
+      O texto original: O QA mediu local, sem o Caddy na
       frente: 6 erros com `X-Forwarded-For` diferentes e a 7ª com a senha certa **entrou**. O
       `FreioDeTentativas` lê o **último salto** por desenho, e o `Caddyfile` **não tem
       `trusted_proxies`**. O QA não reconferiu o comportamento real do Caddy — **vale medir**, porque
@@ -477,7 +515,7 @@ logar o campo **enviado**.
       credenciais). Daqui para frente os dumps nascem cifrados; o que fazer com os antigos é
       decisão sua: apagar os anteriores a 11/11, ou guardá-los como se fossem a própria chave.
 
-- [ ] 🟡 **5º — regerar o webhook da loja 18 no Asaas, por minha causa.** Medindo o dump
+- [x] ~~**5º — regerar o webhook da loja 18 no Asaas.**~~ **DECIDIDO EM 11/11: fica como está.** Você clicou e eu medi: o token **não** trocou (valor byte a byte igual ao do dump das 20:32) e **nenhum request de navegador chegou ao servidor** (235 no Caddy em 60 min, todos de marketplace, sonda de saúde e do meu próprio deploy). O motivo estrutural: `blocoWebhook` em `recebimento.js:177` **não renderiza o botão** quando o sistema acha que o aviso está de pé — **não existe como girar um webhook_token que está funcionando**, nem pela tela nem por endpoint. Se um dia precisar rotacionar por vazamento, isso falta ser construído. O risco aqui é de 7 caracteres de 32, com o token inteiro já em claro nos dumps desta máquina. O texto original: Medindo o dump
       de controle eu imprimi os **7 primeiros caracteres** do token antigo dela (de 32). Não dá
       para usar 7 de 32, e o token completo já está em claro nos 146 dumps desta mesma máquina,
       então o risco a mais é praticamente nulo — mas foi contra a minha própria regra de nunca
