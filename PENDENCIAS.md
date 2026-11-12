@@ -5,7 +5,84 @@ que você guardar hoje continua valendo no mês que vem. Aqui estão **só as a�
 onde clicar. A prova de cada uma — o que foi medido, quando e onde — está em
 [PENDENCIAS-2026-10-30.md](PENDENCIAS-2026-10-30.md).
 
-Última conferência contra a produção: **11/11/2026** — nesse dia a **v158 subiu** e as credenciais do banco ficaram **40 cifradas / 0 em texto puro**. Antes disso, em 10/11 — e nesse dia rodou a **varredura dos 15 agentes na aplicação inteira** ([VARREDURA-2026-11-10.md](VARREDURA-2026-11-10.md)). Os itens de cadastro e operação seguem como foram medidos em **04/11**. Tudo marcado como pendente aqui foi medido, não deduzido.
+Última conferência contra a produção: **12/11/2026** — nesse dia foram atacados os itens que eram
+meus: três defeitos de dinheiro consertados no código (venda duplicada, frete zerado, loja verde
+caindo) e a limpeza de dados medida e pronta. **Nenhum dos dois está no ar**: o deploy e a escrita em
+produção foram recusados pela permissão da sessão — ver a seção de 12/11 logo abaixo.
+Antes disso, **11/11/2026** — nesse dia a **v158 subiu** e as credenciais do banco ficaram **40 cifradas / 0 em texto puro**. Antes disso, em 10/11 — e nesse dia rodou a **varredura dos 15 agentes na aplicação inteira** ([VARREDURA-2026-11-10.md](VARREDURA-2026-11-10.md)). Os itens de cadastro e operação seguem como foram medidos em **04/11**. Tudo marcado como pendente aqui foi medido, não deduzido.
+
+---
+
+## 12/11/2026 — atacado tudo que era meu. O que está consertado, e o que está TRAVADO
+
+**Leia primeiro:** dos consertos abaixo, **nenhum está no ar**. Eles estão commitados e testados, e
+o deploy foi **recusado pela permissão da sessão** ("Production Deploy"). O mesmo aconteceu com a
+limpeza de dados ("Modify Shared Resources"). Commitado não é publicado — já errei isso antes e não
+vou repetir: enquanto a v160 não subir, a produção continua com o comportamento de ontem.
+
+### Consertado no código, falta você liberar o deploy da v160
+
+| o que era | o que ficou | prova |
+|---|---|---|
+| **A mesma venda gravada DUAS vezes.** `POST /api/pedidos` sem chave de idempotência: a resposta se perde na volta, o balconista clica "Finalizar" de novo, e a venda nasce duas vezes — estoque e insumo baixados duas vezes, cashback dobrado, faturamento inflado | Chave `Idempotency-Key` + índice único parcial (V71). O reenvio devolve **o mesmo pedido**. As duas telas que lançam venda (novo-pedido e Frente de Caixa) já mandam a chave | 8 testes novos; sem o cabeçalho nada muda (cardápio público, webhooks e integração de terceiro seguem igual) |
+| **Bairro fora da lista saía R$ 0,00 calado.** E era pior do que a nota dizia: a taxa vinha do bairro do **cadastro**, não do bairro **deste pedido**; e quem pedia sem cadastro não pagava frete nenhum | O bairro vem do pedido, e bairro fora da lista volta **400 dizendo qual bairro** ficou de fora. Na tela, o aviso nasce ao lado do campo. **Não trava venda**: o campo "Taxa" do painel sempre vai no corpo, e cortesia continua possível | 9 testes novos. **O teste REPROVA no código antigo** — conferido desfazendo o conserto: "expected ResponseStatusException, but nothing was thrown" |
+| **A loja que cai e continua VERDE.** `marcarPollingFalhou` gravava hora e mensagem e não mexia no status | Rebaixa CONECTADO → ERRO **no limite de 3 falhas seguidas** (V72). Não na primeira: ERRO custa 10 min de espera até a tentativa seguinte, e rebaixar num tropeço trocaria o silêncio por atraso em pedido real. Com o ciclo de 30 s, uma queda de verdade fica vermelha em ~1,5 min | 6 testes de integração contra um Postgres de verdade. **Reprova no código antigo**: "expected: \<ERRO\> but was: \<CONECTADO\>" |
+| **A rede de segurança do nome da loja estava morta** (`whitelabel.js:45`) | O nome real chega na própria resposta de `/api/configuracao`, sem segunda chamada. E vai também para o `localStorage` — de onde saem a **comanda da cozinha**, o fechamento do caixa e o **recibo do motoboy**, que saíam "BoraHapp" esse tempo todo | — |
+| **O log contava cada 401 do 99Food duas vezes** | As duas linhas de detalhe agora dizem **DETALHE** no texto. A linha do evento continua uma só | — |
+
+**Medições do build:** 1388 testes unitários e 217 de integração, **0 falhas**. As duas migrações
+novas rodaram num Postgres limpo durante os ITs.
+
+### Limpeza de dados: script pronto e medido, travado na permissão
+
+Tirei o backup antes de qualquer coisa: `bora-20261112-0810.dump`, 4,3 MB, 304 entradas, **lido
+inteiro pelo `pg_restore`**. O script roda numa transação só e confere os números antes do
+`COMMIT`. O que ele faz, tudo medido hoje:
+
+| item | medido | o que o script faz |
+|---|---|---|
+| insumos à venda no cardápio da loja 18 | produtos **145 (pacoca, R$ 2,50)** e **146 (leite condensado, R$ 3,00)**, os dois ativos | desativa os dois |
+| contas de teste | **4 ativas**: 6 e 7 e 25 (GERENTE) e 20 (OPERADOR) | desativa as quatro |
+| itens de pedido órfãos | **7**, todos da loja 1, R$ 281,10 em itens cujo pedido não existe mais | apaga |
+| ficha técnica fantasma | `produto_insumo` id 2: produto 1 existe, **insumo 2 não existe** | apaga a linha |
+| "Vale Refeicao" repetido | loja 1, ids **6 e 12** — as duas linhas são idênticas em tudo menos o id | apaga a 12 |
+| lojas sem prazo | **19 e 20** com `acesso_ate = NULL` | alinha às irmãs da mesma cliente (24/01/2027, lido da loja 18) |
+
+### Dois achados novos de hoje, que a lista não tinha
+
+- **Não são duas lojas sem prazo, são quatro.** Além da 19 e da 20, a **loja 1** (QA) e a **loja 17
+  (Pizzaria Bella Napoli)** também estão com `acesso_ate = NULL`. As da Zirá eu alinho às irmãs
+  porque é a mesma cliente e o mesmo contrato. **A da Pizzaria é sua**: eu não sei o prazo dela, e
+  loja sem prazo some da cobrança sem ninguém notar.
+- **"em homologação" não estava em 10 arquivos que importam — estava em 2.** Os outros 8 são
+  relatórios e anotações antigas, que são registro e não documento de cliente. E ao medir o que
+  escrever no lugar, achei que a própria nota estava otimista: os **7 pedidos reais do iFood**
+  (19 a 30/09) são **todos da loja 1, a loja de teste do Bora** — nenhuma loja de cliente recebeu
+  pedido de iFood ainda. E o **99Food tem 5 lojas autenticando e consultando pedido, com 0 pedidos
+  recebidos**. Por isso os documentos ficaram com palavras diferentes: iFood **"No ar"**, 99Food
+  **"Conectado"**.
+
+### FECHADO hoje, com a prova
+
+**"Em homologação" fora dos dois documentos que vão ao cliente.** A apresentação comercial e o
+      gerador da ficha de cadastro. **PDF regenerado e conferido com extração de texto:**
+      "homologa" → **0 ocorrências**, "No ar" → 1, "Conectado" → 1, nas 8 páginas.
+      De quebra, dois números velhos da apresentação: "37 versões de banco" virou **70** (medido no
+      `flyway_schema_history`) e "47 verificações automáticas antes de cada entrega" virou **1.388**
+      — que é o que roda dentro do build da imagem. **Não somei os 217 testes de integração**: eles
+      não rodam no deploy, e somar prometeria uma conferência que a entrega não faz.
+      A data saiu de "30 de setembro" para **12 de novembro de 2026**.
+
+### Não vale a pena fazer, e o número é o motivo
+
+- **Os 5 pedidos apontando para cliente apagado: eu não toquei.** Todos da **loja 1** (QA), todos já
+  ENTREGUE ou CANCELADO, e **nenhum deles guarda outra identificação** (telefone e endereço vazios).
+  Zerar o `cliente_id` apagaria o único registro de que aquele pedido teve cliente, e não conserta
+  nada: o código lê o cliente com `findByIdAndLojaId` e trata o vazio. Vai junto com a decisão da
+  loja de QA, que é sua.
+- **Os 7 itens órfãos não inflam relatório nenhum**, e isso eu medi em vez de supor: o único método
+  que leria item de pedido sem passar pelo pedido é o `PedidoItemRepository.findByLojaId`, e ele
+  **não tem nenhum chamador** no sistema. Apago por limpeza, não por defeito.
 
 ---
 
@@ -258,10 +335,18 @@ foi a lição de 09/10 e é por isso que eu meço o teste antes de confiar nele.
       que o plano não dá acesso ao suporte. O custo total está **dentro do teto** de R$ 800, com
       folga de R$ 427. Decisão sua manter ou voltar ao Basic.
 
-- [ ] **A apresentação comercial e a ficha de cadastro em PDF dizem que o iFood e o 99Food estão "em
-      homologação"**, com "situação em 30 de setembro". O iFood recebe pedido real desde 19/09 e o
-      99Food está em 5 lojas desde hoje. **A landing está certa** — o erro migrou para os dois
-      documentos que vão direto ao cliente. É o mesmo erro de 09/10, em lugar novo.
+- [x] ~~**A apresentação comercial e a ficha de cadastro em PDF dizem que o iFood e o 99Food estão
+      "em homologação"**~~ — **FEITO em 12/11/2026.** Os dois documentos corrigidos e o **PDF
+      regenerado e conferido** com extração de texto: "homologa" → **0 ocorrências**.
+      **E a própria nota estava otimista.** Ao medir o que escrever no lugar: os 7 pedidos reais do
+      iFood (19 a 30/09) são **todos da loja 1, a loja de teste do Bora** — nenhuma loja de cliente
+      recebeu pedido de iFood ainda; e o 99Food tem 5 lojas autenticando e consultando pedido com
+      **0 pedidos recebidos**. Por isso os documentos não ficaram com a mesma palavra: iFood
+      **"No ar"**, 99Food **"Conectado"**. Também não eram 10 arquivos que importam, e sim 2: os
+      outros 8 são relatórios e anotações, que são registro, não documento de cliente.
+      De quebra, dois números velhos do deck: "37 versões de banco" → **70** (medido no
+      `flyway_schema_history`) e "47 verificações automáticas" → **1.388**, que é o que roda no build
+      da imagem.
 
 ---
 
