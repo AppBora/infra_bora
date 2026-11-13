@@ -1,0 +1,652 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BoraHapp — Ficha de abertura da loja</title>
+<meta name="description" content="Os dados que a Bora precisa para colocar a sua loja no ar. Salva sozinho enquanto você digita.">
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="/assets/img/icone-bora.svg">
+<meta name="theme-color" content="#9333EA">
+<link rel="stylesheet" href="/assets/site.css?v=20261029b">
+<!--
+  POR QUE ESTA PAGINA EXISTE (13/11/2026)
+  A ficha de abertura era um PDF de 8 paginas e 422 campos. Uma cliente preencheu tudo e perdeu:
+  quem preenche na previa do WhatsApp, do Gmail ou do Drive esta digitando num visualizador que NAO
+  GRAVA NADA no arquivo -- e no navegador, o botao de baixar costuma buscar o original em branco.
+  Medido no proprio PDF antes de culpar o arquivo: AcroForm de verdade, 422 campos, sem senha, 0
+  campo somente-leitura, 335 de 335 com aparencia propria, e escrever-salvar-ler devolve o valor.
+  O arquivo estava sao; o que apagava era o aplicativo.
+
+  Entao a ficha deixou de ser arquivo. Esta pagina:
+    * grava a cada tecla, no proprio aparelho (localStorage), e diz na tela a hora em que gravou --
+      fechar, perder sinal ou acabar a bateria nao perde nada;
+    * pede so o essencial para a loja entrar no ar (o resto se completa no painel depois, com a
+      lojista ja usando o sistema);
+    * manda o resultado pelo WhatsApp, com "copiar tudo" e "baixar" como alternativa, porque quem
+      preenche no celular nem sempre volta ao computador.
+
+  Sem script de fora e sem servidor: nada do que ela digita sai do aparelho dela ate ela mandar.
+-->
+<style>
+  /* Piso de 16px em TODO campo: abaixo disso o Safari do iPhone da zoom sozinho ao focar, a pagina
+     salta e quem esta preenchendo no celular perde o lugar. */
+  .ficha input, .ficha select, .ficha textarea { font-size: 16px; }
+
+  .ficha { max-width: 720px; }
+  .ficha-topo { background: var(--brasa-fraca); border: 1px solid #E9D5FF; border-radius: var(--raio);
+                padding: 18px 20px; margin-bottom: 22px; }
+  .ficha-topo p { margin: 8px 0 0; color: var(--tinta-2); font-size: 15.5px; }
+
+  /* O aviso de gravado fica COLADO no rodape da tela, visivel durante a digitacao: a promessa de
+     "nao perde" so serve se ela puder ver que esta valendo. */
+  .selo-salvo {
+    position: sticky; bottom: 0; z-index: 5; margin: 0 -20px; padding: 10px 20px;
+    background: var(--verde-fraco); color: var(--verde); border-top: 1px solid #BFDFD1;
+    font-size: 14.5px; font-weight: 700; display: flex; gap: 10px; align-items: center;
+  }
+  .selo-salvo.aviso { background: var(--alerta-fraca); color: var(--alerta); border-top-color: #F3C9B9; }
+
+  .bloco { background: var(--branco); border: 1px solid var(--linha); border-radius: var(--raio);
+           padding: 20px; box-shadow: var(--sombra); margin-bottom: 18px; }
+  .bloco > h2 { font-size: 20px; margin: 0 0 4px; }
+  .bloco > .dica { margin: 0 0 16px; color: var(--fumaca); font-size: 14.5px; }
+
+  .campo { margin-bottom: 14px; }
+  .campo label { display: block; font-weight: 700; font-size: 15px; margin-bottom: 5px; }
+  .campo .ajuda { display: block; font-weight: 400; color: var(--fumaca); font-size: 13.5px; }
+  .campo input[type=text], .campo input[type=email], .campo input[type=tel],
+  .campo input[type=time], .campo input[type=number], .campo textarea, .campo select {
+    width: 100%; padding: 11px 12px; border: 1px solid var(--linha-forte);
+    border-radius: 10px; background: #fff; color: var(--tinta); min-height: 46px;
+  }
+  .campo textarea { min-height: 80px; resize: vertical; }
+  .campo input:focus, .campo textarea:focus, .campo select:focus {
+    outline: 3px solid #E9D5FF; outline-offset: 0; border-color: var(--brasa);
+  }
+  .campo.falta input, .campo.falta select { border-color: var(--alerta); background: #FFF8F5; }
+  .dupla { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 520px) { .dupla { grid-template-columns: 1fr; } }
+
+  .obrig { color: var(--alerta); }
+
+  .marcas { display: grid; gap: 10px; }
+  .marca-item { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px;
+                border: 1px solid var(--linha); border-radius: 10px; cursor: pointer; }
+  .marca-item input { width: 22px; height: 22px; margin: 2px 0 0; flex: 0 0 auto; }
+  .marca-item span { font-size: 15.5px; }
+
+  table.bairros { width: 100%; border-collapse: collapse; }
+  table.bairros th { text-align: left; font-size: 12px; color: var(--fumaca); padding: 0 6px 6px 0;
+                     text-transform: uppercase; letter-spacing: .02em; white-space: nowrap; }
+  table.bairros td { padding: 0 6px 8px 0; vertical-align: top; }
+  table.bairros input { width: 100%; padding: 10px; border: 1px solid var(--linha-forte);
+                        border-radius: 9px; min-height: 44px; }
+  .tira { background: none; border: 1px solid var(--linha-forte); border-radius: 9px;
+          width: 44px; min-height: 44px; font-size: 18px; color: var(--fumaca); cursor: pointer; }
+  .tira:hover { border-color: var(--alerta); color: var(--alerta); }
+
+  /* So para leitor de tela: a coluna do botao de tirar precisa de nome, e um titulo visivel ali
+     só roubaria espaço no celular. */
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+  .cor-linha { display: flex; gap: 10px; align-items: center; }
+  .cor-linha input[type=color] { width: 54px; height: 46px; padding: 2px; border: 1px solid var(--linha-forte);
+                                 border-radius: 10px; background: #fff; }
+
+  .erro-geral { background: var(--alerta-fraca); border: 1px solid #F3C9B9; color: var(--alerta);
+                border-radius: 10px; padding: 12px 14px; margin-bottom: 14px; font-size: 15px; }
+  .erro-geral ul { margin: 8px 0 0; padding-left: 20px; }
+  .fim { margin-top: 24px; }
+  .fim .acoes { margin-top: 14px; }
+  #resumo { width: 100%; min-height: 220px; font-size: 14px; font-family: ui-monospace, Menlo, Consolas, monospace;
+            padding: 12px; border: 1px solid var(--linha-forte); border-radius: 10px; }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="wrap">
+    <a class="marca" href="/">Bora<span>Happ</span></a>
+  </div>
+</header>
+
+<main class="wrap estreito ficha">
+
+  <div class="ficha-topo">
+    <span class="etiqueta ok">Salva sozinho</span>
+    <h1 style="margin:10px 0 0;font-size:27px">Ficha de abertura da sua loja</h1>
+    <p>São estes dados que a gente precisa para colocar a sua loja no ar. <strong>Você não precisa
+    terminar agora:</strong> cada coisa que você escreve fica gravada neste aparelho na hora. Pode
+    fechar, ficar sem sinal, voltar amanhã — está tudo aqui.</p>
+    <p>O que não estiver aqui você completa depois, no painel, com a loja já funcionando.</p>
+  </div>
+
+  <form id="ficha" novalidate>
+
+    <!-- ------------------------------------------------------------------ 1 -->
+    <section class="bloco">
+      <h2>1. A loja</h2>
+      <p class="dica">O nome que o seu cliente vê no cardápio.</p>
+
+      <div class="campo">
+        <label for="nomeLoja">Nome da loja <span class="obrig">*</span>
+          <span class="ajuda">É o nome que aparece no cardápio e no aplicativo.</span></label>
+        <input type="text" id="nomeLoja" name="nomeLoja" autocomplete="organization">
+      </div>
+
+      <div class="dupla">
+        <div class="campo">
+          <label for="razao">Razão social ou seu nome completo <span class="obrig">*</span></label>
+          <input type="text" id="razao" name="razao">
+        </div>
+        <div class="campo">
+          <label for="documento">CNPJ ou CPF <span class="obrig">*</span></label>
+          <input type="text" id="documento" name="documento" inputmode="numeric">
+        </div>
+      </div>
+
+      <div class="campo">
+        <label for="endereco">Endereço da loja <span class="obrig">*</span>
+          <span class="ajuda">Rua, número, bairro e cidade.</span></label>
+        <input type="text" id="endereco" name="endereco" autocomplete="street-address">
+      </div>
+
+      <div class="dupla">
+        <div class="campo">
+          <label for="cep">CEP</label>
+          <input type="text" id="cep" name="cep" inputmode="numeric" autocomplete="postal-code">
+        </div>
+        <div class="campo">
+          <label for="telLoja">Telefone da loja</label>
+          <input type="tel" id="telLoja" name="telLoja" autocomplete="tel">
+        </div>
+      </div>
+    </section>
+
+    <!-- ------------------------------------------------------------------ 2 -->
+    <section class="bloco">
+      <h2>2. Quem vai entrar no painel</h2>
+      <p class="dica">O e-mail aqui vira o login. A senha é você que cria no primeiro acesso — não
+        escreva senha nenhuma nesta ficha.</p>
+
+      <div class="campo">
+        <label for="respNome">Nome completo do responsável <span class="obrig">*</span></label>
+        <input type="text" id="respNome" name="respNome" autocomplete="name">
+      </div>
+
+      <div class="dupla">
+        <div class="campo">
+          <label for="respEmail">E-mail de acesso <span class="obrig">*</span>
+            <span class="ajuda">Também é o e-mail da mensalidade.</span></label>
+          <input type="email" id="respEmail" name="respEmail" inputmode="email" autocomplete="email">
+        </div>
+        <div class="campo">
+          <label for="respZap">WhatsApp do responsável <span class="obrig">*</span></label>
+          <input type="tel" id="respZap" name="respZap" inputmode="tel" autocomplete="tel">
+        </div>
+      </div>
+    </section>
+
+    <!-- ------------------------------------------------------------------ 3 -->
+    <section class="bloco">
+      <h2>3. Horário de funcionamento</h2>
+      <p class="dica">Sem isto, a loja começa com 18:00–23:00 todos os dias.</p>
+
+      <div class="dupla">
+        <div class="campo">
+          <label for="abre">Abre às</label>
+          <input type="time" id="abre" name="abre">
+        </div>
+        <div class="campo">
+          <label for="fecha">Fecha às</label>
+          <input type="time" id="fecha" name="fecha">
+        </div>
+      </div>
+
+      <div class="campo">
+        <label for="horarioObs">Algum dia é diferente?
+          <span class="ajuda">Escreva com as suas palavras. Ex.: "segunda fechado, domingo até 22h".</span></label>
+        <textarea id="horarioObs" name="horarioObs"></textarea>
+      </div>
+    </section>
+
+    <!-- ------------------------------------------------------------------ 4 -->
+    <section class="bloco">
+      <h2>4. Bairros que você entrega <span class="obrig">*</span></h2>
+      <!-- Isto NAO e burocracia: sem pelo menos um bairro com taxa, o cliente nao consegue fechar
+           pedido com entrega, e quem mora em bairro fora da lista recebia de graca. -->
+      <p class="dica">Precisa de <strong>pelo menos um</strong>. Sem bairro cadastrado, o seu cliente
+        não consegue fechar o pedido com entrega. Taxa 0 é entrega de graça, e vale — só não pode
+        ficar em branco.</p>
+
+      <table class="bairros">
+        <thead>
+          <tr><th style="width:50%">Bairro</th><th style="width:22%">Taxa R$</th>
+              <th style="width:16%">Min.</th><th style="width:12%"><span class="sr">Ação</span></th></tr>
+        </thead>
+        <tbody id="bairros"></tbody>
+      </table>
+      <button type="button" class="btn btn-linha btn-pequeno" id="addBairro" style="margin-top:10px">
+        + Outro bairro</button>
+    </section>
+
+    <!-- ------------------------------------------------------------------ 5 -->
+    <section class="bloco">
+      <h2>5. Como o cliente paga <span class="obrig">*</span></h2>
+      <p class="dica">Marque tudo que a sua loja aceita hoje.</p>
+
+      <div class="marcas" id="pagamentos">
+        <label class="marca-item"><input type="checkbox" name="pag" value="Dinheiro (com troco)"><span>Dinheiro, com troco</span></label>
+        <label class="marca-item"><input type="checkbox" name="pag" value="PIX online pelo BoraHapp"><span>PIX online pelo BoraHapp <span class="ajuda">o cliente paga no cardápio e o dinheiro cai na sua conta</span></span></label>
+        <label class="marca-item"><input type="checkbox" name="pag" value="Cartão de crédito na entrega"><span>Cartão de crédito na entrega</span></label>
+        <label class="marca-item"><input type="checkbox" name="pag" value="Cartão de débito na entrega"><span>Cartão de débito na entrega</span></label>
+        <label class="marca-item"><input type="checkbox" name="pag" value="Vale-refeição"><span>Vale-refeição</span></label>
+      </div>
+
+      <div class="campo" style="margin-top:12px">
+        <label for="pagOutra">Outra forma de pagamento</label>
+        <input type="text" id="pagOutra" name="pagOutra">
+      </div>
+    </section>
+
+    <!-- ------------------------------------------------------------------ 6 -->
+    <section class="bloco">
+      <h2>6. O seu cardápio</h2>
+      <p class="dica">Você não precisa digitar produto por produto. Diga só como vai mandar, que a
+        gente cadastra.</p>
+
+      <div class="campo">
+        <label for="cardapioComo">Como você vai mandar o cardápio</label>
+        <select id="cardapioComo" name="cardapioComo">
+          <option value="">escolha…</option>
+          <option>Foto ou print do cardápio</option>
+          <option>Print do meu iFood</option>
+          <option>Link do meu iFood / 99Food</option>
+          <option>Planilha (Excel) ou lista no WhatsApp</option>
+          <option>Não tenho cardápio pronto ainda</option>
+        </select>
+      </div>
+
+      <div class="campo">
+        <label for="cardapioLink">Link, se tiver</label>
+        <input type="text" id="cardapioLink" name="cardapioLink" inputmode="url">
+      </div>
+    </section>
+
+    <!-- ------------------------------------------------------------------ 7 -->
+    <section class="bloco">
+      <h2>7. A sua marca</h2>
+      <p class="dica">O painel e o cardápio ficam com a sua cor e o seu logo.</p>
+
+      <div class="campo">
+        <label for="cor">Cor principal
+          <span class="ajuda">Se não souber, deixe como está — a gente ajusta depois.</span></label>
+        <div class="cor-linha">
+          <input type="color" id="cor" name="cor" value="#9333EA" aria-label="Cor principal">
+          <input type="text" id="corTexto" name="corTexto" value="#9333EA" style="max-width:140px">
+        </div>
+      </div>
+
+      <div class="marcas">
+        <label class="marca-item"><input type="checkbox" id="temLogo" name="temLogo" value="sim">
+          <span>Tenho o logo e vou mandar pelo WhatsApp</span></label>
+      </div>
+    </section>
+
+    <!-- ------------------------------------------------------------------ 8 -->
+    <section class="bloco">
+      <h2>8. iFood e 99Food <span class="etiqueta ok" style="vertical-align:middle">opcional</span></h2>
+      <p class="dica">Só se você já vende por eles e quer que o pedido caia no mesmo painel. Pode
+        deixar em branco e resolver depois.</p>
+
+      <div class="dupla">
+        <div class="campo">
+          <label for="ifood">Merchant ID do iFood
+            <span class="ajuda">Está no Portal do Parceiro.</span></label>
+          <input type="text" id="ifood" name="ifood">
+        </div>
+        <div class="campo">
+          <label for="noveNove">App Shop ID do 99Food
+            <span class="ajuda">O "shopId", no painel da sua loja no 99Food.</span></label>
+          <input type="text" id="noveNove" name="noveNove">
+        </div>
+      </div>
+    </section>
+
+    <!-- ------------------------------------------------------------------ fim -->
+    <section class="bloco fim">
+      <h2>Terminou? Mande para a gente</h2>
+      <p class="dica">O botão abre o WhatsApp da Bora já com tudo escrito. Você só aperta enviar.</p>
+
+      <div id="erros" hidden></div>
+
+      <div class="acoes">
+        <button type="button" class="btn btn-principal" id="enviar">Enviar pelo WhatsApp</button>
+        <button type="button" class="btn btn-linha" id="copiar">Copiar tudo</button>
+        <button type="button" class="btn btn-linha" id="baixar">Baixar como arquivo</button>
+      </div>
+
+      <details style="margin-top:18px">
+        <summary style="cursor:pointer;font-weight:700">Ver o que vai ser enviado</summary>
+        <textarea id="resumo" readonly style="margin-top:10px"></textarea>
+      </details>
+
+      <p class="dica" style="margin-top:16px">Se preferir, pode mandar por e-mail para
+        <a href="mailto:contato@borahapp.com.br">contato@borahapp.com.br</a> — use o
+        <strong>Copiar tudo</strong> e cole na mensagem.</p>
+    </section>
+  </form>
+
+  <div class="selo-salvo" id="selo" role="status" aria-live="polite">
+    <span aria-hidden="true">✓</span><span id="seloTexto">Tudo que você digitar fica gravado aqui.</span>
+  </div>
+
+  <p class="dica" style="margin:18px 0 40px">
+    Nada do que você escreve sai deste aparelho até você apertar enviar.
+    <button type="button" class="btn btn-linha btn-pequeno" id="limpar" style="margin-left:8px">Apagar e começar de novo</button>
+  </p>
+
+</main>
+
+<script>
+(function () {
+  'use strict';
+
+  var ZAP = '5515998602332';            // o WhatsApp da Bora, o mesmo da landing
+  var CHAVE = 'boraFichaAbertura.v1';
+  var MIN_BAIRROS = 3;                  // linhas em branco que ja nascem na tela
+
+  var $ = function (id) { return document.getElementById(id); };
+  var form = $('ficha');
+
+  // ------------------------------------------------------------ guardar e devolver
+  //
+  // O localStorage pode estourar ou voltar vazio (janela privada, dados do site bloqueados), e a
+  // pagina tem de continuar servindo mesmo assim -- ela so perde a promessa de "nao perde".
+  function guardar(dados) {
+    try {
+      localStorage.setItem(CHAVE, JSON.stringify(dados));
+      return true;
+    } catch (e) { return false; }
+  }
+  function guardado() {
+    try { return JSON.parse(localStorage.getItem(CHAVE) || '{}') || {}; }
+    catch (e) { return {}; }
+  }
+
+  // ------------------------------------------------------------ bairros
+  function linhaBairro(b) {
+    b = b || {};
+    var tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td><input type="text" class="bNome" aria-label="Bairro"></td>' +
+      '<td><input type="text" class="bTaxa" inputmode="decimal" aria-label="Taxa em reais"></td>' +
+      '<td><input type="text" class="bMin" inputmode="numeric" aria-label="Minutos"></td>' +
+      '<td><button type="button" class="tira" aria-label="Tirar este bairro">×</button></td>';
+    tr.querySelector('.bNome').value = b.bairro || '';
+    tr.querySelector('.bTaxa').value = b.taxa || '';
+    tr.querySelector('.bMin').value = b.minutos || '';
+    tr.querySelector('.tira').addEventListener('click', function () {
+      tr.parentNode.removeChild(tr);
+      if (!$('bairros').children.length) $('bairros').appendChild(linhaBairro());
+      aoMudar();
+    });
+    return tr;
+  }
+
+  function lerBairros() {
+    var fora = [];
+    Array.prototype.forEach.call($('bairros').children, function (tr) {
+      var nome = tr.querySelector('.bNome').value.trim();
+      var taxa = tr.querySelector('.bTaxa').value.trim();
+      var min = tr.querySelector('.bMin').value.trim();
+      if (nome || taxa || min) fora.push({ bairro: nome, taxa: taxa, minutos: min });
+    });
+    return fora;
+  }
+
+  // ------------------------------------------------------------ ler e escrever a ficha toda
+  var CAMPOS = ['nomeLoja', 'razao', 'documento', 'endereco', 'cep', 'telLoja',
+                'respNome', 'respEmail', 'respZap', 'abre', 'fecha', 'horarioObs',
+                'pagOutra', 'cardapioComo', 'cardapioLink', 'cor', 'corTexto', 'ifood', 'noveNove'];
+
+  function ler() {
+    var d = {};
+    CAMPOS.forEach(function (c) { if ($(c)) d[c] = $(c).value; });
+    d.pagamentos = [];
+    Array.prototype.forEach.call(document.querySelectorAll('input[name=pag]'), function (c) {
+      if (c.checked) d.pagamentos.push(c.value);
+    });
+    d.temLogo = $('temLogo').checked;
+    d.bairros = lerBairros();
+    return d;
+  }
+
+  function escrever(d) {
+    CAMPOS.forEach(function (c) {
+      if ($(c) && typeof d[c] === 'string') $(c).value = d[c];
+    });
+    var marcados = d.pagamentos || [];
+    Array.prototype.forEach.call(document.querySelectorAll('input[name=pag]'), function (c) {
+      c.checked = marcados.indexOf(c.value) >= 0;
+    });
+    $('temLogo').checked = !!d.temLogo;
+
+    $('bairros').innerHTML = '';
+    var bs = (d.bairros && d.bairros.length) ? d.bairros : [];
+    bs.forEach(function (b) { $('bairros').appendChild(linhaBairro(b)); });
+    while ($('bairros').children.length < MIN_BAIRROS) $('bairros').appendChild(linhaBairro());
+  }
+
+  // ------------------------------------------------------------ o texto que vai para a Bora
+  function linha(rotulo, valor) {
+    return (valor && String(valor).trim()) ? (rotulo + ': ' + String(valor).trim() + '\n') : '';
+  }
+
+  function resumo(d) {
+    var t = 'FICHA DE ABERTURA - BoraHapp\n\n';
+    t += '-- A LOJA --\n';
+    t += linha('Nome da loja', d.nomeLoja);
+    t += linha('Razao social / nome', d.razao);
+    t += linha('CNPJ ou CPF', d.documento);
+    t += linha('Endereco', d.endereco);
+    t += linha('CEP', d.cep);
+    t += linha('Telefone da loja', d.telLoja);
+
+    t += '\n-- ACESSO AO PAINEL --\n';
+    t += linha('Responsável', d.respNome);
+    t += linha('E-mail de acesso', d.respEmail);
+    t += linha('WhatsApp', d.respZap);
+
+    t += '\n-- HORÁRIO --\n';
+    if (d.abre || d.fecha) t += linha('Todos os dias', (d.abre || '?') + ' as ' + (d.fecha || '?'));
+    t += linha('Dias diferentes', d.horarioObs);
+
+    t += '\n-- BAIRROS E TAXAS --\n';
+    (d.bairros || []).forEach(function (b) {
+      t += '- ' + (b.bairro || '(sem nome)') + ': R$ ' + (b.taxa || '0')
+         + (b.minutos ? ' / ' + b.minutos + ' min' : '') + '\n';
+    });
+
+    t += '\n-- PAGAMENTO --\n';
+    (d.pagamentos || []).forEach(function (p) { t += '- ' + p + '\n'; });
+    t += linha('Outra', d.pagOutra);
+
+    t += '\n-- CARDÁPIO --\n';
+    t += linha('Como vai mandar', d.cardapioComo);
+    t += linha('Link', d.cardapioLink);
+
+    t += '\n-- MARCA --\n';
+    t += linha('Cor principal', d.corTexto || d.cor);
+    t += 'Logo: ' + (d.temLogo ? 'vou mandar pelo WhatsApp' : 'não informado') + '\n';
+
+    if (d.ifood || d.noveNove) {
+      t += '\n-- MARKETPLACES --\n';
+      t += linha('iFood Merchant ID', d.ifood);
+      t += linha('99Food App Shop ID', d.noveNove);
+    }
+    return t;
+  }
+
+  // ------------------------------------------------------------ o que falta
+  var OBRIGATORIOS = [
+    ['nomeLoja', 'o nome da loja'],
+    ['razao', 'a razão social ou o seu nome completo'],
+    ['documento', 'o CNPJ ou CPF'],
+    ['endereco', 'o endereço da loja'],
+    ['respNome', 'o nome do responsável'],
+    ['respEmail', 'o e-mail de acesso'],
+    ['respZap', 'o WhatsApp do responsável']
+  ];
+
+  function oQueFalta(d) {
+    var falta = [];
+    OBRIGATORIOS.forEach(function (par) {
+      var el = $(par[0]);
+      var vazio = !el.value.trim();
+      el.parentNode.classList.toggle('falta', vazio);
+      if (vazio) falta.push(par[1]);
+    });
+    // Um bairro com NOME e taxa escrita. Taxa "0" vale (entrega de graca); taxa em branco nao,
+    // porque bairro sem taxa foi exatamente o defeito que deixou entrega sair de graca sem ninguem
+    // ver.
+    var bomBairro = (d.bairros || []).some(function (b) {
+      return b.bairro && String(b.taxa).trim() !== '';
+    });
+    if (!bomBairro) falta.push('pelo menos um bairro com a taxa escrita (pode ser 0)');
+    if (!(d.pagamentos || []).length && !String(d.pagOutra || '').trim()) {
+      falta.push('pelo menos uma forma de pagamento');
+    }
+    return falta;
+  }
+
+  function mostrarFalta(falta) {
+    var box = $('erros');
+    if (!falta.length) { box.hidden = true; box.innerHTML = ''; return; }
+    box.hidden = false;
+    box.className = 'erro-geral';
+    box.innerHTML = '<strong>Falta preencher:</strong><ul>' +
+      falta.map(function (f) { return '<li>' + f + '</li>'; }).join('') + '</ul>';
+    box.scrollIntoView({ block: 'center' });
+  }
+
+  // ------------------------------------------------------------ o pulso: gravar a cada tecla
+  var relogio = null;
+
+  function aoMudar() {
+    var d = ler();
+    $('resumo').value = resumo(d);
+    clearTimeout(relogio);
+    relogio = setTimeout(function () {
+      var ok = guardar(d);
+      var hora = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+      $('selo').className = 'selo-salvo' + (ok ? '' : ' aviso');
+      $('seloTexto').textContent = ok
+        ? 'Gravado neste aparelho às ' + hora + '. Pode fechar e voltar depois.'
+        : 'Este navegador não deixa gravar (janela privada?). Termine agora e aperte enviar, ou troque de navegador.';
+    }, 250);
+  }
+
+  // `input` cobre digitar e colar; `change` cobre marcar, escolher e os campos de hora e cor.
+  form.addEventListener('input', aoMudar);
+  form.addEventListener('change', aoMudar);
+
+  // As duas caras da mesma cor andam juntas: quem nao conhece hex usa o seletor, quem recebeu o
+  // codigo da identidade visual cola o texto.
+  $('cor').addEventListener('input', function () { $('corTexto').value = $('cor').value.toUpperCase(); });
+  $('corTexto').addEventListener('input', function () {
+    var v = $('corTexto').value.trim();
+    if (/^#[0-9a-fA-F]{6}$/.test(v)) $('cor').value = v;
+  });
+
+  $('addBairro').addEventListener('click', function () {
+    $('bairros').appendChild(linhaBairro());
+    $('bairros').lastChild.querySelector('.bNome').focus();
+  });
+
+  $('enviar').addEventListener('click', function () {
+    var d = ler();
+    var falta = oQueFalta(d);
+    if (falta.length) { mostrarFalta(falta); return; }
+    mostrarFalta([]);
+    // O texto vai montado no link: quem recebe ja ve a ficha, sem precisar abrir anexo nenhum.
+    window.location.href = 'https://wa.me/' + ZAP + '?text=' + encodeURIComponent(resumo(d));
+  });
+
+  $('copiar').addEventListener('click', function () {
+    var texto = resumo(ler());
+    var avisar = function (msg) {
+      $('selo').className = 'selo-salvo';
+      $('seloTexto').textContent = msg;
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(texto).then(
+        function () { avisar('Copiado. Agora cole no WhatsApp ou no e-mail.'); },
+        function () { selecionar(); }
+      );
+    } else { selecionar(); }
+
+    // Sem acesso a area de transferencia (http, permissao negada, navegador antigo), o caminho que
+    // sempre funciona: deixar o texto selecionado para ela copiar na mao.
+    function selecionar() {
+      var ta = $('resumo');
+      ta.closest('details').open = true;
+      ta.focus(); ta.select();
+      avisar('Selecionei o texto aí embaixo — copie com o seu teclado e cole no WhatsApp.');
+    }
+  });
+
+  $('baixar').addEventListener('click', function () {
+    var texto = resumo(ler());
+    var nome = 'ficha-' + ((ler().nomeLoja || 'loja').toLowerCase().replace(/[^a-z0-9]+/g, '-')) + '.txt';
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([texto], { type: 'text/plain;charset=utf-8' }));
+    a.download = nome;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
+  });
+
+  $('limpar').addEventListener('click', function () {
+    if (!window.confirm('Apagar tudo que você preencheu nesta ficha? Não tem como desfazer.')) return;
+    try { localStorage.removeItem(CHAVE); } catch (e) {}
+    escrever({});
+    aoMudar();
+    window.scrollTo(0, 0);
+  });
+
+  // ------------------------------------------------------------ comeco
+  //
+  // Quem volta precisa VER que voltou. O aviso comum ("gravado as 14:02") nao responde a pergunta
+  // que ela tem ao reabrir a pagina depois de perder tudo uma vez: "sera que esta la?". Entao,
+  // quando ha ficha guardada, a primeira coisa na tela diz isso com todas as letras -- e o proximo
+  // toque no teclado volta ao aviso de sempre.
+  var antes = guardado();
+  var tinhaAlgo = Object.keys(antes).some(function (k) {
+    var v = antes[k];
+    if (Array.isArray(v)) return v.length > 0;
+    return typeof v === 'string' ? v.trim() !== '' : !!v;
+  });
+
+  escrever(antes);
+  aoMudar();
+
+  if (tinhaAlgo) {
+    clearTimeout(relogio);
+    $('selo').className = 'selo-salvo';
+    $('seloTexto').textContent = 'Você já tinha começado — está tudo aqui, como você deixou.';
+  }
+})();
+</script>
+
+<footer class="rodape">
+  <div class="wrap">
+    <p style="margin:0;font-size:14.5px;color:var(--fumaca)">
+      BoraHapp · ADF Sistemas e Tecnologias LTDA · CNPJ 68.761.778/0001-57 · Sorocaba/SP ·
+      <a href="/privacidade.html">Privacidade</a>
+    </p>
+  </div>
+</footer>
+
+</body>
+</html>
