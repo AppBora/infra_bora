@@ -5,9 +5,11 @@ que você guardar hoje continua valendo no mês que vem. Aqui estão **só as a�
 onde clicar. A prova de cada uma — o que foi medido, quando e onde — está em
 [PENDENCIAS-2026-10-30.md](PENDENCIAS-2026-10-30.md).
 
-Última conferência contra a produção: **13/11/2026** — nesse dia subiu a **v160**, com os três
-defeitos de dinheiro consertados (venda duplicada, frete zerado em silêncio, loja que cai e fica
-verde), e a limpeza de dados foi aplicada. **12 itens fecharam.** Antes disso, **11/11/2026** — nesse dia a **v158 subiu** e as credenciais do banco ficaram **40 cifradas / 0 em texto puro**. Antes disso, em 10/11 — e nesse dia rodou a **varredura dos 15 agentes na aplicação inteira** ([VARREDURA-2026-11-10.md](VARREDURA-2026-11-10.md)). Os itens de cadastro e operação seguem como foram medidos em **04/11**. Tudo marcado como pendente aqui foi medido, não deduzido.
+Última conferência contra a produção: **13/11/2026** — nesse dia subiram a **v160** (venda
+duplicada, frete zerado em silêncio, loja que cai e fica verde) e a **v161** (o aviso de "sem
+pedido" passou a contar o tempo), a limpeza de dados foi aplicada, e a ficha de abertura virou
+[uma página que grava a cada tecla](https://borahapp.com.br/ficha.html). **13 itens fecharam.**
+Antes disso, **11/11/2026** — nesse dia a **v158 subiu** e as credenciais do banco ficaram **40 cifradas / 0 em texto puro**. Antes disso, em 10/11 — e nesse dia rodou a **varredura dos 15 agentes na aplicação inteira** ([VARREDURA-2026-11-10.md](VARREDURA-2026-11-10.md)). Os itens de cadastro e operação seguem como foram medidos em **04/11**. Tudo marcado como pendente aqui foi medido, não deduzido.
 
 ---
 
@@ -795,12 +797,35 @@ O 1º item continua seu: eu não leio nem guardo a chave.
       cima, e na loja de QA.
       **Caminho:** Configurações → 🔑 Credencial do app BoraHapp nos marketplaces.
 
-- [ ] **(opcional) Fazer o aviso de "sem pedido" contar o tempo.** O verde que mentia já foi
-      consertado e publicado em 30/10 — a tela agora diz "Conectado, sem pedido ainda" em vez de
-      prometer. O que ela **não** diz é há quanto tempo, porque isso **não existe no banco**: o
-      `ultima_sync` só é gravado quando um pedido entra, e não há coluna de "conectado desde".
-      Para o aviso virar "ativo há mais de 48 h sem pedido" falta uma coluna `conectado_em` —
-      migração e **versão nova da API**. Só se você quiser; hoje a tela já não engana.
+- [x] ~~**(opcional) Fazer o aviso de "sem pedido" contar o tempo.**~~ **NO AR na v161,
+      13/11/2026** (coluna `conectado_em`, V73).
+      | até 48 h | 🟡 "Conectado há X, sem pedido ainda" |
+      | passou de 48 h | 🔴 "Ligada há X e nenhum pedido entrou — confira o vínculo desta loja no iFood/99Food" |
+      | sem data ainda | o texto de 30/10, intacto |
+
+      **A nota acima estava errada num ponto, e eu só descobri medindo:** o `ultima_sync` **não** é
+      gravado só quando um pedido entra. São quatro caminhos, e um deles — o webhook do PIX, no
+      `PublicController` — não é pedido nenhum; e o `descontarRecebido` desconta o contador sem
+      mexer na data. Medido na produção: **loja 18 com `ultima_sync` de 21/10 e contador 0**, e o
+      PIX da loja 1 com data e contador zerado. Aquela coluna quer dizer "última coisa que chegou
+      por aqui". *(O comentário do `integracoes.js` já desconfiava disso — só faltava para onde
+      apontar.)*
+
+      **Quem carimba a data é um lugar só: a primeira busca de pedido que deu certo.** `CONECTADO`
+      é escrito em **oito** lugares do código; carimbar nos oito seria garantir que o nono
+      esquecesse, calado. E não reinicia ao se levantar de um erro, de propósito: uma queda de dez
+      minutos não desmente uma seca de três dias.
+
+      **Sem preenchimento retroativo, e isso é escolha.** Não havia de onde tirar a data real das
+      que já estavam ligadas; chutar `now()` faria a tela dizer "conectado há 1 minuto" para uma
+      loja ligada desde 10/11 — trocaria "não sei" por uma mentira precisa.
+
+      **A prova, medida no ar:** 43 segundos depois do deploy o relógio começou **sozinho** nas
+      **6** integrações que de fato buscam pedido (o iFood da loja 1 e as 5 da Zirá no 99Food), e
+      ficou **nulo** nas que não buscam (PIX, WhatsApp, Rappi, o iFood da loja 17) e na que está em
+      ERRO — exatamente o desenho. Meia hora depois, a **busca andou 30 s e o carimbo não se
+      mexeu**: o `coalesce` segurou em produção. 1392 testes unitários e **221** de integração, 0
+      falhas, e os dois testes novos do relógio **reprovam sem o `coalesce`**.
 
 - [x] **Bairros e taxa de entrega das 5 lojas: FEITO em 04/11.** O dono passou a tabela e eu
       apliquei: **15 bairros gravados, 0 falhas** — Centro R$ 8,00, Vila Hortência R$ 6,00 e
