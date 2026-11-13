@@ -64,6 +64,29 @@ se mexeu: 43 pedidos (igual), 7 usuários ativos, 52 itens de pedido (eram 59, m
 | "Vale Refeicao" repetido | loja 1, ids **6 e 12** — as duas linhas são idênticas em tudo menos o id | apaga a 12 |
 | lojas sem prazo | **19 e 20** com `acesso_ate = NULL` | alinhadas às irmãs da mesma cliente: **24/01/2027**, lido da loja 18 em vez de digitado |
 
+### A ficha de abertura deixou de ser arquivo
+
+Uma cliente preencheu as 8 páginas da ficha em PDF e **perdeu tudo**. Antes de culpar o arquivo, eu
+medi o PDF: formulário de verdade (AcroForm), 422 campos, **sem senha, 0 campo somente leitura,
+335 de 335 com aparência própria**, e escrever-salvar-ler devolve o valor. **O arquivo estava são.**
+O que apaga é o aplicativo: a prévia do WhatsApp, do Gmail e do Drive **não grava nada no
+arquivo**, e no navegador o botão de baixar costuma buscar o original em branco. Conferi também que
+a ficha **não está publicada no site** (404 nos três caminhos, nenhum PDF na pasta do servidor) —
+ou seja, ela recebeu por mensagem, que é exatamente o caminho onde se perde.
+
+**No ar: [borahapp.com.br/ficha.html](https://borahapp.com.br/ficha.html)** — grava a cada tecla no
+próprio aparelho, diz na tela a hora em que gravou, e quem volta lê *"você já tinha começado,
+está tudo aqui"*. São **28 campos em vez de 422**: só o que a loja precisa para entrar no ar. No
+fim, manda pelo WhatsApp com tudo escrito (ou copia, ou baixa). Nada sai do aparelho dela até
+apertar enviar.
+
+**Medido no navegador, em tela de 375 px:** 19 campos + 3 bairros + 2 formas de pagamento
+sobreviveram ao recarregamento; com a ficha vazia o "Enviar" lista os 9 itens que faltam, pinta os
+7 campos e **não navega**; o link do WhatsApp sai com 823 caracteres e o texto decodificado bate com
+o da tela. E repeti o teste **na página publicada**, não só no meu computador.
+
+**O PDF continua valendo** para quem preferir papel — só deixou de ser o único caminho.
+
 ### Dois achados novos de hoje, que a lista não tinha
 
 - **Não são duas lojas sem prazo, são quatro.** Além da 19 e da 20, a **loja 1** (QA) e a **loja 17
