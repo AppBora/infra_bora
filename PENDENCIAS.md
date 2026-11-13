@@ -13,6 +13,49 @@ Antes disso, **11/11/2026** — nesse dia a **v158 subiu** e as credenciais do b
 
 ---
 
+## 🆕 13/11/2026 (tarde) — abrir a 6ª unidade da Zirá, no endereço do dono
+
+**Decidido:** entra como **6ª loja da Zirá, pelo CNPJ centralizador dela**. O passo a passo inteiro,
+dos dois lados, está em **[ABRIR-LOJA-NOVA-NA-99.md](ABRIR-LOJA-NOVA-NA-99.md)**.
+
+**O que eu fiz hoje, porque não existia** (commitado e testado; **não deployado**):
+
+- **Copiar cardápio de outra unidade** — painel da plataforma → Configurações → ➕ Nova loja →
+  "Copiar cardápio de outra unidade". Medido na loja 18: **44 produtos, 59 grupos de complemento,
+  639 itens, 43 insumos, 6 taxas**. A mão, isso não é tarefa. Vem cadastro e marca; **não** vem
+  saldo de estoque, horário, nem o código do produto no iFood/99. Roda uma vez só, em loja vazia.
+- **Campo do "ID do loja" da 99** em Integrações. A coluna existe desde a V67 e **nenhuma tela
+  escrevia nela** — toda unidade nova ficava pela metade esperando eu abrir o banco.
+- **Uma trava nova que vale por si:** a unicidade do código do marketplace passou a comparar os
+  **dois** identificadores entre si. O ID numérico de uma loja igual ao APPShopID de outra **passava**
+  — e o pedido real de uma cairia no painel da outra, calado.
+
+**O que é seu, para a unidade sair do papel:**
+
+1. 🔴 **Cadastrar o estabelecimento na 99** — <https://merchant.99app.com/pt-BR/store>. Tenha em
+   mãos: CNPJ da Zirá, CPF/RG do responsável, endereço com CEP, telefone, **foto da fachada
+   (obrigatória)**, foto de capa que **não repita** a de outra loja, cardápio em foto/PDF/QR e os
+   dados bancários do CNPJ da Zirá. O micro-depósito de validação leva **até 2 dias úteis**.
+2. 🔴 **Autorizar o app `BR_P_BoraHapp` e vincular** (caminho batido em 06/11), e **me trazer dois
+   números**: o **ID do loja** (numérico) e o **APPShopID** que você digitou. Segredo nenhum: a
+   credencial da plataforma já está certa desde 10/11.
+3. 🟡 **Me dizer o nome da unidade, o endereço completo e o e-mail do responsável** — com o mesmo
+   e-mail da Zirá ela entra no login dela, pelo seletor de loja.
+4. 🟡 **Duas decisões de dinheiro:** esta unidade **entra na cobrança** (hoje nasce com 7 dias de
+   cortesia; as irmãs vão até 24/01/2027)? E **qual a taxa de entrega** dos bairros dela — desde a
+   v160, bairro fora da lista **recusa o pedido** em vez de cobrar R$ 0,00 em silêncio.
+
+**O que eu NÃO sei, e por isso não está prometido aqui:** se a 99 deixa você mesmo criar a unidade
+dentro da conta da Zirá ou se isso passa pelo comercial deles; se ela vai pedir documento do ponto
+(o endereço é seu, o CNPJ é da Zirá); e qual o prazo de aprovação. Nenhum guia publica isso. Quando
+você abrir o portal, eu leio a tela com você, como em 06/11.
+
+**Um aviso que vem de graça com o recurso novo:** a 99 aceita **dois turnos no mesmo dia** e o Bora
+guarda **um horário por dia**. Se esta unidade tiver turno partido, o Bora não representa hoje — é
+ajuste de código, e eu só mexo nisso se você disser que ela precisa.
+
+---
+
 ## 13/11/2026 — a v160 no ar, e a limpeza aplicada. 12 itens fecharam
 
 **Estado medido**, não anotado: `api Up (healthy)`, **0 ERROR** no log, health 200 pela internet.
