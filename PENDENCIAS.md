@@ -5,22 +5,36 @@ que você guardar hoje continua valendo no mês que vem. Aqui estão **só as a�
 onde clicar. A prova de cada uma — o que foi medido, quando e onde — está em
 [PENDENCIAS-2026-10-30.md](PENDENCIAS-2026-10-30.md).
 
-Última conferência contra a produção: **12/11/2026** — nesse dia foram atacados os itens que eram
-meus: três defeitos de dinheiro consertados no código (venda duplicada, frete zerado, loja verde
-caindo) e a limpeza de dados medida e pronta. **Nenhum dos dois está no ar**: o deploy e a escrita em
-produção foram recusados pela permissão da sessão — ver a seção de 12/11 logo abaixo.
-Antes disso, **11/11/2026** — nesse dia a **v158 subiu** e as credenciais do banco ficaram **40 cifradas / 0 em texto puro**. Antes disso, em 10/11 — e nesse dia rodou a **varredura dos 15 agentes na aplicação inteira** ([VARREDURA-2026-11-10.md](VARREDURA-2026-11-10.md)). Os itens de cadastro e operação seguem como foram medidos em **04/11**. Tudo marcado como pendente aqui foi medido, não deduzido.
+Última conferência contra a produção: **13/11/2026** — nesse dia subiu a **v160**, com os três
+defeitos de dinheiro consertados (venda duplicada, frete zerado em silêncio, loja que cai e fica
+verde), e a limpeza de dados foi aplicada. **12 itens fecharam.** Antes disso, **11/11/2026** — nesse dia a **v158 subiu** e as credenciais do banco ficaram **40 cifradas / 0 em texto puro**. Antes disso, em 10/11 — e nesse dia rodou a **varredura dos 15 agentes na aplicação inteira** ([VARREDURA-2026-11-10.md](VARREDURA-2026-11-10.md)). Os itens de cadastro e operação seguem como foram medidos em **04/11**. Tudo marcado como pendente aqui foi medido, não deduzido.
 
 ---
 
-## 12/11/2026 — atacado tudo que era meu. O que está consertado, e o que está TRAVADO
+## 13/11/2026 — a v160 no ar, e a limpeza aplicada. 12 itens fecharam
 
-**Leia primeiro:** dos consertos abaixo, **nenhum está no ar**. Eles estão commitados e testados, e
-o deploy foi **recusado pela permissão da sessão** ("Production Deploy"). O mesmo aconteceu com a
-limpeza de dados ("Modify Shared Resources"). Commitado não é publicado — já errei isso antes e não
-vou repetir: enquanto a v160 não subir, a produção continua com o comportamento de ontem.
+**Estado medido**, não anotado: `api Up (healthy)`, **0 ERROR** no log, health 200 pela internet.
+V71 e V72 aplicadas (**72 migrações** no total), o índice `uq_pedido_loja_chave_idempotencia`
+criado. Backup antes de trocar o container: `bora-20261113-1013.dump`, 4,3 MB, **lido inteiro pelo
+`pg_restore`**.
 
-### Consertado no código, falta você liberar o deploy da v160
+**O frontend sobe por outro caminho, e sem ele metade do conserto ficaria fora do ar** — é a
+armadilha que me pegou em 28/10. Publicado também: os **5 arquivos** que eu mexi, e só eles (o
+ensaio do script listou exatamente esses 5 de 98), com os **98 sha256 iguais** aqui e no servidor.
+Conferido **baixando da internet**, não no meu disco: `Idempotency-Key` no `api.js`, `chaveDaVenda`
+nos três JS, `avisoBairro` no `novo-pedido.html`, `nomeDaLoja` no `whitelabel.js`.
+
+**A prova que eu mais queria, e que não é de teste:** 4 minutos depois do deploy, o 99Food da loja
+1 — que leva 403 em toda consulta — tentou de novo e o `falhas_seguidas` dela **virou 1**,
+enquanto as 5 lojas da Zirá seguiam com **0** e polling de 5 segundos atrás. O caminho novo está
+rodando em produção, nos dois sentidos.
+
+**O que eu NÃO consegui provar no ar:** lançar pedido pede login de lojista, e eu não entro em
+conta de ninguém. A trava da venda duplicada está provada por **8 testes** no serviço e **4 na
+fiação do controller** — esses 4 porque os 8 continuariam verdes se o cabeçalho nunca chegasse ao
+serviço, e isso já custou aqui uma vez.
+
+### Os três defeitos, e o que cada um ficou sendo
 
 | o que era | o que ficou | prova |
 |---|---|---|
@@ -33,11 +47,13 @@ vou repetir: enquanto a v160 não subir, a produção continua com o comportamen
 **Medições do build:** 1388 testes unitários e 217 de integração, **0 falhas**. As duas migrações
 novas rodaram num Postgres limpo durante os ITs.
 
-### Limpeza de dados: script pronto e medido, travado na permissão
+### Limpeza de dados: **aplicada**, numa transação só
 
-Tirei o backup antes de qualquer coisa: `bora-20261112-0810.dump`, 4,3 MB, 304 entradas, **lido
-inteiro pelo `pg_restore`**. O script roda numa transação só e confere os números antes do
-`COMMIT`. O que ele faz, tudo medido hoje:
+Rodou numa transação só, conferindo os números **antes** do `COMMIT`: **2 + 4 + 7 + 1 + 1 + 2
+linhas**, e os seis contadores foram a **0**. Os controles no mesmo print mostraram que nada a mais
+se mexeu: 43 pedidos (igual), 7 usuários ativos, 52 itens de pedido (eram 59, menos os 7 órfãos),
+42 produtos ativos na loja 18 (eram 44, menos os 2 insumos), 13 formas de pagamento na loja 1 (eram
+14). O que cada linha fez, tudo medido antes:
 
 | item | medido | o que o script faz |
 |---|---|---|
@@ -46,7 +62,7 @@ inteiro pelo `pg_restore`**. O script roda numa transação só e confere os nú
 | itens de pedido órfãos | **7**, todos da loja 1, R$ 281,10 em itens cujo pedido não existe mais | apaga |
 | ficha técnica fantasma | `produto_insumo` id 2: produto 1 existe, **insumo 2 não existe** | apaga a linha |
 | "Vale Refeicao" repetido | loja 1, ids **6 e 12** — as duas linhas são idênticas em tudo menos o id | apaga a 12 |
-| lojas sem prazo | **19 e 20** com `acesso_ate = NULL` | alinha às irmãs da mesma cliente (24/01/2027, lido da loja 18) |
+| lojas sem prazo | **19 e 20** com `acesso_ate = NULL` | alinhadas às irmãs da mesma cliente: **24/01/2027**, lido da loja 18 em vez de digitado |
 
 ### Dois achados novos de hoje, que a lista não tinha
 
@@ -430,19 +446,26 @@ logar o campo **enviado**.
       vazou em outubro, `AKIA5S2TU3Z5UVPCBVOV`, **já foi rotacionada** — conferido em 10/11: o `adm`
       tem só a `AKIA5S2TU3Z5ZBXWDVWM`, de 01/07.)
 
-- [ ] **Quando o polling falha, o status NÃO é rebaixado — a loja fica verde.** Ainda aberto,
-      reconferido no código em 10/11: `marcarPollingFalhou` grava só hora e mensagem, e
-      `IntegracaoCanalRepository` não toca em `status`. O caminho inverso existe (sucesso promove
-      `ERRO` → `CONECTADO`), mas a queda não rebaixa. Então uma loja CONECTADO que comece a levar
-      403 na busca de pedido segue **verde**, com o motivo escondido num campo que ninguém lê.
-      É o mesmo "morre em silêncio" que custou dois meses no 99Food, e agora que as 5 lojas da Zirá
-      dependem desse canal, é a trava que eu ligaria primeiro. **O conserto é meu: código + deploy.
-      Me peça e eu subo.**
+- [x] ~~**Quando o polling falha, o status NÃO é rebaixado — a loja fica verde.**~~
+      **NO AR na v160, 13/11/2026.** Rebaixa CONECTADO → ERRO **no limite de 3 falhas seguidas**
+      (V72, coluna `falhas_seguidas`). **Não na primeira**, e a razão é o preço: ERRO joga a
+      integração na espera de 10 minutos do `mereceNovaTentativa()`, então rebaixar num tropeço
+      trocaria o defeito de silêncio por um defeito de **atraso em pedido real**. Com o ciclo de
+      30 s, uma queda de verdade fica vermelha em ~1,5 min. Só rebaixa quem está CONECTADO —
+      descobri medindo que existe um **quinto status, `PRONTO`**, que o comentário da entidade nem
+      citava, e `AGUARDANDO_AUTORIZACAO` virar ERRO apagaria a informação de que falta um passo no
+      portal.
+      **A prova no ar, e não só em teste:** 4 minutos depois do deploy, o 99Food da loja 1 — que
+      leva 403 em toda consulta — tentou de novo e o `falhas_seguidas` dela **virou 1**, enquanto as
+      5 lojas da Zirá seguiam com 0 e polling de 5 segundos atrás. O contador novo está rodando em
+      produção. **6 testes de integração** contra um Postgres de verdade, e **reprovam no código
+      antigo**: "expected: \<ERRO\> but was: \<CONECTADO\>".
 
-- [ ] **O log conta cada 401 do 99Food duas vezes.** Efeito colateral da v153: a linha nova (com
-      `client_id` e corpo) foi acrescentada **ao lado** da antiga, não em lugar dela. Para contar
-      falhas use `grep -c "polling falhou para a loja"` (1 por evento) — e lembre que essa frase
-      também cobre o 403 da loja 1, que não é recusa de credencial.
+- [x] ~~**O log conta cada 401 do 99Food duas vezes.**~~ **NO AR na v160, 13/11/2026.** As duas
+      linhas de detalhe (a do Not Found e a da credencial recusada) agora dizem **DETALHE** no
+      próprio texto, então não entram mais na conta de eventos. A linha do evento continua uma só:
+      `grep -c "polling falhou para a loja"` conta falhas, não linhas — e segue valendo que essa
+      frase também cobre o 403 da loja 1, que não é recusa de credencial.
 
 ---
 
@@ -688,12 +711,10 @@ O 1º item continua seu: eu não leio nem guardo a chave.
       fica no **Jardim Hungarês**. "Jardim Tropical" existe em Sorocaba — só não é onde a loja está.
       **É decisão sua, porque é preço:** me diga a taxa de cada um e eu cadastro nas 5.
 
-- [ ] **A tela diz CONECTADO com 403 em toda consulta.** Defeito do Bora, achado em 04/11: quando
-      a consulta de pedidos falha, o Bora grava o erro mas **não rebaixa o status**. A loja 18 está
-      agora com `status = CONECTADO` e `ultimo_erro = 403 ... forbidden`. É o mesmo padrão de
-      "morre em silêncio" de sempre, numa variante nova.
-      **Onde:** `OpenDeliveryClient.polling`, no `catch` — o `marcarPollingFalhou` grava hora e erro,
-      e o status fica como estava. Precisa de deploy. **Me peça e eu subo.**
+- [x] ~~**A tela diz CONECTADO com 403 em toda consulta.**~~ **NO AR na v160, 13/11/2026** — é o
+      mesmo conserto do item "quando o polling falha, o status não é rebaixado", acima, com a prova
+      medida em produção. A loja 18 hoje está CONECTADO **sem erro nenhum** e buscando pedido a cada
+      30 s; quem está em ERRO com o 403 é a loja 1, que é a de QA.
 
 - [x] ✅ **PROVADO AO VIVO em 04/11, 13h08: a taxa de entrega entra no total do cardápio.** Até
       hoje isso só tinha sido **lido no código**. Pedido de teste real na loja 22
@@ -743,7 +764,10 @@ O 1º item continua seu: eu não leio nem guardo a chave.
       e leva `403 "User is forbidden to access this resource"` **com `request_id`** na busca de
       pedido. E a loja de teste do Bora, nao um estabelecimento vinculado ao app de producao:
       erro de autorizacao, nao de credencial. **Nao e defeito nosso.** Se um dia precisar falar
-      com a 99 sobre ela, o `request_id` sai no log. O texto original: Ativo, sem
+      com a 99 sobre ela, o `request_id` sai no log.
+      **Atualizado em 13/11/2026:** desde a v160 ela aparece como **ERRO** na tela, com o 403 no
+      motivo, em vez de verde — e o `falhas_seguidas` dela já conta as tentativas. Continua não
+      sendo defeito nosso; o que mudou é que a tela passou a dizer a verdade. O texto original: Ativo, sem
       `client_secret`, e o polling volta recusado a cada 10 min. É problema **diferente** do de
       cima, e na loja de QA.
       **Caminho:** Configurações → 🔑 Credencial do app BoraHapp nos marketplaces.
@@ -783,12 +807,19 @@ O 1º item continua seu: eu não leio nem guardo a chave.
       **Atenção:** o agendamento vive só nesta sessão do Claude. Se ela fechar antes das 13h, o
       pedido de teste não acontece e alguém precisa pedir de novo.
 
-- [ ] **No balcão/painel, bairro fora da lista sai R$ 0,00 em silêncio.** `PedidoService.taxaPara`
-      (linha 82): a taxa sai do bairro do **cadastro do cliente**, e sem correspondência devolve
-      `BigDecimal.ZERO` — o pedido é aceito com frete zerado, sem aviso. Cliente sem bairro no
-      cadastro também paga zero. Diferente do cardápio público, aqui não há bloqueio. É defeito
-      ou é de propósito (o comentário do código diz que o balconista pode combinar frete fora da
-      tabela)? Vale a decisão do dono antes de eu mexer.
+- [x] ~~**No balcão/painel, bairro fora da lista sai R$ 0,00 em silêncio.**~~ **NO AR na v160,
+      13/11/2026** — e eram **dois** defeitos no mesmo método, não um. Além do zero calado: a taxa
+      saía do bairro do **cadastro**, não do bairro **deste pedido** (o atendente digita "entregar
+      no Centro" e o frete vinha do bairro antigo), e `clienteId == null` devolvia zero antes de
+      olhar qualquer coisa, então quem pedia **sem cadastro não pagava frete nenhum**.
+      Agora o bairro vem do pedido, e bairro fora da lista (ou entrega sem bairro) volta **400
+      dizendo qual bairro** ficou de fora. Na tela, o aviso nasce **ao lado do campo** que ele
+      explica, em vez de o campo ir a 0,00 calado.
+      **Não trava venda de balcão**, e isso foi medido antes de eu mexer: o campo "Taxa" do painel
+      sempre vai no corpo (o `num()` do JS devolve 0 para vazio, nunca nulo), então o caminho do 400
+      só alcança quem **não informou** a taxa. Cortesia e frete combinado continuam possíveis.
+      **9 testes novos, e o teste REPROVA no código antigo** — conferido desfazendo o conserto:
+      "expected ResponseStatusException, but nothing was thrown".
 
 - [x] **Horário das 5 lojas igualado em 04/11.** A 18 tinha 13:00→23:00 nos sete dias e as outras
       quatro tinham 18:00→23:00, o padrão genérico do `provisionamento.semear`. O dono autorizou
@@ -797,13 +828,25 @@ O 1º item continua seu: eu não leio nem guardo a chave.
       e as lojas de outros clientes intactas (loja 1 em 09:00→23:59, loja 17 em 18:00→23:00).
 
 
-- [ ] **Dois insumos estão à venda no cardápio público da Zirá** (loja 18, categoria "mantimento"):
-      `leite condensado` R$ 3,00 e `pacoca` R$ 2,50, os dois ativos. O cliente final vê isso.
-      **Caminho:** Produtos → desativar os dois.
+- [x] ~~**Dois insumos estão à venda no cardápio público da Zirá**~~ **FEITO em 13/11/2026.**
+      Produtos **145 (pacoca, R$ 2,50)** e **146 (leite condensado, R$ 3,00)** desativados.
+      Conferido: 0 "mantimento" ativo, e a loja 18 foi de 44 para **42 produtos ativos**.
+      E o cardápio público, baixado pela internet, saiu de 41.271 para **41.033 bytes** — os dois
+      saíram da página de verdade, não só da tabela.
 
-- [ ] **Cinco contas de teste ativas, três delas GERENTE.** GERENTE vê faturamento, custo, margem e
-      lucro, apaga cliente e apaga pedido.
-      **Caminho:** Configurações → Usuários → desativar. Tem efeito imediato.
+- [x] ~~**Cinco contas de teste ativas, três delas GERENTE.**~~ **FEITO em 13/11/2026** — eram
+      **4**, não 5: `operador.qa@teste.com` e `gerente.qa@teste.com` e `gerente.test@qa.test`
+      (GERENTE, que vê faturamento, custo, margem e lucro) e `opqa_plano@qa.test` (OPERADOR).
+      As quatro desativadas. Conferido: **0 conta de teste ativa**, e sobraram 7 usuários ativos no
+      total.
+
+- [ ] **A loja 17 (Pizzaria Bella Napoli) não tem prazo de acesso.** `acesso_ate` vazio, que o
+      código trata como "nunca vence" (`Loja.java:163`). Achado em 13/11 ao alinhar as lojas da
+      Zirá: **não eram duas lojas sem prazo, eram quatro** — as duas da Zirá eu alinhei às irmãs
+      porque é a mesma cliente e o mesmo contrato, e a loja 1 é a de QA do Bora. **Esta é sua: eu
+      não sei o prazo da Pizzaria.** Loja sem prazo some da cobrança sem ninguém notar, que é o
+      mesmo buraco do item do corte por falta de pagamento.
+      **Caminho:** painel da plataforma → Lojas → liberar acesso (exige data futura, teto de 180 dias).
 
 - [ ] **A empresa da Pizzaria está sem CNPJ** (empresa 2). Não quebra nada hoje porque a emissão
       fiscal está desligada — mas quebra no dia que ligar.
@@ -830,11 +873,24 @@ O 1º item continua seu: eu não leio nem guardo a chave.
       B limitado ao PDV. **Antes de construir o B, me peça a medição de quantas vezes a internet
       caiu em cada loja** — é leitura de log e é ela que diz se vale.
 
-- [ ] **Autorizar o conserto da venda duplicada** — isto é defeito de **hoje**, com a internet boa.
-      O `POST /api/pedidos` não tem chave de idempotência: se a resposta se perde na volta e o
-      balconista clica "Finalizar" de novo, a venda é gravada **duas vezes** (estoque baixado duas
-      vezes, cashback acumulado duas vezes, faturamento inflado). O conserto é meu — código, uma
-      migração e uma versão nova —, só preciso do seu "sobe". Detalhe no item 4 do estudo.
+- [x] ~~**Autorizar o conserto da venda duplicada**~~ **NO AR na v160, 13/11/2026.** Cabeçalho
+      `Idempotency-Key` + **índice único parcial** `uq_pedido_loja_chave_idempotencia` (V71): o
+      reenvio devolve **o mesmo pedido** em vez de gravar outra venda. As duas telas que lançam venda
+      mandam a chave — `novo-pedido` sorteia uma por tela aberta, e a **Frente de Caixa** renova
+      **depois** de a venda entrar, porque o balconista atende o próximo na mesma tela (renovar antes
+      faria a segunda venda do dia não entrar).
+      A trava é o **índice**, não a consulta: dois cliques quase juntos são duas requisições em
+      paralelo, as duas procuram antes de qualquer uma gravar, as duas não acham — mesma lição da
+      V65. E o `catch` do conflito mora **fora** da transação que falhou, por isso o serviço é uma
+      classe separada: dentro do `PedidoService` a chamada não passaria pelo proxy do Spring e o
+      `@Transactional` do `criar` simplesmente não valeria.
+      **Sem o cabeçalho nada muda**: cardápio público, webhooks e integração de terceiro seguem pelo
+      caminho de sempre.
+      **O que eu NÃO consegui provar no ar:** lançar pedido pede login de lojista, e eu não entro em
+      conta de ninguém. Provado por **8 testes** no serviço e, depois, por mais **4 na fiação do
+      controller** — porque os 8 continuariam verdes se o cabeçalho nunca chegasse ao serviço, e
+      isso já custou aqui uma vez (21/10). Esses 4 pegam o nome trocado: conferido com
+      "X-Idempotency-Key", a resposta foi "expected: \<Idempotency-Key\>".
 
 - [ ] **"Fechamento de Caixa" não guarda nada e não existe para ontem.** Não é defeito: é
       funcionalidade que não existe. O tamanho é decisão sua — um seletor de data (pequeno) ou um
@@ -874,31 +930,53 @@ O 1º item continua seu: eu não leio nem guardo a chave.
       Sem custo não há margem real, e é por isso que o número que o lojista lê sai do jeito que sai.
       Não é conserto de código: é cadastro que alguém precisa preencher.
 
-- [ ] **Duas das cinco lojas da Zirá nunca vencem.** A 19 e a 20 estão com `acessoAte = NULL`, que
+- [x] ~~**Duas das cinco lojas da Zirá nunca vencem.**~~ A 19 e a 20 estão com `acessoAte = NULL`, que
       o código trata como "sem prazo, nunca vence" (`Loja.java:163`). O roteiro das unidades **não
       mexe** nisso — não é hora de tirar acesso de loja que já existe. Mas é o mesmo buraco do item
       do corte por falta de pagamento: loja sem prazo some da cobrança sem ninguém notar. E não há
       porta para o contrário: nada no backend põe `acessoAte` de volta em `null`, `POST
       /admin-bora/lojas` grava sempre +7 dias e `liberar-acesso` exige data futura com teto de 180.
-      Se quiser alinhar as duas a 24/01/2027 como as outras, é um clique no painel por loja.
+      **RESOLVIDO em 13/11/2026, e não eram duas: eram QUATRO.** A 19 e a 20 ficaram com
+      **24/01/2027**, lido da loja 18 em vez de digitado — mesma cliente, mesmo contrato. Conferido
+      depois: as cinco da Zirá com prazo, **0 sem**.
+      **Mas a loja 1 (QA) e a loja 17 (Pizzaria Bella Napoli) também estão com `acesso_ate` vazio**,
+      e isso a lista não tinha. **A da Pizzaria é sua:** eu não sei o prazo dela, e loja sem prazo
+      some da cobrança sem ninguém notar.
 
 ---
 
 ## ⚪ Um "sim" seu e eu faço — eu não escrevo em produção sem autorização
 
-- [ ] **7 itens de pedido órfãos** — apontam para pedido que não existe mais. Não mexe em dinheiro.
-- [ ] **5 pedidos apontando para cliente apagado** — não dispara erro hoje.
-- [ ] **1 linha de ficha técnica fantasma** — **esta mexe em dinheiro**: entra no custo e, portanto,
-      na margem que o lojista lê. É a única das quatro que mexe.
-- [ ] **"Vale Refeicao" repetido na loja 1** — forma de pagamento duplicada. É um clique.
-- [ ] **O nome da loja no painel tem uma rede de segurança que nunca pega** (`whitelabel.js:45`).
+- [x] ~~**7 itens de pedido órfãos**~~ **FEITO em 13/11/2026.** Todos da loja 1, R$ 281,10 em itens
+      cujo pedido não existe mais. **E eles não inflavam relatório nenhum** — isso eu medi em vez de
+      supor: o único método que leria item sem passar pelo pedido
+      (`PedidoItemRepository.findByLojaId`) **não tem nenhum chamador** no sistema. Apagados por
+      limpeza, não por defeito. Conferido: 0 órfãos, e 52 itens no total (eram 59).
+- [ ] **5 pedidos apontando para cliente apagado** — **eu NÃO toquei, de propósito.** Todos da
+      **loja 1** (QA), todos já ENTREGUE ou CANCELADO, e **nenhum guarda outra identificação**
+      (telefone e endereço vazios). Zerar o `cliente_id` apagaria o único registro de que aquele
+      pedido teve cliente e não conserta nada: o código lê com `findByIdAndLojaId` e trata o vazio.
+      **Vai junto com a decisão da loja de QA, que é sua.**
+- [x] ~~**1 linha de ficha técnica fantasma**~~ **FEITO em 13/11/2026.** Era a `produto_insumo` id 2
+      do "Acai 500ml Atualizado" (loja 1): o produto existe, **o insumo 2 não existe**. Apagada.
+      Conferido: 0 linhas de ficha apontando para produto ou insumo que não existe.
+- [x] ~~**"Vale Refeicao" repetido na loja 1**~~ **FEITO em 13/11/2026.** Eram os ids 6 e 12, e as
+      duas linhas eram **idênticas em tudo menos o id** — ficou a 6. Apagar a 12 não desamarrou
+      pedido nenhum: `pedido.forma_pagamento` guarda o texto, não o id. A loja 1 foi de 14 para 13
+      formas.
+- [x] ~~**O nome da loja no painel tem uma rede de segurança que nunca pega**~~ (`whitelabel.js:45`).
       Medido em 31/10. Quando o lojista **apaga** o campo "nome de exibição", o painel cai no texto
       neutro do HTML em vez do nome da loja. A rede está morta por três motivos somados:
       `window.Bora` é sempre `undefined` (o `const Bora` do api.js não cria propriedade em
       `window`); o `boraUser` da sessão guarda só `{nome, papel, lojaId}`, **sem `lojaNome`**; e
-      `lojaNome` só vem de dois endpoints, nunca do login normal. **Não toca dinheiro nem papel
-      impresso** — é o nome na tela do próprio lojista. O conserto é meu, é pequeno, e precisa de
-      um "sim".
+      `lojaNome` só vem de dois endpoints, nunca do login normal.
+      **NO AR na v160, 13/11/2026.** O nome real da loja agora chega na **própria resposta de
+      `/api/configuracao`** (campo transiente `nomeDaLoja`), que essa tela já pede — sem segunda
+      chamada e sem depender da sessão.
+      **E a nota estava errada num ponto: isto TOCAVA papel impresso.** O `guardarTema` só guardava
+      o `nomeExibicao`, então com o campo apagado a **comanda da cozinha**, o fechamento do caixa e
+      o **recibo do motoboy** saíam "BoraHapp" enquanto a tela mostrava o nome certo. Agora o
+      `localStorage` recebe o nome já resolvido, o mesmo que a tela usa.
 
 ---
 
