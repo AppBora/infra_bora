@@ -111,6 +111,10 @@ header.topo .wrap { display: flex; align-items: center; gap: 20px; height: 66px;
 }
 .marca span { color: var(--brasa); }
 nav.menu { display: flex; gap: 22px; margin-left: auto; }
+/* Item de menu NAO quebra em duas linhas. Com a entrada "Ficha de abertura" (13/11/2026), entre
+   860 e 1000px o rotulo partia no meio e so aquele item ficava com o dobro da altura. Medido a
+   862px: menu de 64px de altura quebrando, 39px com `nowrap`. */
+nav.menu a { white-space: nowrap; }
 nav.menu a {
   color: var(--tinta-2); text-decoration: none; font-size: 15.5px; font-weight: 600;
   padding: 6px 0; border-bottom: 2px solid transparent;
@@ -342,6 +346,13 @@ footer.rodape a:hover { color: #fff; text-decoration: underline; }
 }
 
 /* ---------------- responsivo ---------------- */
+/* Com 6 itens o menu encosta na barra entre 860 e 1000px. Medido a 862px, pela unica conta que
+   vale -- a pagina rola de lado ou nao --, e nao somando larguras na mao: somar enganou, porque
+   deixa de fora o `gap` do proprio .wrap. Com o vao de 22px sobram 6px, que e pouco para confiar
+   (a mesma fonte mede diferente em outra maquina); com 18px sobram 15. Acima de 1000px o vao
+   continua 22, que e onde ha espaco. */
+@media (max-width: 1000px) { nav.menu { gap: 18px; } }
+
 @media (max-width: 900px) {
   .hero-grid, .calc, .plano, .confronto { grid-template-columns: 1fr; }
   .hero-grid { gap: 34px; }
