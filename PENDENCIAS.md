@@ -11,6 +11,22 @@ pedido" passou a contar o tempo), a limpeza de dados foi aplicada, e a ficha de 
 [uma página que grava a cada tecla](https://borahapp.com.br/ficha.html). **13 itens fecharam.**
 Antes disso, **11/11/2026** — nesse dia a **v158 subiu** e as credenciais do banco ficaram **40 cifradas / 0 em texto puro**. Antes disso, em 10/11 — e nesse dia rodou a **varredura dos 15 agentes na aplicação inteira** ([VARREDURA-2026-11-10.md](VARREDURA-2026-11-10.md)). Os itens de cadastro e operação seguem como foram medidos em **04/11**. Tudo marcado como pendente aqui foi medido, não deduzido.
 
+## ✅ 15/11/2026 — o aceite dos Termos passou a exigir que o texto abra
+
+A faixa trazia um link "Ler os Termos" (outra aba) e, ao lado, um botão "Li e aceito". **Dava
+para aceitar sem nunca ter aberto nada.** Agora o botão abre o texto numa janela — Termos e
+Política de Privacidade, buscados de `/termos.html` e `/privacidade.html` e passados por
+`DOMParser` — e **o aceite fica no fim do documento**, liberado só ao chegar lá.
+
+No ar em 15/11 (front `2b9d1e7`), conferido byte a byte contra o repositório. Medido no navegador:
+os dois documentos carregam (12 e 10 seções, ~10 mil caracteres) e saem sem nenhum script.
+
+- [ ] A tela de **cadastro** (`cadastro.html`, inscrição por conta própria) continua com a
+      caixinha "Li e aceito" + link para outra aba. É outro fluxo, numa página pública que nem
+      carrega o `app.js`. *Falta: decidir se leva o mesmo comportamento.*
+
+---
+
 ## 🆕 15/11/2026 — cliente novo: Doce Jardim (loja #23)
 
 Cliente **novo**, não é unidade da Zirá: CNPJ 61.216.168/0001-23 (PATRICIA VIEIRA DE MORAES
