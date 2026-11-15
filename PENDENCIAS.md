@@ -35,20 +35,23 @@ Preços do **papel** — o site Anota.ai serviu só para as imagens.
 - [ ] **Dois adicionais extras sem nome** no papel (R$ 3,00 e R$ 7,00): as duas colunas têm uma
       linha de preço a mais que a de nomes. Ficaram de fora — não dá para adivinhar.
 - [ ] **Copo Tropical sem foto** (único dos 32): não existe no site da loja.
-- [ ] **Logo não gravado** — a imagem foi colada no chat, não chegou como arquivo.
+- [x] ~~Logo não gravado~~ — **gravado em 15/11**, medido em `GET /public/loja/23/logo`
+      (HTTP 200, `image/png` 200×200, sha256 igual ao arquivo original).
+- [ ] **A cor da marca é roxa (`#7c3aed`) e o logo é rosa com vermelho** (`#FDCBCC` / `#931E23`).
+      O roxo veio do padrão do painel — é a cor do BoraHapp, não a dela. *Falta: decidir.*
 - [ ] O papel cobra **mais caro que o site** em quase todo item (ver
       [DOCE-JARDIM-PAPEL-x-SITE.md](DOCE-JARDIM-PAPEL-x-SITE.md)). Vale a Patrícia confirmar.
 - [ ] O rodapé do site traz **CNPJ 55.052.547/0001-22**, diferente do cadastrado. Resolver
       **antes** da 99: lá a conta bancária tem de ser do mesmo CNPJ.
 
-### 🔴 Pronto e testado, NÃO deployado
+### ✅ Fechado em 15/11 — v162 no ar
 
-- [ ] **Trocar o e-mail de acesso** (`PUT /api/usuarios/{id}/email` + campo na tela de Usuários).
-      Não existia: o `setEmail` só rodava na criação e a tela desabilitava o campo. Back `5b00b54`,
-      front `aad55c0`, ambos no remoto. **1410 unitários + 695 de tela, 0 falhas.**
-      O deploy foi recusado pelo modo automático — precisa da sua autorização.
-- [ ] Junto sobem a **cópia de cardápio entre unidades** e o **campo do ID da loja na 99**
-      (back `2bfd954`, front `5726f4c`, de 13/11, também não deployados).
+- [x] ~~Trocar o e-mail de acesso~~ — **v162 no ar em 15/11** (`PUT /api/usuarios/{id}/email`
+      + campo na tela). Medido no bytecode do jar EM EXECUÇÃO, não deduzido do commit. O dono
+      trocou o login da Doce Jardim no mesmo dia: hoje é `docejardim@borah.com.br`.
+- [x] ~~Cópia de cardápio entre unidades e campo do ID da loja na 99~~ — **subiram junto na
+      v162**: `copiar-cardapio` e `shopIdCanal` conferidos dentro do jar, e os campos conferidos
+      no `integracoes.js` e no `configuracoes.html` servidos pelo site.
 
 ### 99Food — o que foi medido em 14/11
 
