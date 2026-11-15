@@ -37,8 +37,10 @@ Preços do **papel** — o site Anota.ai serviu só para as imagens.
 - [ ] **Copo Tropical sem foto** (único dos 32): não existe no site da loja.
 - [x] ~~Logo não gravado~~ — **gravado em 15/11**, medido em `GET /public/loja/23/logo`
       (HTTP 200, `image/png` 200×200, sha256 igual ao arquivo original).
-- [ ] **A cor da marca é roxa (`#7c3aed`) e o logo é rosa com vermelho** (`#FDCBCC` / `#931E23`).
-      O roxo veio do padrão do painel — é a cor do BoraHapp, não a dela. *Falta: decidir.*
+- [x] ~~Cor da marca roxa com logo rosa/vermelho~~ — **ajustado em 15/11**: primária `#9C1C24`
+      (o vermelho das letras, 8,06:1 com branco) e secundária `#BA4245` (5,31:1). As duas medidas
+      com a própria `cores.js`. O rosa do fundo (`#FDCBCC`) foi descartado para secundária porque
+      viraria preço em `#8b7070`, um marrom acinzentado. Conferido na tela, no celular.
 - [ ] O papel cobra **mais caro que o site** em quase todo item (ver
       [DOCE-JARDIM-PAPEL-x-SITE.md](DOCE-JARDIM-PAPEL-x-SITE.md)). Vale a Patrícia confirmar.
 - [ ] O rodapé do site traz **CNPJ 55.052.547/0001-22**, diferente do cadastrado. Resolver
