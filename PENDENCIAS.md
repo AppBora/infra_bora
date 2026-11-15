@@ -11,6 +11,54 @@ pedido" passou a contar o tempo), a limpeza de dados foi aplicada, e a ficha de 
 [uma página que grava a cada tecla](https://borahapp.com.br/ficha.html). **13 itens fecharam.**
 Antes disso, **11/11/2026** — nesse dia a **v158 subiu** e as credenciais do banco ficaram **40 cifradas / 0 em texto puro**. Antes disso, em 10/11 — e nesse dia rodou a **varredura dos 15 agentes na aplicação inteira** ([VARREDURA-2026-11-10.md](VARREDURA-2026-11-10.md)). Os itens de cadastro e operação seguem como foram medidos em **04/11**. Tudo marcado como pendente aqui foi medido, não deduzido.
 
+## 🆕 15/11/2026 — cliente novo: Doce Jardim (loja #23)
+
+Cliente **novo**, não é unidade da Zirá: CNPJ 61.216.168/0001-23 (PATRICIA VIEIRA DE MORAES
+PONTES - ME), plano único R$ 199, cortesia até **22/11/2026**. Login `ferreira_114@hotmail.com`.
+
+**Já está no ar** (medido em `GET /public/loja/23/cardapio`, HTTP 200): 5 categorias, 32 produtos,
+8 grupos e 92 complementos; 31 produtos com foto (servidas pela API, `image/webp` 200×200).
+Preços do **papel** — o site Anota.ai serviu só para as imagens.
+
+### 🔴 O que impede a loja de vender hoje
+
+- [ ] **Nenhuma taxa de entrega cadastrada** (`bairros: []`). **Todo pedido de entrega é
+      recusado** (v160). A ficha trazia "São Bento: R$ 0 / 0 min" e **não foi gravado**: R$ 0 é
+      entrega de graça de verdade e "0 min" é campo não preenchido. *Falta: os bairros e as taxas.*
+- [ ] **Horário 18:00–23:00 todos os dias**, que foi o padrão do painel. A ficha dizia
+      "08:06 às 23:07", que é relógio, não horário de loja. *Falta: o horário real.*
+- [ ] **PIX online indisponível** (`pixDisponivel: false`) — sem conta Asaas. A ficha marcou
+      "PIX online pelo BoraHapp".
+
+### 🟡 Cardápio
+
+- [ ] **Dois adicionais extras sem nome** no papel (R$ 3,00 e R$ 7,00): as duas colunas têm uma
+      linha de preço a mais que a de nomes. Ficaram de fora — não dá para adivinhar.
+- [ ] **Copo Tropical sem foto** (único dos 32): não existe no site da loja.
+- [ ] **Logo não gravado** — a imagem foi colada no chat, não chegou como arquivo.
+- [ ] O papel cobra **mais caro que o site** em quase todo item (ver
+      [DOCE-JARDIM-PAPEL-x-SITE.md](DOCE-JARDIM-PAPEL-x-SITE.md)). Vale a Patrícia confirmar.
+- [ ] O rodapé do site traz **CNPJ 55.052.547/0001-22**, diferente do cadastrado. Resolver
+      **antes** da 99: lá a conta bancária tem de ser do mesmo CNPJ.
+
+### 🔴 Pronto e testado, NÃO deployado
+
+- [ ] **Trocar o e-mail de acesso** (`PUT /api/usuarios/{id}/email` + campo na tela de Usuários).
+      Não existia: o `setEmail` só rodava na criação e a tela desabilitava o campo. Back `5b00b54`,
+      front `aad55c0`, ambos no remoto. **1410 unitários + 695 de tela, 0 falhas.**
+      O deploy foi recusado pelo modo automático — precisa da sua autorização.
+- [ ] Junto sobem a **cópia de cardápio entre unidades** e o **campo do ID da loja na 99**
+      (back `2bfd954`, front `5726f4c`, de 13/11, também não deployados).
+
+### 99Food — o que foi medido em 14/11
+
+A conta da Zirá no `merchant.99app.com` **lista, filtra e copia loja, mas não cria**. Não há
+autoatendimento: abrir unidade nova passa pelo time da 99. IDs das unidades existentes: Montreal
+`5764615393256407102`, Nova Esperança `5764608368417965364`, Zona Norte `5764608427259856166`,
+São Bento `5764614166724478604`.
+
+---
+
 ---
 
 ## 🆕 13/11/2026 (tarde) — abrir a 6ª unidade da Zirá, no endereço do dono
