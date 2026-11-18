@@ -97,13 +97,48 @@ aviso saindo em toda cópia enquanto estiver atrasado ou falhando.
 
 ### 🔴 O ÚNICO CLIQUE QUE FALTA É SEU: ligar a fila de eventos
 
-Agora o controle está no ar e o endpoint responde (confirmei: `GET` e `PUT` em
-`/admin-bora/config/outbox` devolvem 401, ou seja existem e pedem login). Vá em **Configurações →
-🔧 Plataforma BoraHapp → 📬 Fila de eventos do ERP**, ligue, e a própria tela passa a mostrar a
-média que a gravação custa em cada venda. Eu não consigo clicar: é conta sua.
+Vá em **Configurações → 🔧 Plataforma BoraHapp → 📬 Fila de eventos do ERP**, ligue, e a própria
+tela passa a mostrar a média que a gravação custa em cada venda. Eu não consigo clicar: é conta sua.
 
 Os 5 ganchos que não tinham teste nenhum — e que eram o motivo de eu não recomendar ligar antes —
 estão travados desde hoje.
+
+**Confirmado hoje que você ainda não clicou, e isso é medido, não suposição.** Restaurei o dump de
+produção das 18:26 UTC num Postgres descartável e li duas coisas: a chave `outbox.habilitado` **não
+existe** em `config_plataforma` (e sem a linha ela nasce desligada), e `evento_outbox` tem **0
+linhas**. O log do container sozinho não respondia isso — ele começa às 18:26 e não houve nenhuma
+venda desde então, então uma fila ligada também apareceria como silêncio.
+
+#### E o `empresa_id`, que eu fechei ANTES de você clicar
+
+A V74 criou a coluna `empresa_id` na fila e a entrega A2 gravava **`null` literal** nela. Só
+`loja_id` ia preenchido — ou seja, o evento dizia em qual unidade a venda aconteceu, mas não de
+quem era a unidade. **O caso que mostra o preço está em produção: as lojas 18, 19, 20, 21 e 22 são
+a rede da Zirá e pertencem a UMA empresa (a 3).** Sem a coluna, quem consome a fila veria cinco
+clientes em vez de cinco unidades de um.
+
+Resolvido hoje (V76 + backend + tela), e **era agora ou nunca de graça**: com a fila em zero evento,
+o retrofit não toca em nada. Se você tivesse ligado primeiro, cada venda nasceria um evento sem
+empresa e o retrofit passaria a ser correção de histórico.
+
+Três coisas que vale você saber:
+
+- **a empresa vem da loja por subconsulta dentro do próprio INSERT**, não por uma consulta separada
+  em Java — essa custaria uma ida e volta a mais no caminho de **toda venda**, o dobro do custo que a
+  tela mede;
+- **a fila continua sem poder recusar uma venda.** A coluna segue sem `NOT NULL` e sem chave
+  estrangeira, como a V74 decidiu: loja sem empresa, ou loja que não existe, grava o evento com nulo
+  e a venda segue. Dois testes de integração medem exatamente isso;
+- **o modo de falha dessa coluna é o silêncio**, então a tela passa a mostrar quantos eventos estão
+  sem empresa. Zero é a resposta saudável; se sair de zero, o conserto é no cadastro da loja, não na
+  fila.
+
+Também fechei o terceiro caminho que cria loja: o bootstrap do primeiro start era o único que não
+preenchia `empresa_id`. Em produção ele nunca rodou (só entra quando não existe nenhuma loja), mas
+numa instalação nova **todo** evento sairia sem empresa, para sempre.
+
+**Medido:** 1588 testes unitários e 245 de integração, 0 falhas. Quatro mutantes, nenhum sobreviveu
+— inclusive voltar o `null` literal, que morreu em 4 unitários e 3 de integração.
 
 ### 🔴 O que ficou PARA VOCÊ decidir: a terceira cópia
 
