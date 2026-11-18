@@ -68,10 +68,33 @@ NAO_E_SOBRA='^(ROTEIRO-DE-TESTE\.html|guia-zira\.html|manifest\.webmanifest)$'
 dizer() { printf '\n=== %s\n' "$*"; }
 raiz_de() { local n="$1"; eval "echo \"\$RAIZ_$n\""; }
 
-TEMPORARIOS=()
-limpar() { for t in "${TEMPORARIOS[@]:-}"; do [ -n "$t" ] && rm -f "$t"; done; }
+# ESTE SCRIPT SAIA COM CODIGO 1 EM TODO CAMINHO, INCLUSIVE QUANDO DAVA CERTO.
+#
+# Achado no deploy da v163 (17/11/2026) e diagnosticado com `bash -x`. Duas coisas, uma causa:
+#
+#   `novo_temp` era chamada como `$(novo_temp)` -- ou seja, em SUBSHELL. O `TEMPORARIOS+=(...)`
+#   morria junto com o subshell e o array do shell pai ficava sempre VAZIO. Dai:
+#     1. os temporarios NUNCA eram apagados (havia 136 arquivos /tmp/tmp.* acumulados);
+#     2. com o array vazio, `"${TEMPORARIOS[@]:-}"` expande para UMA string vazia, o
+#        `[ -n "$t" ]` da falso, a funcao `limpar` retorna 1 -- e por causa do `set -e` esse 1 do
+#        trap de EXIT atropelava o `exit 0`. Isolado nos dois sentidos: sem `set -e` saia 0, com
+#        `set -e` saia 1.
+#
+# Por que isso nao era cosmetico: um deploy que falha DE VERDADE ficava indistinguivel de um que deu
+# certo, e quem encadeasse `./deploy-frontend.sh && alguma-coisa` veria todo deploy como falha.
+#
+# O conserto: a lista de temporarios vai para um ARQUIVO, que atravessa subshell, e `limpar` termina
+# em `:` para nunca ser a razao de o script sair diferente de zero.
+LISTA_DE_TEMPORARIOS=$(mktemp)
+limpar() {
+  if [ -f "$LISTA_DE_TEMPORARIOS" ]; then
+    while IFS= read -r t; do [ -n "$t" ] && rm -f "$t"; done < "$LISTA_DE_TEMPORARIOS"
+    rm -f "$LISTA_DE_TEMPORARIOS"
+  fi
+  :
+}
 trap limpar EXIT
-novo_temp() { local t; t=$(mktemp); TEMPORARIOS+=("$t"); echo "$t"; }
+novo_temp() { local t; t=$(mktemp); printf '%s\n' "$t" >> "$LISTA_DE_TEMPORARIOS"; echo "$t"; }
 
 # --------------------------------------------------------------------------------- 1
 dizer "1/6 que arquivos vao"
