@@ -11,6 +11,64 @@ pedido" passou a contar o tempo), a limpeza de dados foi aplicada, e a ficha de 
 [uma página que grava a cada tecla](https://borahapp.com.br/ficha.html). **13 itens fecharam.**
 Antes disso, **11/11/2026** — nesse dia a **v158 subiu** e as credenciais do banco ficaram **40 cifradas / 0 em texto puro**. Antes disso, em 10/11 — e nesse dia rodou a **varredura dos 15 agentes na aplicação inteira** ([VARREDURA-2026-11-10.md](VARREDURA-2026-11-10.md)). Os itens de cadastro e operação seguem como foram medidos em **04/11**. Tudo marcado como pendente aqui foi medido, não deduzido.
 
+## ✅ 18/11/2026 (noite) — **v170 NO AR**: a fila já sabe de QUEM é a venda
+
+Você mandou resolver o `empresa_id` antes de ligar a fila. Está resolvido e **publicado**, API e
+frontend, medido em produção — não só commitado:
+
+| conferência | medido |
+|---|---|
+| API | **v170**, commit `dd72710`, imagem `5fc4484e`, container **healthy**, `health/viva` **200** |
+| migração | schema **75 → 76** em **0,048 s** (`Successfully applied 1 migration`) |
+| rollback guardado | `bora-api:anterior` = v169 (`a54858ec`), e **nenhum** `api-anterior` sobrando |
+| o índice da V76 **no schema** | `ix_outbox_sem_empresa ... WHERE (empresa_id IS NULL)` — lido de um dump novo restaurado, não só do que o Flyway disse |
+| a garantia da V74 intacta | `not null = false` e **0 chaves estrangeiras**: a fila **continua sem poder recusar uma venda** |
+| frontend | **100 arquivos** com o mesmo sha256; o `configuracoes.html` no ar é **idêntico byte a byte** ao local |
+| erros no log | **0** |
+
+Os `ERROR` que aparecem no log do deploy são dos **testes rodando dentro do build da imagem**
+(passo 3/9), não de produção — vale lembrar, porque assustam na leitura.
+
+### O que estava errado
+
+A V74 criou a coluna `empresa_id` na fila e a entrega A2 gravava **`null` literal** nela. Só
+`loja_id` ia preenchido: o evento dizia em qual unidade a venda aconteceu, mas **não de quem era a
+unidade**. Ficou assim porque o `Pedido` não carrega a empresa, e coluna opcional vazia não reclama
+de nada.
+
+**O caso que mostra o preço: as lojas 18, 19, 20, 21 e 22 são a rede da Zirá e pertencem a UMA
+empresa (a 3).** Sem a coluna, quem consome a fila veria **cinco clientes** em vez de cinco unidades
+de um. Medido no dump: 8 lojas, 4 empresas, **0 lojas sem empresa**, 0 órfãs.
+
+**E era agora ou nunca de graça:** com a fila em zero evento, o retrofit não tocou em nada. Se você
+tivesse clicado primeiro, cada venda nasceria um evento sem empresa.
+
+### Três decisões que têm motivo
+
+- **a empresa vem da loja por subconsulta dentro do próprio `INSERT`**, não por consulta separada em
+  Java — essa custaria uma ida e volta a mais no caminho de **toda venda**, o dobro do que a tela mede;
+- **a fila continua sem poder recusar uma venda**: loja sem empresa, ou loja que não existe, grava o
+  evento com nulo e a venda segue. Dois testes de integração medem isso, e o schema de produção
+  confirma `not null = false` e 0 chaves estrangeiras;
+- **o modo de falha dessa coluna é o silêncio**, então a tela da fila mostra quantos eventos estão sem
+  empresa. Zero é a resposta saudável; se sair de zero, o conserto é no cadastro da loja.
+
+Fechei também o terceiro caminho que cria loja: o bootstrap do primeiro start era o único que não
+preenchia `empresa_id`. Em produção nunca rodou, mas numa instalação nova **todo** evento sairia sem
+empresa, para sempre.
+
+**Medido:** 1588 testes unitários e 245 de integração, 0 falhas. **Quatro mutantes, nenhum
+sobreviveu** — voltar o `null` literal morreu em 4 unitários e 3 de integração. Três arquivos de
+teste travavam a forma antiga do `INSERT` por posição de argumento e os três falharam quando a
+mudança entrou, que é o que se quer deles.
+
+### 🔴 Agora sim: só falta o seu clique
+
+**Configurações → 🔧 Plataforma BoraHapp → 📬 Fila de eventos do ERP.** Confirmado às 21:21 que a
+chave `outbox.habilitado` **ainda não existe** no banco (e sem a linha ela nasce desligada) e que
+`evento_outbox` tem **0 eventos, 0 sem empresa**.
+
+
 ## ✅ 18/11/2026 — **v169 NO AR**, com os 4 itens que você mandou
 
 A ordem foi a sua: preço zero → os 5 ganchos sem teste → rollback do deploy → backup fora da conta.
