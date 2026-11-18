@@ -11,6 +11,351 @@ pedido" passou a contar o tempo), a limpeza de dados foi aplicada, e a ficha de 
 [uma página que grava a cada tecla](https://borahapp.com.br/ficha.html). **13 itens fecharam.**
 Antes disso, **11/11/2026** — nesse dia a **v158 subiu** e as credenciais do banco ficaram **40 cifradas / 0 em texto puro**. Antes disso, em 10/11 — e nesse dia rodou a **varredura dos 15 agentes na aplicação inteira** ([VARREDURA-2026-11-10.md](VARREDURA-2026-11-10.md)). Os itens de cadastro e operação seguem como foram medidos em **04/11**. Tudo marcado como pendente aqui foi medido, não deduzido.
 
+## ✅ 18/11/2026 (tarde) — os 4 itens que você mandou, na ordem que você mandou
+
+Nenhum deles está no ar. São **4 commits** esperando deploy, e a ordem foi a sua: preço zero → os 5
+ganchos sem teste → rollback do deploy → backup fora da conta.
+
+### 1. Produto sem preço não vende de graça — e o zero da Zirá continua vendendo
+
+**Quase quebrei três lojas suas.** O QA disse "produto sem preço (ou negativo) vende de graça". Medi
+o cardápio público antes de consertar: dos **182 produtos ativos** das 6 lojas reais, **nenhum** tem
+preço nulo e **5 têm preço ZERO de propósito** — o **"Monte Seu Açaí"** nas lojas 18, 19 e 20, que
+está a R$ 0,00 porque quem carrega o preço é o grupo "Recipientes" (mínimo 1, opções de R$ 12,90 a
+R$ 50,00), mais "Brinde Grátis" e "Brinde Gratuito" na loja 1. Recusar `preço <= 0` teria parado
+esses 5 produtos em 4 lojas. **Zero diz "é de graça"; nulo diz "ninguém disse".**
+
+**O buraco de verdade era o carrinho MISTO.** O cardápio já recusava carrinho que dava total zero
+("Pedido sem valor"), mas essa guarda olha o **total**, não o item. Medido: 2 açaís sem preço + 1
+refrigerante de R$ 8,00 **gravavam o pedido com total R$ 8,00, sem erro nenhum**. Os dois açaís de
+R$ 20 saíram de graça dentro de um pedido que fechou normal — e você não teria como notar.
+
+**A porta que o QA não viu:** a importação de cardápio por foto fazia
+`try { new BigDecimal(...) } catch { preço = ZERO }` e **salvava**, contando como sucesso. O prompt
+pede ponto decimal, mas o que está impresso no cardápio é **vírgula** — e medi que "24,90",
+"R$ 24,90" e preço ausente **todos** estouram, logo todos viravam R$ 0,00 publicados. Agora a
+vírgula é lida, e o que não dá para ler volta pelo nome, para você digitar à mão.
+
+Fechado em: cadastro, venda do painel, venda do cardápio, importação por IA, complementos, e uma
+trava no banco (`V75`) para as portas que não passam por nenhum deles — como a **cópia de cardápio**,
+que é o caminho de abrir unidade nova.
+
+### 2. Os 5 ganchos de evento que nenhum teste media
+
+É o que **travava ligar a fila**. Medi comentando cada gravação de evento, uma por vez:
+
+| gancho | antes | agora |
+|---|---|---|
+| venda do balcão | **mutante vivo** | 3 falhas |
+| pedido de iFood/99 | **mutante vivo** | 2 falhas |
+| cancelamento do marketplace | **mutante vivo** | 2 falhas |
+| avanço do marketplace | coberto | 3 falhas |
+| clique de status no painel | **mutante vivo** | 4 falhas |
+| excluir pedido | **mutante vivo** | 1 falha |
+
+**Cinco de seis podiam ser apagados sem uma única reclamação** dos 1563 testes. É o caminho inteiro
+do dinheiro. Hoje ninguém consome a fila, então gancho errado não aparece; no dia em que ligar, o
+módulo decide estoque e contabilidade por eles.
+
+### 3. O rollback do deploy apagava o container SADIO
+
+O `rollback()` começava sempre com `docker rm -f api`. Isso está certo em **um** dos quatro pontos em
+que o deploy pode falhar. Nos outros três o container que está no servidor **é o bom**, e o rollback
+o destruía — deixando a produção **sem nenhum container**, sem nada para devolver, e com o vigia
+escrevendo "ISTO PRECISA DE MAO HUMANA". Uma falha num passo inofensivo (um nome de tag errado)
+derrubava o site até alguém entrar no servidor de madrugada.
+
+Agora a decisão é por fato: existe `api-anterior`? Se não existe, o rename não aconteceu e o `api`
+de agora é o bom — **não se apaga**. Provado com containers de mentira no Docker: lógica nova 5/5
+verdes, **lógica antiga reprova em 3 dos 5**.
+
+### 4. O backup fora da AWS passa a ser RESTAURADO toda semana
+
+**O QA errou a data e eu errei a causa.** Ele disse que a cópia falhou em 16/11. O log tem **duas**
+falhas na vida (07 e 08/11, o IP morto). Em 16/11 o PC estava desligado às 10:00 — e o Windows
+**recuperou sozinho**, rodando o atraso às 08:28 de 17/11 com 8 arquivos. Estado real: **188 dumps,
+691 MB**, cobertura diária de 04/10 a hoje sem furo, exceto 07/11 (o dia em que o servidor estava
+desligado e não produziu dump).
+
+**O que faltava era outra coisa: ninguém nunca restaurou essa cópia.** Tamanho batendo prova que a
+transferência chegou completa; não prova que o arquivo restaura. E era justamente ela — a **única
+fora da AWS**. Rodei hoje: restaurou, com 8 lojas, 13 usuários, 268 produtos, 43 pedidos, schema
+V74. Agora roda **toda semana sozinho**, pendurado na tarefa de cópia (que provadamente roda), com o
+aviso saindo em toda cópia enquanto estiver atrasado ou falhando.
+
+### 🔴 O que ficou PARA VOCÊ decidir: a terceira cópia
+
+Hoje há duas, e a da AWS está na conta que **já foi encerrada uma vez** — e o e-mail deles diz que
+passados **90 dias** a conta não reabre e o que sobrou é apagado. A do PC está num disco só.
+
+**Não é dinheiro:** 691 MB hoje, 1,31 GB por ano. Cabe de graça no Cloudflare R2 ou Backblaze B2.
+São três decisões suas: **onde** (recomendo R2 ou B2, não um segundo bucket na AWS — o ponto é sair
+do alcance de um problema de cobrança da Amazon); **a chave**, porque o dump tem telefone, endereço e
+CPF de todo cliente e precisa ser cifrado antes de sair da máquina, com senha no seu gerenciador de
+senhas (backup cifrado com chave perdida não é backup); e **a conta**, que eu não crio.
+
+Não escrevi o script de envio de propósito: script que fala com um destino que não existe não pode
+ser testado, e código não testado no caminho do backup **parece pronto** e é pior que a falta dele.
+
+---
+
+## 🔴 17/11/2026 (noite) — **o próximo clique é SEU: ligar a fila de eventos do ERP**
+
+A v167 subiu a gravação da fila de eventos (outbox, entrega A2) **desligada**, e eu não consigo
+ligá-la. Não é cautela minha: não há caminho. Está commitado como a **v168**, aguardando deploy.
+
+### O que eu achei ao tentar ligar, e que era um defeito meu
+
+A chave `outbox.habilitado` **podia ser lida** na tela e **não podia ser escrita por lugar nenhum**.
+Só o `fiscal.habilitado` tinha endpoint de escrita. Ligar ou desligar exigia escrever direto no
+banco de produção.
+
+Isso é pior do que parece: a gravação fica no caminho de **toda venda**. O interruptor de
+emergência dela só era alcançável por quem tem acesso ao banco — o que, numa emergência, é o
+mesmo que não ter interruptor.
+
+### O que a v168 traz (commitada, **não** em produção)
+
+- `GET` e `PUT /admin-bora/config/outbox`. O PUT invalida o cache de 30s na hora: ligar e desligar
+  valem **na próxima venda, sem deploy**. Sai no log como AUDITORIA.
+- **Configurações → Plataforma BoraHapp → "Fila de eventos do ERP"**: o interruptor, e ao lado
+  dele o **custo medido por venda** — contagem, média e maior, atualizando a cada 15s. Desligar ou
+  não é decisão que se toma olhando o número.
+- A própria aplicação mede, porque não há como medir de fora: **nenhum** endpoint que grava evento
+  é alcançável sem credencial de loja, e o `/actuator` só expõe `health`. A primeira gravação sai
+  sempre no log, com hora — é a prova de que a chave passou a valer.
+- Suite: 162 classes, **1488 testes, 0 falhas** (1476 + 12 novos).
+
+### Por que a média do INSERT é a medição certa
+
+O custo que a fila acrescenta a uma venda é **exatamente** a duração do INSERT: com a chave
+desligada não existe INSERT nenhum, então o "antes" é zero por construção. Cronometrar a
+requisição inteira seria pior — o tempo dela varia com rede, tamanho do carrinho e concorrência,
+e o ruído engoliria um INSERT de poucos milissegundos.
+
+No meu ambiente o banco fica na mesma máquina e a diferença caiu no ruído. Em produção o banco
+está do outro lado da rede: um INSERT a mais é uma ida e volta a mais. **O número que vale é o
+de lá.**
+
+### A ação, em ordem
+
+1. Subir a **v168** (API e frontend).
+2. **Configurações → Plataforma BoraHapp → Fila de eventos do ERP** → ligar o interruptor.
+3. Deixar as vendas do dia acontecerem e **ler a média na própria tela**.
+4. Se incomodar, desligar ali mesmo — vale na próxima venda.
+
+### ✅ FECHADO em 18/11 — o cardápio próprio emite evento (commit `813cfb3`, aguardando deploy)
+
+O checkout do cardápio próprio (`POST /public/loja/{id}/pedido`) **não tem hook de outbox**. Ele
+monta o Pedido no próprio controller, com `tx.execute`, sem passar pelo `PedidoService` — e os 5
+pontos de gravação estão todos no `PedidoService`.
+
+Consequência para o ERP: venda feita pelo QR / cardápio da própria loja ficaria **invisível** para
+os módulos de estoque e fiscal quando eles forem acoplados. **Fechado em três pontos**, porque um não bastava:
+
+1. **A venda nasce** → `PedidoRecebido`, como último passo da transação. Não é estilo: o pedido é
+   gravado uma primeira vez com total **zero**, para ter id antes do laço dos itens — emitir ali
+   mandaria R$ 0,00 ao financeiro. Frete, cupom e cashback entram depois disso.
+2. **O PIX não nasce** (o Asaas recusou) → `PedidoCancelado`. Obrigatório, não extra: o
+   `PedidoRecebido` já commitou, e a venda é desfeita por uma transação **posterior** — nenhum
+   rollback desfaz o evento. Sem ele a fila fica com uma venda que deixou de existir.
+3. **O PIX é pago depois do cancelamento** → o pedido reabre e emite de novo, marcado como
+   reabertura. Sem isso o módulo trata como morta uma venda que voltou a valer, com o cliente
+   tendo pagado e esperando comida.
+
+O canal vai como **código** (`CARDAPIO`), não como o rótulo "Cardápio Digital". Esse texto já fez o
+canal ser contado como Instagram e depois como nada — evento que módulo vai assinar não pode
+depender de rótulo.
+
+**A lacuna que ficou, de propósito e travada por teste:** PIX pago de pedido que **não** estava
+cancelado não emite nada. "O dinheiro entrou" não tem nome no catálogo — o que existe é
+`PedidoFinalizado`, que no código quer dizer ENTREGUE, e PIX pago não é entrega. Inventar
+`PedidoPago` agora seria publicar contrato que ninguém leu. **Isso é da entrega A5, e vale para
+todos os canais, não só para este.**
+
+**O teste que eu tive de consertar.** Apaguei cada gravação para ver se algum teste reclamava. A
+emissão movida para antes do laço dos itens matou 2 testes — e o teste do *total final* continuava
+**verde**. O defeito era o meu teste: `ArgumentCaptor` guarda a **referência** do pedido, não uma
+cópia, então ele devolve o estado final e a asserção passa mesmo com a emissão no lugar errado.
+Trocado por instantâneo gravado no momento da chamada. Suite: **1503 testes, 0 falhas**.
+
+(Lembrete do que medi em 15/11: esse checkout tem **zero POST** em 12 dias de log do Caddy. O canal
+próprio não tem tráfego nenhum — o que não diminui o buraco, só adia a conta.)
+
+---
+
+## ✅ 17/11/2026 (tarde) — v165: a fundação do ERP em produção, e 7 defeitos fechados
+
+**A V74 aplicou em 0,199 segundo.** Schema de 73 para **74**, container sadio, zero erro no log,
+as lojas reais servindo cardápio. As 8 tabelas novas (`tenant`, `licenca_modulo`, `deposito`,
+`fornecedor`, `evento_outbox`, `evento_consumido`, `auditoria`, `certificado_digital`) existem e
+estão **vazias** — e `licenca_modulo` vazia quer dizer "tudo desligado", que é o estado correto das
+23 lojas. **Nada mudou para nenhum cliente**, que era o objetivo do passo.
+
+### A varredura dos 5 agentes, antes de subir
+
+Rodei QA de API, QA de tela, DBA, segurança e líder técnico na aplicação inteira. Acharam coisa
+séria, e **dois deles acharam o mesmo defeito crítico de forma independente**:
+
+- **A V74 quebrava o "Excluir usuário" que eu tinha subido de manhã.** Ela criava chave estrangeira
+  para `usuario` sem `ON DELETE` — a prévia dizia "pode excluir" e o DELETE devolvia **500**.
+  Corrigido na própria V74, antes de ela existir em produção.
+- **Uma loja podia ficar sem nenhum administrador**, por corrida (1 em 6 tentativas). Corrigido:
+  0 em 10.
+- **E o mesmo buraco, pior, na tela do lojista — esse estava NO AR para as 23 lojas.** O dono podia
+  desativar ou rebaixar o único administrador da própria loja e ficar com uma loja que ninguém
+  administra, nem para desfazer. E gera **cobrança sem e-mail**.
+- Corpo vazio num `PUT /ativo` **desativava a conta** respondendo 200. Teto de 15 usuários burlável
+  só reativando alguém. Nome/e-mail longos viravam 500 **com o SQL no corpo**.
+- **Todo pedido do cardápio próprio aparecia como "Instagram"** em Pedidos, Canais, Relatórios, KDS
+  e Caixa — o `IG` casava dentro de "CARDÁPIO D-IG-ITAL". O lojista decide divulgação em cima
+  disso. Ao consertar apareceu o segundo, escondido atrás do primeiro: o canal Site procura
+  `CARDAP` e **"CARDÁPIO" tem acento**, então nunca casou.
+
+### 🔴 O que a varredura achou e eu NÃO consertei
+
+São defeitos **pré-existentes**, nenhum causado pela V74. Cada um merece passada própria:
+
+- [ ] **500 com o SQL no corpo** em corrida de chave única, em 3 rotas — uma delas **pública**
+      (`/public/signup`). O conserto certo é um handler global, que muda o erro dos 166 endpoints.
+- [ ] **Freio de login burlável por `X-Forwarded-For`** se a porta da API for alcançável sem passar
+      pelo Caddy. **Conferir se a porta do container está exposta na internet** — é verificação de
+      infra, não de código.
+- [ ] **Token não é revogado ao trocar a senha.** Funcionário demitido com sessão aberta continua
+      dentro por até 24h; só desativar a conta derruba. Contradiz o comentário do próprio código.
+- [ ] Webhook sem id externo cria **pedido vazio de R$ 0,00** a cada chamada.
+- [ ] Seletor de cor virou linha de 3px em Configurações; botões do cartão de pedido estourando a
+      coluna (o 🗑 some). Arrastam bump de versão do CSS em 34 telas.
+- [ ] "Pagamento na entrega" no cardápio não obriga escolher dinheiro/cartão — e aí a conta do
+      **acerto do motoboy sai errada**.
+- [ ] `deploy-frontend.sh` **sempre sai com código 1**, mesmo dando certo (ver a seção própria).
+
+---
+
+## ✅ 17/11/2026 — v163 no ar: o adm master vê e mexe em TODO usuário da plataforma
+
+**O que te travava:** a tela de Usuários de uma loja lista só quem é daquela loja. Conta de
+plataforma (`ADMINISTRADOR_BORA`) tem **loja nula por desenho**, então não aparecia em lista de loja
+nenhuma — foi por isso que o `will@bora.com.br` "não existia". E para achar alguém de outra loja, só
+entrando em cada loja pelo suporte, uma por uma.
+
+**Onde está agora:** Configurações → 🔧 Plataforma BoraHapp → 🗂️ **Todos os usuários da
+plataforma**. Lista todas as lojas **mais** as contas sem loja, com busca, filtro por loja, e
+**incluir / ativar / desativar / excluir**. Inativo aparece na lista, de propósito.
+
+**No ar em 17/11:** API **v163** (commit `509c51b`), front commit `5301f09`. Sem migração de banco.
+
+### As três travas que ele respeita
+
+1. Ninguém mexe na própria conta.
+2. Nunca o último administrador de plataforma ativo.
+3. **Nunca o último administrador ativo de uma loja** — e esta não é zelo abstrato: é a consulta
+   `donosDaLoja` que informa o e-mail do lojista na cobrança do Asaas. Loja sem dono ativo gera
+   **cobrança sem e-mail** e o lojista não recebe a fatura.
+
+### Excluir × desativar — leia antes de usar o botão vermelho
+
+**Prefira desativar.** Corta o acesso igual (vale no próximo clique da pessoa, não espera o login
+vencer), é reversível e mantém o histórico legível.
+
+**Excluir não apaga o histórico do pedido, mas apaga o NOME de quem mexeu nele.** O
+`log_status.usuario_id` não tem chave estrangeira: a linha fica lá apontando para uma conta que não
+existe mais. A tela conta essas linhas e te mostra o número antes de confirmar — medido com 7
+linhas: avisou 7, excluiu, e as 7 continuaram no banco.
+
+### A prova
+
+1.431 testes (eram 1.410 + 21 novos), 0 falhas. **Dois mutantes mortos:** desligar a trava de
+loja-sem-dono deixa 4 testes vermelhos, inverter a ordem do DELETE deixa 1. Mais 28 verificações
+contra API e Postgres de verdade, e a tela exercitada no navegador. Depois do deploy: container
+`healthy`, **0 erro real no log**, e cardápio das 5 lojas reais (1, 18, 19, 20, 23) respondendo 200.
+
+### 🔴 O próximo clique é SEU
+
+- [ ] Entrar como **adm@borahapp.com.br**, abrir a seção e **conferir se o `will@bora.com.br`
+      aparece**. Se for conta de plataforma, vem com a tarja "sem loja". Decidir ali: desativar
+      (recomendado) ou excluir.
+- [ ] **Trocar a senha do `will@bora.com.br`** — ela foi colada num chat em 17/11 e precisa ser
+      trocada mesmo que a conta seja apagada.
+
+---
+
+## 🐞 17/11/2026 — o `deploy-frontend.sh` SEMPRE sai com código 1, mesmo quando dá certo
+
+Achado durante o deploy da v163. **O deploy funciona** — a conferência interna dele passa e eu
+conferi o arquivo no ar byte a byte — mas o código de saída é `1` em **todos** os caminhos,
+inclusive no `--ensaio`, que não envia nada.
+
+**A raiz, medida com `bash -x`:** `novo_temp()` é chamada como `$(novo_temp)`, ou seja em
+**subshell** — então o `TEMPORARIOS+=(...)` nunca chega ao shell pai e o array fica vazio. Com o
+array vazio, `"${TEMPORARIOS[@]:-}"` expande para **uma string vazia**, o `[ -n "$t" ]` dá falso, a
+função `limpar` retorna 1 — e, **por causa do `set -e`**, esse 1 do trap de `EXIT` atropela o
+`exit 0` explícito. Isolado nos dois sentidos: sem `set -e` sai 0, com `set -e` sai 1.
+
+**Por que importa:** quem encadear `./deploy-frontend.sh && alguma-coisa`, ou ler o código de saída
+em automação, vai ver **todo deploy como falha** — e um deploy que falha de verdade fica
+indistinguível de um que deu certo. **Segunda consequência:** os temporários nunca são apagados —
+havia **136** arquivos `/tmp/tmp.*` acumulados.
+
+- [ ] Conserto (não fiz, está fora do que foi pedido): fazer `novo_temp` gravar o nome num arquivo
+      de controle em vez de num array, ou trocar o corpo do `limpar` por algo que termine em
+      verdadeiro. O `deploy-api.sh` **não** tem esse defeito — sai 0 corretamente.
+
+---
+
+## 📘 17/11/2026 — a documentação do ERP está escrita. **Nada dela está em produção**
+
+Isto **não é código no ar** e não muda nada para nenhuma loja hoje. É o levantamento de requisitos
+para transformar o BoraHapp num ERP, feito em **22 documentos, 15.180 linhas**, em
+`documentacao-erp/`. Tudo **local**: nada commitado, nada subido.
+
+**Por onde se começa a ler:** `documentacao-erp/00-VISAO-GERAL-E-ARQUITETURA-MODULAR.md` — ele tem
+o índice dos outros 21 no começo.
+
+**A decisão de estratégia, sua, de 17/11:** três fases estanques. **A)** ajustar o módulo principal
+para rodar sem os acoplamentos, sem quebrar o que roda hoje. **B)** desenvolver cada módulo sem
+conectar ao principal. **C)** o acoplamento por último, um módulo de cada vez. O simulador do módulo
+principal entrou como entrega **A6** da fase A, para que a fase C não vire integração de big-bang.
+
+### O que falta fechar, em quatro grupos
+
+**1 · Meu, ainda consigo pesquisar — e é o que bloqueia escrever código fiscal:**
+
+- [ ] Investigar a **calculadora oficial do RTC** (`consumo.tributos.gov.br`, código aberto, roda
+      offline). Ela fecha de uma vez a mecânica de montar o XML da **gorjeta** e da **comissão de
+      plataforma**, e provavelmente diz **onde gravar o ID do pedido do marketplace** — provei que o
+      `idCadIntTran` é o perfil da loja, não o pedido.
+- [ ] Prazos de cancelamento de nota do **RJ** — o domínio da SEFAZ-RJ bloqueou a pesquisa.
+
+**2 · Precisa de assinatura de profissional — eu não fecho nenhum destes:**
+
+- [ ] **Consultor tributário:** os 13 pontos do checklist (doc 00, cap. 13) e as 7 questões
+      pontuais ainda abertas. São **46 marcações `[VALIDAR]`** em 7 documentos. As duas que mais
+      pesam: **gorjeta acima de 15% perde a exclusão inteira ou só o excedente** (muda a base de
+      todo pedido com gorjeta) e **local da operação no delivery** (decide qual município arrecada).
+- [ ] **Advogado trabalhista:** garantia mínima condicionada a turno ou taxa de aceite — efeito no
+      vínculo do entregador. Risco de impacto crítico.
+
+**3 · Depende de norma que ainda não existe — é monitorar, não fazer:**
+
+- **Não há data oficial de obrigatoriedade do split payment**, nem geral nem por meio de pagamento.
+  O "2028" que circula é declaração à imprensa. No documento está como parâmetro com vigência.
+- **Não há resolução do Senado** com as alíquotas de referência de CBS e IBS.
+- Cupom custeado pela plataforma: a lei fala em *valores retidos*, não em desconto de terceiro.
+
+**4 · O que trava o módulo Fiscal mesmo depois de pronto:**
+
+Os 11 cenários fiscais do simulador rodam, mas o resultado esperado de cada um é um *golden case*
+que **só vale assinado**. Sem assinatura o módulo pode ser construído, **mas não pode emitir nota de
+cliente** — e depois do art. 341-G, VI (150 UPF por equipamento, para quem **desenvolve, fornece ou
+instala** software fiscal que não atende à lei), o risco é **da ADF Sistemas**, não só do lojista.
+
+> **O estado honesto dos documentos:** todos os 13 do conjunto principal estão marcados "Versão base
+> para refinamento". Os capítulos de API são amostra, os requisitos não têm estimativa, e nenhum
+> passou por revisão de terceiro — a conferência que existe é a minha, das fontes legais.
+
+---
+
 ## ✅ 15/11/2026 — o aceite dos Termos passou a exigir que o texto abra
 
 A faixa trazia um link "Ler os Termos" (outra aba) e, ao lado, um botão "Li e aceito". **Dava
@@ -1147,3 +1492,7 @@ Estas ficaram como **registro**, não como pendência — todas têm um aviso no
 `SO-VOCE-PODE-FAZER.md` (24/10), `O-QUE-FALTA-VOCE-FAZER.md` (23/10) e
 `PENDENCIAS-30-09-2026.md`. Se um item delas não aparece nesta página, é porque já foi fechado — a
 prova de cada fechamento está no relatório do dia.
+
+**E uma pasta, não uma lista:** `documentacao-erp/` tem os 22 documentos de requisitos do ERP
+(17/11/2026). Não é pendência de produção — é projeto. O que falta fechar nela está na seção de
+17/11 no começo desta página.
