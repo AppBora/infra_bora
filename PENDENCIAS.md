@@ -11,10 +11,22 @@ pedido" passou a contar o tempo), a limpeza de dados foi aplicada, e a ficha de 
 [uma página que grava a cada tecla](https://borahapp.com.br/ficha.html). **13 itens fecharam.**
 Antes disso, **11/11/2026** — nesse dia a **v158 subiu** e as credenciais do banco ficaram **40 cifradas / 0 em texto puro**. Antes disso, em 10/11 — e nesse dia rodou a **varredura dos 15 agentes na aplicação inteira** ([VARREDURA-2026-11-10.md](VARREDURA-2026-11-10.md)). Os itens de cadastro e operação seguem como foram medidos em **04/11**. Tudo marcado como pendente aqui foi medido, não deduzido.
 
-## ✅ 18/11/2026 (tarde) — os 4 itens que você mandou, na ordem que você mandou
+## ✅ 18/11/2026 — **v169 NO AR**, com os 4 itens que você mandou
 
-Nenhum deles está no ar. São **4 commits** esperando deploy, e a ordem foi a sua: preço zero → os 5
-ganchos sem teste → rollback do deploy → backup fora da conta.
+A ordem foi a sua: preço zero → os 5 ganchos sem teste → rollback do deploy → backup fora da conta.
+**Tudo publicado às 15:27**, API e frontend, medido em produção:
+
+| conferência | medido |
+|---|---|
+| API | **v169**, commit `1d62dbd`, imagem `a54858ec`, container **healthy** |
+| migração | schema **74 → 75** em **0,029 s** (`Successfully applied 1 migration`) |
+| rollback guardado | `bora-api:anterior` = v168, e **nenhum** `api-anterior` sobrando |
+| frontend | **100 arquivos**, mesmo sha256 aqui e no servidor; o navegador recebe `?v=20261118` |
+| as 6 lojas reais | respondem, **182 produtos**, e os **5 zeros de propósito intactos** — o "Monte Seu Açaí" continua vendendo nas três lojas da Zirá |
+| erros no log | **0** (o único casamento foi `ExitOnOutOfMemoryError`, falso positivo do grep) |
+
+E o `deploy-frontend.sh` saiu com **código 0** — primeira vez num deploy real, depois do conserto
+descrito no fim deste arquivo.
 
 ### 1. Produto sem preço não vende de graça — e o zero da Zirá continua vendendo
 
@@ -82,6 +94,16 @@ transferência chegou completa; não prova que o arquivo restaura. E era justame
 fora da AWS**. Rodei hoje: restaurou, com 8 lojas, 13 usuários, 268 produtos, 43 pedidos, schema
 V74. Agora roda **toda semana sozinho**, pendurado na tarefa de cópia (que provadamente roda), com o
 aviso saindo em toda cópia enquanto estiver atrasado ou falhando.
+
+### 🔴 O ÚNICO CLIQUE QUE FALTA É SEU: ligar a fila de eventos
+
+Agora o controle está no ar e o endpoint responde (confirmei: `GET` e `PUT` em
+`/admin-bora/config/outbox` devolvem 401, ou seja existem e pedem login). Vá em **Configurações →
+🔧 Plataforma BoraHapp → 📬 Fila de eventos do ERP**, ligue, e a própria tela passa a mostrar a
+média que a gravação custa em cada venda. Eu não consigo clicar: é conta sua.
+
+Os 5 ganchos que não tinham teste nenhum — e que eram o motivo de eu não recomendar ligar antes —
+estão travados desde hoje.
 
 ### 🔴 O que ficou PARA VOCÊ decidir: a terceira cópia
 
