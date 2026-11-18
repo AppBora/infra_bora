@@ -33,7 +33,7 @@ TGZ="/tmp/bora-api-$TAG.tgz"
 
 dizer() { printf '\n=== %s\n' "$*"; }
 
-dizer "1/8 a arvore do backend esta limpa?"
+dizer "1/9 a arvore do backend esta limpa?"
 if [ -n "$(git -C "$BACKEND" status --porcelain)" ]; then
   echo "ABORTADO: ha mudanca nao commitada no backend." >&2
   echo "A imagem copia o src do disco, entao subiria codigo que nao esta no Git." >&2
