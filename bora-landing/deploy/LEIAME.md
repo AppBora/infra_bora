@@ -22,6 +22,43 @@ O `api.env`, com as chaves do Asaas, do iFood, da 99 e o segredo do JWT. Segredo
 repositório. Ele vive só no servidor, com permissão 600.
 
 
+## `teste-do-rollback.sh` — prova que o rollback do `deploy-api.sh` não derruba o site
+
+```
+bash deploy/teste-do-rollback.sh    # precisa do Docker local. Nao toca no servidor.
+```
+
+Rode **depois de qualquer mexida no `rollback()`** do `deploy-api.sh`.
+
+Existe porque em **18/11/2026** o QA achou que o `rollback()` **apagava o container sadio**. Ele
+começava sempre com `docker rm -f api`, partindo de que o `api` do servidor é a versão nova e ruim e
+que a boa está guardada em `api-anterior`. Isso vale em **um** dos quatro pontos em que o passo 8
+pode falhar. Nos outros três o `api` que está lá **é o bom**:
+
+| o que falhou no passo 8 | estado | rollback antigo |
+|---|---|---|
+| `docker tag bora-api:$TAG` | `api` **rodando e sadio**, sem `api-anterior` | destruía o sadio → **site no chão** |
+| `docker stop -t 30 api` | `api` existe, sem `api-anterior` | destruía → **site no chão** |
+| `docker rename api api-anterior` | `api` existe **parado**, imagem boa | destruía → **site no chão** |
+| `docker run -d --name api` | sem `api`, `api-anterior` é o bom | **único caso que ele tratava** |
+
+E não havia volta: o `vigia-bora.sh`, quando não existe `api`, tenta o `api-anterior` e, não achando,
+escreve `ISTO PRECISA DE MAO HUMANA` e desiste. Uma falha num passo inofensivo — um nome de tag
+errado — derrubava a produção até alguém entrar no servidor e rodar `docker run` à mão.
+
+Agora a decisão é **por fato**: existe `api-anterior`? Se existe, o rename aconteceu e o `api` de
+agora é o novo — apaga e devolve. Se não existe, o rename não aconteceu e o `api` de agora **é o
+bom** — não se apaga, só religa.
+
+O teste **extrai a lógica de dentro do `deploy-api.sh`** (entre os marcadores `INICIO/FIM DA LOGICA
+DO ROLLBACK`), não uma cópia que envelhece, e roda os 5 estados contra containers de mentira no
+Docker local. Não dá para ensaiar um deploy de verdade sem derrubar o site; dá para provar a decisão.
+
+**Medido em 18/11/2026:** lógica nova → 5 de 5 verdes. Lógica antiga → **reprova em A, B e C**,
+passa em D e E. Se os marcadores desaparecerem, o teste **recusa rodar** em vez de ficar verde
+medindo nada.
+
+
 ## `deploy-frontend.sh` — publica o painel e CONFERE
 
 ```

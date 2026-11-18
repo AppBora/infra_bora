@@ -130,16 +130,63 @@ ssh -i "$KEY" "$SRV" '/home/ubuntu/backup-bora.sh && ls -t ~/backups/*.dump | he
 # era alcancado. O proprio cabecalho deste script dizia que era isso que ele queria evitar.
 #
 # Agora os dois passos usam o MESMO rollback, e ele e uma funcao.
+#
+# E O ROLLBACK APAGAVA O CONTAINER SADIO (achado pelo QA em 18/11/2026).
+# -----------------------------------------------------------------------------------------------
+# Ele comecava SEMPRE com `docker rm -f api`, partindo de que o `api` que esta la e o container NOVO
+# e ruim, e que o bom esta guardado em `api-anterior`. Isso e verdade em UM dos quatro pontos em que
+# o passo 8 pode falhar. Nos outros tres o `api` que esta la E O BOM, e o rollback o destruia:
+#
+#   docker tag bora-api:$TAG bora-api:latest   <- falha (tag inexistente, disco cheio)
+#        estado: `api` RODANDO e sadio, servindo o site. `api-anterior` nao existe.
+#        rollback antigo: rm -f api (DESTROI O SADIO) -> rename falha -> start falha.
+#        resultado: NAO EXISTE container api. Site no chao.
+#
+#   docker stop -t 30 api                      <- falha
+#        estado: `api` existe (talvez rodando). `api-anterior` nao existe.
+#        resultado: o mesmo. Site no chao.
+#
+#   docker rename api api-anterior             <- falha
+#        estado: `api` existe PARADO, com a imagem boa. `api-anterior` nao existe.
+#        resultado: o mesmo. Site no chao.
+#
+#   docker run -d --name api ...               <- falha
+#        estado: `api` nao existe; `api-anterior` e o bom.  <-- O UNICO caso que o rollback tratava.
+#
+# E nao havia volta depois: eu li o vigia-bora.sh para conferir, e quando nao existe `api` ele tenta
+# `api-anterior` e, nao achando, escreve "ISTO PRECISA DE MAO HUMANA" e desiste. Ou seja: uma falha
+# num passo inofensivo -- um nome de tag errado -- derrubava a producao ate alguem entrar no servidor
+# de madrugada e rodar `docker run` a mao.
+#
+# AGORA A DECISAO E POR FATO, NAO POR SUPOSICAO: existe `api-anterior`?
+#   existe   -> o rename aconteceu, logo o `api` de agora e o novo. Apaga e devolve o anterior.
+#   nao existe -> o rename NAO aconteceu, logo o `api` de agora E O BOM. NAO SE APAGA.
+#                 So religa (o `stop` pode ter passado) e desfaz a tag.
+#
+# A logica fica entre os marcadores abaixo porque `deploy/teste-do-rollback.sh` a EXTRAI e roda
+# contra containers de mentira no docker local, nos quatro casos. Nao da para ensaiar um deploy de
+# verdade sem derrubar o site, mas da para provar a decisao.
 rollback() {
   echo "ROLLBACK: devolvendo a versao anterior." >&2
   ssh -i "$KEY" "$SRV" 'docker logs --tail 40 api 2>&1 | tail -40' >&2 || true
-  # Cada passo com `|| true`: se o container novo nem existe (falha no passo 8), o `rm -f` falha e o
-  # que importa -- devolver o antigo -- nao pode ser abortado por causa disso.
-  ssh -i "$KEY" "$SRV" '
-    docker rm -f api >/dev/null 2>&1 || true
-    docker rename api-anterior api 2>/dev/null || true
-    docker start api >/dev/null 2>&1 || true
-    docker tag bora-api:anterior bora-api:latest 2>/dev/null || true'
+  ssh -i "$KEY" "$SRV" "bash -s" <<'FIM_DO_ROLLBACK'
+# >>>>> INICIO DA LOGICA DO ROLLBACK (extraida pelo teste-do-rollback.sh) >>>>>
+if docker inspect api-anterior >/dev/null 2>&1; then
+  echo "rollback: existe api-anterior, entao o 'api' de agora e o container NOVO. Trocando."
+  docker rm -f api >/dev/null 2>&1 || true
+  docker rename api-anterior api
+  docker start api >/dev/null
+else
+  echo "rollback: NAO existe api-anterior, entao o 'api' de agora E O BOM. NAO vou apagar."
+  # O `stop` do passo 8 pode ter passado antes da falha: religa. Se ja estiver de pe, start nao faz
+  # nada e devolve 0.
+  docker start api >/dev/null 2>&1 || true
+fi
+# A tag volta nos dois casos: `anterior` foi gravada no inicio do passo 8 e aponta para a imagem que
+# estava no ar. Quando o `docker tag ... latest` nem chegou a rodar, isto e um no-op.
+docker tag bora-api:anterior bora-api:latest 2>/dev/null || true
+# <<<<< FIM DA LOGICA DO ROLLBACK <<<<<
+FIM_DO_ROLLBACK
   # Nao anuncia sucesso sem olhar: rollback que falha calado e pior que o deploy que falhou.
   if ssh -i "$KEY" "$SRV" 'for i in $(seq 1 20); do
         docker exec api curl -fs localhost:8080/actuator/health 2>/dev/null | grep -q UP && exit 0
