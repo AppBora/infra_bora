@@ -37,6 +37,95 @@ function Anotar($texto) {
     Add-Content -Path $Log -Value $linha -Encoding UTF8
 }
 
+# ---------------------------------------------------------------------------------------------
+# ENSAIO DE RESTAURACAO DA COPIA LOCAL, PENDURADO NESTA TAREFA
+#
+# ATE 18/11/2026 ESTA COPIA NUNCA HAVIA SIDO RESTAURADA. O que existia:
+#   - `conferir-dump.sh`     prova que o arquivo esta INTEIRO ................ no servidor
+#   - `ensaio-de-restauracao.sh` restaura e conta linhas, todo domingo ....... no servidor
+#   - este script            confere que o byte count bate com o do servidor . aqui
+# O byte count provando transferencia completa e forte, mas nao e a mesma coisa que provar que o
+# arquivo RESTAURA. E justamente esta copia -- a unica fora da AWS -- era a que ninguem ensaiava.
+# Eu rodei a mao em 18/11: restaurou, com 8 lojas, 13 usuarios, 268 produtos, 43 pedidos, schema V74.
+# Mas "eu rodei uma vez" nao diz nada sobre o dump da semana que vem. Dai isto aqui.
+#
+# POR QUE PENDURADO NESTA TAREFA, E NAO NUMA TAREFA PROPRIA
+# Porque esta tarefa PROVADAMENTE roda. Medido no copias.log: 45 dias, 2 falhas (07 e 08/11, o IP
+# morto depois da queda da conta), e o `StartWhenAvailable` recupera dia perdido -- o atraso de
+# 16/11 rodou as 08:28 de 17/11 e trouxe 8 arquivos. Uma tarefa agendada NOVA so vale depois de o
+# dono registrar, e ja existe uma pendente de registro desde 08/11 (`vigia-site.ps1`). Mais uma
+# nao-registrada seria mais uma coisa que nao roda.
+#
+# O ensaio NUNCA pode derrubar a copia: copia e o critico, ensaio e a conferencia. Por isso tudo
+# aqui dentro de try/catch, chamado DEPOIS de a copia estar gravada e anotada.
+function Ensaiar {
+    $marca = Join-Path $Destino 'ULTIMO-ENSAIO.txt'
+    $bash  = 'C:\Program Files\Git\bin\bash.exe'
+    $script = Join-Path (Split-Path -Parent $PSCommandPath) 'ensaio-de-restauracao.sh'
+
+    try {
+        $ultimoOk = $null
+        if (Test-Path $marca) {
+            $t = (Get-Content $marca -First 1 -ErrorAction SilentlyContinue)
+            if ($t -match '^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\s+OK') {
+                $ultimoOk = [datetime]::ParseExact($matches[1], 'yyyy-MM-dd HH:mm:ss', $null)
+            }
+        }
+        $dias = if ($ultimoOk) { ((Get-Date) - $ultimoOk).TotalDays } else { 9999 }
+
+        # O AVISO VEM ANTES DA TENTATIVA, e sai em TODA copia enquanto estiver velho. Ensaio que
+        # falha calado deixa a copia parecendo boa -- que e exatamente o estado em que ela estava.
+        #
+        # TUDO O QUE SAI PARA O LOG E ASCII, SEM ACENTO. Nao e desleixo: o PowerShell 5.1 le um
+        # `.ps1` SEM BOM como ANSI, entao um "ha" com acento no fonte vira DOIS caracteres e o log
+        # grava "hÃ¡". Medido em 18/11/2026 -- a primeira versao desta mensagem saiu assim. Todas as
+        # mensagens originais deste script sao ASCII, e agora eu sei por que.
+        if ($dias -gt 14) {
+            $quanto = if ($ultimoOk) { "$([math]::Round($dias)) dia(s) atras" } else { 'NUNCA' }
+            Anotar ("ATENCAO: a copia local nao e restaurada com sucesso desde: $quanto. " +
+                    "Ela e a unica copia fora da AWS, e backup que ninguem restaura e esperanca.")
+        }
+        if ($dias -lt 7) { return }   # ensaiado esta semana: nada a fazer
+
+        if (-not (Test-Path $bash))   { Anotar 'ensaio pulado: nao achei o bash do Git.'; return }
+        if (-not (Test-Path $script)) { Anotar "ensaio pulado: nao achei $script."; return }
+        # Docker desligado nao e defeito do backup: PULA sem mexer na marca, para tentar amanha.
+        & docker version --format '{{.Server.Version}}' *> $null
+        if ($LASTEXITCODE -ne 0) { Anotar 'ensaio pulado: o Docker nao esta respondendo. Tento amanha.'; return }
+
+        $saida = & $bash $script '/c/bora-backups' 2>&1
+        $codigo = $LASTEXITCODE
+        # So as linhas de CONTAGEM ("ok: loja com 8 linha(s)"), mais qualquer FALHOU.
+        #
+        # Duas pedras aqui, as duas minhas, as duas medidas em 18/11/2026:
+        #  1. A linha de veredito "ENSAIO OK: ... (Isto nao substitui a copia para FORA da
+        #     instancia:" tem o parentese abrindo numa linha e fechando na seguinte. Entrando no
+        #     resumo, o log terminava cortado no meio de uma frase.
+        #  2. `-match` no PowerShell e INSENSIVEL a maiusculas por padrao, entao filtrar por 'ok: '
+        #     casava tambem o 'ENSAIO OK:' -- e a correcao do item 1 nao funcionou. Por isso
+        #     `-cmatch`: as contagens sao 'ok:' minusculo, o veredito e 'OK:' maiusculo.
+        $resumo = ($saida | Where-Object { ($_ -cmatch '\sok: ') -or ($_ -match 'FALHOU') } |
+                   ForEach-Object { ($_ -replace '^\S+\s+', '') -replace '^ok: ', '' }) -join ', '
+
+        if ($codigo -eq 0) {
+            Anotar "ENSAIO DE RESTAURACAO OK -- $resumo"
+            Set-Content -Path $marca -Encoding UTF8 -Value @(
+                ("{0} OK" -f (Get-Date -Format 'yyyy-MM-dd HH:mm:ss')),
+                $resumo,
+                'Este arquivo e lido pelo copiar-backup-bora.ps1 para saber quando ensaiar de novo.',
+                'Uma linha que NAO comece com data + OK faz o proximo ensaio rodar.')
+        } else {
+            # NAO atualiza a marca: o aviso continua saindo em toda copia ate alguem resolver.
+            Anotar "!!! O ENSAIO DE RESTAURACAO FALHOU (codigo $codigo). A COPIA LOCAL PODE NAO SERVIR."
+            Anotar "    $resumo"
+            $saida | Select-Object -Last 8 | ForEach-Object { Anotar "    $_" }
+        }
+    }
+    catch {
+        Anotar "ensaio nao rodou: $($_.Exception.Message)"
+    }
+}
+
 try {
     if (-not (Test-Path $Destino)) { New-Item -ItemType Directory -Path $Destino | Out-Null }
 
@@ -91,6 +180,8 @@ try {
                 "nuvem. Cada um tem telefone, endereco e CPF de todo cliente. Mover ou apagar e " +
                 "decisao do dono." -f $sobrando.Count, $mb, $Antigo)
     }
+
+    Ensaiar
 }
 catch {
     Anotar "FALHOU: $($_.Exception.Message)"

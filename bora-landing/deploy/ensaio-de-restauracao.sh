@@ -61,11 +61,38 @@ if ! docker exec "$NOME_CT" pg_isready -U postgres >/dev/null 2>&1; then
 fi
 
 # ---------------------------------------------------------------- a restauracao
-docker cp "$ARQ" "$NOME_CT":/tmp/dump.dump >/dev/null
+#
+# TODO CAMINHO DE DENTRO DO CONTAINER VAI DENTRO DE `sh -c '...'`.
+#
+# Eu quis rodar ESTE script contra a copia local de C:ora-backups -- manter uma segunda versao do
+# ensaio so para Windows seriam duas verdades envelhecendo diferente. No Git Bash ele falhava com:
+#
+#   pg_restore: error: could not open input file "C:/Users/user/AppData/Local/Temp/dump.dump"
+#
+# A CAUSA NAO E O `docker cp`, que foi onde eu olhei primeiro e errei duas vezes. E que o MSYS
+# reescreve qualquer argumento que PARECA caminho POSIX antes de entregar ao processo. Medido em
+# 18/11/2026, pedindo ao proprio container para imprimir o que recebeu:
+#
+#   docker exec ct echo /tmp/dump.dump         -> C:/Users/user/AppData/Local/Temp/dump.dump
+#   docker exec ct sh -c 'echo /tmp/dump.dump' -> /tmp/dump.dump
+#   docker exec ct echo //tmp/dump.dump        -> //tmp/dump.dump
+#
+# Ou seja: era o `/tmp/dump.dump` do PG_RESTORE que chegava reescrito, e o arquivo estava no lugar
+# certo o tempo todo. Dentro de aspas simples do `sh -c` o MSYS nao mexe; no Linux `sh -c` nao muda
+# nada. Uma linha que serve aos dois.
+#
+# O `docker cp` saiu por outro motivo: ele tem caminho nos DOIS lados -- origem do Windows e destino
+# do container -- que querem convencoes opostas, e MSYS_NO_PATHCONV e uma so para ambos. Pelo
+# redirecionamento quem abre o arquivo e o proprio bash, que nao converte nada, e nao sobra caminho
+# nenhum na linha de comando.
+if ! docker exec -i "$NOME_CT" sh -c 'cat > /tmp/dump.dump' < "$ARQ"; then
+  dizer "ENSAIO FALHOU: nao consegui colocar o dump dentro do container de ensaio."
+  exit 1
+fi
 # `--no-owner`: o dono das tabelas na producao e o boraadmin, que nao existe aqui. Sem isto a
 # restauracao enche o log de erro de permissao e mascara o que importa.
 SAIDA=$(docker exec -e PGPASSWORD="$SENHA" "$NOME_CT" \
-  pg_restore --no-owner --no-privileges -U postgres -d ensaio /tmp/dump.dump 2>&1) || true
+  sh -c 'pg_restore --no-owner --no-privileges -U postgres -d ensaio /tmp/dump.dump' 2>&1) || true
 ERROS=$(printf '%s' "$SAIDA" | grep -ci "error" || true)
 if [ "$ERROS" -gt 0 ]; then
   dizer "ENSAIO FALHOU: a restauracao deu $ERROS erro(s):"
