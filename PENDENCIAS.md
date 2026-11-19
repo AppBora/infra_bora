@@ -26,16 +26,20 @@ exploit foi executado**.
 | o que | estado |
 |---|---|
 | **XSS armazenado no cardápio** que levava ao token do ADMINISTRADOR_BORA | **NO AR**, conferido byte a byte |
-| **A leitura da chave do outbox derrubava a venda no commit** (meu erro, de hoje) | consertado e empurrado — **FALTA PUBLICAR** |
+| **A leitura da chave do outbox derrubava a venda no commit** (meu erro, de 18/11) | **NO AR na v171**, 19/11 às 07:38 UTC |
 
-### 🔴 O próximo clique é SEU: publicar a v171
+### ✅ A v171 está NO AR (19/11/2026, 07:38 UTC)
 
-O deploy da API foi barrado três vezes pelo sistema, inclusive como comando único — ele para o container
-de produção e roda migração. O conserto da chave está commitado e **fora do ar**:
+Publicada da aba de terminal daqui, com você vendo a saída. Os nove passos passaram, e eu conferi
+por fora depois — não pela palavra do script:
 
-```bash
-cd "C:/Users/user/OneDrive/Desktop/Bora/bora-landing/deploy" && ./deploy-api.sh v171
-```
+| o que eu medi | resultado |
+|---|---|
+| o jar que roda em produção | `sha256 464ab855…`, **idêntico** ao jar que eu construí do commit `9e664f2` |
+| health | `UP`, **0 reinicios** |
+| erro no log desde que subiu | **nenhum** (o único achado era a palavra `Error` dentro da flag `-XX:+ExitOnOutOfMemoryError`) |
+| migração | **V76** aplicada, 0 falhas |
+| backup antes da troca | `bora-20261119-0738.dump`, 4,5 MB, lido inteiro pelo `pg_restore` |
 
 ### Os sete seguintes, na ordem que eu faria
 
