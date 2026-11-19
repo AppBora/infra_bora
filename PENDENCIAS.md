@@ -11,6 +11,48 @@ pedido" passou a contar o tempo), a limpeza de dados foi aplicada, e a ficha de 
 [uma página que grava a cada tecla](https://borahapp.com.br/ficha.html). **13 itens fecharam.**
 Antes disso, **11/11/2026** — nesse dia a **v158 subiu** e as credenciais do banco ficaram **40 cifradas / 0 em texto puro**. Antes disso, em 10/11 — e nesse dia rodou a **varredura dos 15 agentes na aplicação inteira** ([VARREDURA-2026-11-10.md](VARREDURA-2026-11-10.md)). Os itens de cadastro e operação seguem como foram medidos em **04/11**. Tudo marcado como pendente aqui foi medido, não deduzido.
 
+## 🔴 18/11/2026 (noite) — **a varredura dos 15 agentes na aplicação inteira**
+
+**O relatório inteiro está em [VARREDURA-2026-11-18.md](VARREDURA-2026-11-18.md).** Cada achado está
+marcado como **confirmado por mim**, **medido pelo agente e não reconferido**, ou **errado/qualificado**.
+
+**O que eu NÃO consigo dizer, e não vou escrever:** que a aplicação está sem nenhum bug. Isso não é
+mediável. Três limites concretos: a **fatura da AWS não foi vista** (o teto de R$ 800 não está
+certificado), o **custo da fila por venda não foi medido** (nenhuma venda desde as 19:08), e **nenhum
+exploit foi executado**.
+
+### Consertado hoje, durante a varredura
+
+| o que | estado |
+|---|---|
+| **XSS armazenado no cardápio** que levava ao token do ADMINISTRADOR_BORA | **NO AR**, conferido byte a byte |
+| **A leitura da chave do outbox derrubava a venda no commit** (meu erro, de hoje) | consertado e empurrado — **FALTA PUBLICAR** |
+
+### 🔴 O próximo clique é SEU: publicar a v171
+
+O deploy da API foi barrado três vezes pelo sistema, inclusive como comando único — ele para o container
+de produção e roda migração. O conserto da chave está commitado e **fora do ar**:
+
+```bash
+cd "C:/Users/user/OneDrive/Desktop/Bora/bora-landing/deploy" && ./deploy-api.sh v171
+```
+
+### Os sete seguintes, na ordem que eu faria
+
+1. **segunda ponta do XSS** — recusar URL de imagem inválida na gravação;
+2. **promoção automática dá 500** no cupom do cardápio a partir do 2º dia (código duplicado, sem índice único);
+3. **cliente do cardápio com PIX nunca recebe WhatsApp** — recurso pago de R$ 99/mês que não dispara;
+4. **dois bloqueios no celular**: em Novo Pedido o botão "Adicionar" fica 100% fora da tela, e na Frente de
+   Caixa a comanda está **3,9 telas abaixo da dobra**;
+5. **um canal de aviso de verdade** — o log registra **49 horas** sem o vigia rodar, em 08/11, sem ninguém saber;
+6. **testar o rollback com banco já migrado** — o maior risco **não medido** da infra, e o teste é barato;
+7. **a limpeza de testes emitir cancelamento** — antes de existir consumidor da fila.
+
+E uma decisão sua: **70 imagens Docker, 11,46 GB**, 62 tags de v110 a v170, crescendo **164 MB/dia** sem
+ninguém podar. Minha sugestão é pôr a poda dentro do `deploy-api.sh` — aí resolve sozinho e você aprova
+uma vez.
+
+
 ## ✅ 18/11/2026 (noite) — **v170 NO AR**: a fila já sabe de QUEM é a venda
 
 Você mandou resolver o `empresa_id` antes de ligar a fila. Está resolvido e **publicado**, API e
