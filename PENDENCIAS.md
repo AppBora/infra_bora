@@ -41,6 +41,34 @@ por fora depois — não pela palavra do script:
 | migração | **V76** aplicada, 0 falhas |
 | backup antes da troca | `bora-20261119-0738.dump`, 4,5 MB, lido inteiro pelo `pg_restore` |
 
+### ✅ A FILA DE EVENTOS está PROVADA com uma venda de verdade (19/11/2026)
+
+Antes disso ela estava ligada e tinha entregado **zero** eventos — e isso não era defeito: eram **0
+pedidos em 24h**. Ligada e nunca exercitada é "não testada", não "funcionando". Como os módulos vão
+consumir esse cano, eu fiz um pedido de verdade na **loja 1** (a de teste) antes de qualquer módulo:
+
+| o que eu medi | resultado |
+|---|---|
+| o log do container | `evento PedidoRecebido do pedido 144 (loja 1) em 23.7 ms. A chave 'outbox.habilitado' esta LIGADA` |
+| a linha gravada na fila | `id=1, tipo=PedidoRecebido, schema=1.0.0, empresa_id=1, loja_id=1, agregado=pedido/144` |
+| a empresa confere com o cadastro? | evento `empresa_id=1` = loja `empresa_id=1` = **Sorveteria da Rosa** — **conferem** |
+| eventos sem empresa | **0** |
+
+De propósito **não** usei PIX: criaria cobrança de verdade na conta Asaas do lojista. O pedido de
+teste ficou na loja 1 (**CD-144**, R$ 25, retirada, dinheiro, com observação "não preparar") — se
+quiser, eu cancelo.
+
+### ⚠️ Uma coisa que eu te disse errado: a idempotência **existe**
+
+Eu afirmei que o `POST /api/pedidos` grava venda duas vezes "hoje". Isso vinha de um estudo de
+**30/10** e deixou de valer em **17/11**. Os **quatro** canais têm a trava: marketplace (V28),
+painel e PDV (V71, com `crypto.randomUUID()` por venda), e o cardápio desde 17/11. Medido no ar
+hoje: reenviei o mesmo pedido com a mesma chave e a API devolveu **`jaEstavaGravado: true` com o
+mesmo pedido 144**; o banco ficou com **1** pedido e **1** evento.
+
+A ressalva que continua valendo: a trava só vale para quem **manda o cabeçalho**. Cardápio antigo
+em cache no celular de alguém segue sem ela.
+
 ### Os sete seguintes, na ordem que eu faria
 
 1. **segunda ponta do XSS** — recusar URL de imagem inválida na gravação;
