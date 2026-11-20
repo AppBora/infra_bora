@@ -69,21 +69,62 @@ mesmo pedido 144**; o banco ficou com **1** pedido e **1** evento.
 A ressalva que continua valendo: a trava só vale para quem **manda o cabeçalho**. Cardápio antigo
 em cache no celular de alguém segue sem ela.
 
-### Os sete seguintes, na ordem que eu faria
+### ✅ OS 14 DO MÓDULO PRINCIPAL ESTÃO CONSERTADOS (19/11/2026)
 
-1. **segunda ponta do XSS** — recusar URL de imagem inválida na gravação;
-2. **promoção automática dá 500** no cupom do cardápio a partir do 2º dia (código duplicado, sem índice único);
-3. **cliente do cardápio com PIX nunca recebe WhatsApp** — recurso pago de R$ 99/mês que não dispara;
-4. **dois bloqueios no celular**: em Novo Pedido o botão "Adicionar" fica 100% fora da tela, e na Frente de
-   Caixa a comanda está **3,9 telas abaixo da dobra**;
-5. **um canal de aviso de verdade** — o log registra **49 horas** sem o vigia rodar, em 08/11, sem ninguém saber;
-6. **testar o rollback com banco já migrado** — o maior risco **não medido** da infra, e o teste é barato;
-7. **a limpeza de testes emitir cancelamento** — antes de existir consumidor da fila.
+Você mandou fechar os 14 e só voltar com 100%. Estão os 14, **commitados e empurrados nos três
+repositórios** — e **nenhum publicado ainda**: o deploy é o seu clique.
 
-E uma decisão sua: **70 imagens Docker, 11,46 GB**, 62 tags de v110 a v170, crescendo **164 MB/dia** sem
-ninguém podar. Minha sugestão é pôr a poda dentro do `deploy-api.sh` — aí resolve sozinho e você aprova
-uma vez.
+| # | item | prova |
+|---|---|---|
+| 1 | **promoção dava 500** no cupom do cardápio | a loja 18 (Zirá) tinha **4 linhas** de `BORA15L18` no dump de produção; conserto em 3 partes + `uq_promocao_loja_codigo` na V77 |
+| 2 | **PIX nunca recebia WhatsApp** (R$ 99/mês) | a regra virou uma só (`Pedido.ehDeMarketplace`); achei o **mesmo defeito num 2º lugar**: o cliente do PIX perdia também o botão de repetir pedido |
+| 3 | **dois bloqueios no celular** | medido no navegador a 375×812: botão de **x1=548 → x1=347**, e a comanda agora a **um toque** |
+| 4 | **nada avisava quando o site caía** | `avisar` em **9 pontos** do vigia, testado com recebedor local nas duas pontas |
+| 5 | **o vigia não olhava o Caddy** | ele mede, reinicia quando a causa está medida, e diz qual das três sobrou |
+| 6 | **folha impressa era da Zirá** | recusa loja sem desenho próprio, e diz o que ainda funciona |
+| 7 | **link sem `?loja=` ia para a loja 1** | a página diz que o link está incompleto e não deixa pedir |
+| 8 | **a marca sobrevivia ao logout** | `boraTheme` apagado; era o que te mostrou "Zirá - Montreal" |
+| 9 | **integração morta em silêncio** | novo painel com as mortas de **todas** as lojas, sem vazar segredo |
+| 10 | **deck na marca antiga** | 49 ocorrências do laranja → 0; contraste de **3,18 → 4,33:1**, zero reprovados |
+| 11 | **agente de marketing se contradizia** | a contradição e os 2 arquivos que a alimentavam |
+| 12 | **limpeza não emitia cancelamento** | emite na mesma transação; pedido já cancelado fica de fora |
+| 13 | **nada podava imagem Docker** | poda nos dois lados do deploy; e achei **25,4 GB** nesta máquina |
+| 14 | **segunda metade do XSS** | `EnderecoDeImagem`: lista de permissão nos 3 caminhos de gravação |
 
+**A prova, somada:** **1.624** testes de unidade + **255** de integração contra Postgres de verdade +
+**742** de tela = **2.621 testes, 0 falhas**. São **53 testes novos**. Em cada defeito de dinheiro ou
+segurança eu apliquei um mutante e **confirmei que o teste morreu** antes de remover:
+
+| mutante | testes que morreram |
+|---|---|
+| tirar o filtro da regra no `DescontoService` | 2 de 4 |
+| devolver a guarda errada da notificação | 2 de 8 |
+| validador de imagem que aceita tudo | 10 de 12 |
+
+**E os quatro passos locais do deploy passam** (árvore limpa, data dos Termos conferida contra a
+página no ar, `docker build` com os testes dentro, e subida com a única causa raiz sendo
+`Connection refused`). Ou seja: **dá para publicar.**
+
+### 🔴 O próximo clique é SEU: publicar
+
+```bash
+cd "C:/Users/user/OneDrive/Desktop/Bora/bora-landing/deploy" && ./deploy-api.sh v172
+```
+
+O frontend sobe por outro caminho (`scp` da pasta) — e esta rodada tem **9 arquivos de tela**
+mudados, então os dois precisam subir.
+
+### O que NÃO entrou nestes 14, e por quê
+
+1. **testar o rollback com banco já migrado** — segue sendo o maior risco **não medido** da infra. Não
+   estava entre os 14 porque não é defeito do módulo principal: é um teste que falta. Barato, e eu faria
+   em seguida.
+2. **folha impressa genérica** — a folha hoje **recusa** a loja para a qual não foi desenhada, que é o
+   conserto. Fazer uma folha montada das categorias reais de cada loja é **recurso novo**, não conserto.
+3. **a seção 4 da varredura** — os achados que os agentes mediram e **eu não reconferi**. Continuam
+   desconhecidos, e eu não os conto como fechados nem como abertos.
+4. **os 42 GB de cache de build e os 132 volumes** desta máquina — limpar deixa o próximo build lento e
+   volume anônimo pode guardar algo. Os comandos estão no comentário do deploy; a decisão é sua.
 
 ## ✅ 18/11/2026 (noite) — **v170 NO AR**: a fila já sabe de QUEM é a venda
 
