@@ -375,8 +375,17 @@ else
   echo "   nada a remover: ha \$(echo "\$TAGS" | grep -c . ) versao(oes) guardada(s)"
 fi
 
-# Camadas soltas e volumes sem dono. Os dois sao conservadores: `image prune` sem `-a` so remove
-# camada que nenhuma imagem com tag referencia, e `volume prune` so remove volume que nenhum
+# Camadas soltas e volumes sem dono. Os dois sao conservadores: 'image prune' sem '-a' so
+# remove camada que nenhuma imagem com tag referencia, e 'volume prune' so remove volume que
+# nenhum
+#
+# SEM CRASE AQUI, e nao e estilo. Este heredoc e <<PODA SEM aspas, de proposito, para
+# interpolar $PODA_MANTER. Com o delimitador sem aspas o shell LOCAL expande o corpo inteiro
+# antes de enviar -- inclusive o que parece comentario. As crases que estavam nestas duas
+# linhas fizeram a maquina local tentar rodar 'image prune', '-a' e 'volume prune', e o deploy
+# da v172 imprimiu os tres 'command not found' (20/11/2026). Deu em nada porque nenhum dos
+# tres existe como comando. Uma crase com um comando QUE EXISTE teria rodado na maquina de
+# quem faz o deploy, em silencio.
 # container usa. O dump do banco NAO mora em volume -- mora em /home/ubuntu/backups, no disco.
 docker image prune -f >/dev/null 2>&1 || true
 docker volume prune -f >/dev/null 2>&1 || true
