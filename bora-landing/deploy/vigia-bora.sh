@@ -34,6 +34,24 @@
 # esta DOWN, ele NAO reinicia: escreve que o problema e DEPOIS da API -- e aí quem le o log sabe
 # olhar o banco em vez de ficar esperando o reinicio resolver.
 LOG=/home/ubuntu/backups/vigia.log
+
+# ==================================================================================================
+# DE ONDE VEM A URL DO ALARME (20/11/2026)
+#
+# O dono escolheu Telegram. A URL de um bot do Telegram CARREGA o token dentro dela
+# (https://api.telegram.org/bot<TOKEN>/sendMessage): ela e SEGREDO, nao configuracao.
+#
+# Por isso ela NAO entra no crontab, onde 'crontab -l' a mostraria, nem na linha de comando, onde
+# 'ps' a mostraria. Ela mora num arquivo so do dono, modo 600, lido com 'grep | cut' -- NUNCA com
+# 'source'. Em 30/10/2026 um 'source' num arquivo de segredo imprimiu a chave de producao do Asaas
+# no meio de uma tarefa. Aqui isso nao tem como acontecer: nada deste arquivo e executado, so lido.
+#
+# A variavel de ambiente, quando existe, GANHA do arquivo -- e assim da para testar o envio sem
+# tocar no arquivo do dono.
+ARQ_ALARME=/home/ubuntu/.bora-alarme
+le_segredo() { [ -r "$ARQ_ALARME" ] && grep -m1 "^$1=" "$ARQ_ALARME" 2>/dev/null | cut -d= -f2- ; }
+: "${BORA_ALARME_WEBHOOK:=$(le_segredo BORA_ALARME_WEBHOOK)}"
+: "${BORA_ALARME_CHAT:=$(le_segredo BORA_ALARME_CHAT)}"
 MARCA=/tmp/bora-falhou
 # Marcador separado: o processo pode estar vivo e o sistema fora. Sao duas historias diferentes.
 MARCA_SISTEMA=/tmp/bora-sistema-fora
@@ -87,13 +105,35 @@ avisar() {
   seguro=${seguro//$'\n'/ }      # quebra de linha -> espaco
   seguro=${seguro//$'\r'/ }
   seguro=${seguro//$'\t'/ }
-  if curl -sS -o /dev/null --max-time 15 -X POST \
+  # O CORPO DEPENDE DE QUEM RECEBE, e isto NAO e detalhe de estilo: o Telegram RECUSA o corpo
+  # generico. Ele quer {"chat_id":...,"text":...}; Discord e ntfy aceitam o {"title","message"}.
+  local corpo
+  case "$BORA_ALARME_WEBHOOK" in
+    *api.telegram.org*)
+      if [ -z "${BORA_ALARME_CHAT:-}" ]; then
+        echo "$(date -Is) ATENCAO: a URL e do Telegram mas BORA_ALARME_CHAT nao esta definido --" \
+             "o alarme acima NAO foi enviado. Falta a linha BORA_ALARME_CHAT= em $ARQ_ALARME." >> "$LOG"
+        return 0
+      fi
+      corpo="{\"chat_id\":\"$BORA_ALARME_CHAT\",\"text\":\"BoraHapp: $seguro\"}" ;;
+    *)
+      corpo="{\"title\":\"BoraHapp\",\"message\":\"$seguro\"}" ;;
+  esac
+
+  # CONFERE O CODIGO HTTP, e nao so o exit do curl. E a diferenca que importa com o Telegram: corpo
+  # errado devolve 400, mas o curl TERMINA BEM -- ele entregou a requisicao. Com o teste antigo
+  # ("if curl ...") o log escreveria "alarme enviado" para um alarme que o Telegram jogou fora. Um
+  # aviso que o log JURA ter mandado e pior que um que ele admite ter perdido.
+  local http
+  http=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 15 -X POST \
        -H 'Content-Type: application/json' \
-       --data-binary "{\"title\":\"BoraHapp\",\"message\":\"$seguro\"}" \
-       "$BORA_ALARME_WEBHOOK" 2>>"$LOG"; then
-    echo "$(date -Is) alarme enviado" >> "$LOG"
+       --data-binary "$corpo" \
+       "$BORA_ALARME_WEBHOOK" 2>>"$LOG")
+  if [ "${http:-000}" -ge 200 ] && [ "${http:-000}" -lt 300 ]; then
+    echo "$(date -Is) alarme enviado (HTTP $http)" >> "$LOG"
   else
-    echo "$(date -Is) O ENVIO DO ALARME FALHOU. O texto esta na linha de cima deste log." >> "$LOG"
+    echo "$(date -Is) O ENVIO DO ALARME FALHOU (HTTP ${http:-000}). O texto esta na linha de cima" \
+         "deste log." >> "$LOG"
   fi
 }
 
