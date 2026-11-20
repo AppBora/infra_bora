@@ -92,6 +92,74 @@ if [ "$NO_AR" != "$NO_CODIGO" ]; then
 fi
 echo "ok: codigo, checkout e pagina no ar dizem $NO_CODIGO"
 
+# ==================================================================================================
+# A MIGRACAO NOVA DEIXA O ROLLBACK FUNCIONAR? (medido em 19/11/2026)
+#
+# O passo 9 deste script faz rollback quando a versao nova nao fica sadia -- e o rollback sobe a
+# imagem ANTIGA contra o banco que a nova JA MIGROU. Isso nunca tinha sido testado, e era o maior
+# risco nao medido da infra.
+#
+# EU TESTEI. Subi a `bora-api:v170` (que conhece ate a V76) contra um Postgres migrado em V77:
+#
+#   Successfully validated 77 migrations
+#   WARN: Schema "public" has a version (77) that is newer than the latest available migration (76) !
+#   Schema "public" is up to date. No migration necessary.
+#   health CHEIO: HTTP 200   |   cardapio da loja 1: HTTP 200
+#
+# Ou seja: o Flyway TOLERA schema mais novo que o codigo, com um aviso, e a aplicacao antiga sobe e
+# funciona. O rollback esta seguro -- PARA MIGRACAO ADITIVA.
+#
+# O QUE CONTINUA PERIGOSO, e e o que este bloco confere: migracao que APAGA ou RENOMEIA o que o
+# codigo antigo le. Nesse caso o Flyway nao reclama de nada (ele valida historico, nao expectativa
+# de codigo) e o rollback sobe uma aplicacao que consulta coluna que nao existe mais. Falha em
+# tempo de consulta, com cliente no ar, e nao no health.
+#
+# Quais migracoes conferir: so as que entraram DESDE o commit da imagem que esta em producao. O
+# proprio deploy grava esse commit como label `git` na imagem, e e dele que sai o intervalo.
+# ==================================================================================================
+dizer "2.5/9 a migracao nova deixa o rollback funcionar?"
+COMMIT_NO_AR="$(ssh -i "$KEY" "$SRV" \
+  'docker inspect api --format "{{index .Config.Labels \"git\"}}" 2>/dev/null' 2>/dev/null | tr -d '\r')"
+if [ -z "$COMMIT_NO_AR" ]; then
+  echo "   nao consegui ler o commit da imagem em producao (label 'git'). Sem o intervalo eu nao" >&2
+  echo "   sei quais migracoes sao novas -- CONFIRA A MAO se alguma apaga ou renomeia coluna." >&2
+elif ! git -C "$BACKEND" cat-file -e "$COMMIT_NO_AR^{commit}" 2>/dev/null; then
+  echo "   o commit em producao ($COMMIT_NO_AR) nao existe neste repositorio. CONFIRA A MAO." >&2
+else
+  NOVAS="$(git -C "$BACKEND" diff --name-only --diff-filter=AM \
+      "$COMMIT_NO_AR..HEAD" -- src/main/resources/db/migration || true)"
+  if [ -z "$NOVAS" ]; then
+    echo "   nenhuma migracao nova desde $COMMIT_NO_AR -- o rollback nao tem risco de schema."
+  else
+    echo "   migracoes novas desde $COMMIT_NO_AR:"
+    printf '     %s\n' $NOVAS
+    PERIGO=""
+    for M in $NOVAS; do
+      ARQ="$BACKEND/$M"
+      [ -f "$ARQ" ] || continue
+      # Sem comentario, para "-- drop column" nao virar alarme. E so o que o codigo ANTIGO poderia
+      # estar lendo: apagar/renomear coluna ou tabela, e trocar tipo de coluna que ja existia.
+      CORPO="$(sed -E 's/--.*$//' "$ARQ" | tr '\n' ' ' | tr -s ' ')"
+      if echo "$CORPO" | grep -qiE 'drop +column|drop +table|rename +column|rename +to|alter +column +[a-z_]+ +type'; then
+        PERIGO="$PERIGO $M"
+      fi
+    done
+    if [ -n "$PERIGO" ]; then
+      echo "" >&2
+      echo "   !!! ATENCAO: estas migracoes NAO sao aditivas:$PERIGO" >&2
+      echo "   O rollback do passo 9 sobe a imagem ANTIGA contra o banco JA MIGRADO. Com coluna" >&2
+      echo "   apagada ou renomeada, a aplicacao antiga sobe e QUEBRA na consulta -- com cliente no" >&2
+      echo "   ar, e nao no health. Medido em 19/11/2026: o Flyway nao reclama disso." >&2
+      echo "   Se for seguir, tenha o dump a mao e saiba que o rollback automatico pode nao salvar." >&2
+      echo "   Para seguir de proposito: PODA_MANTER=... ACEITO_RISCO_DE_ROLLBACK=1 ./deploy-api.sh $TAG" >&2
+      [ "${ACEITO_RISCO_DE_ROLLBACK:-}" = "1" ] || exit 1
+      echo "   (ACEITO_RISCO_DE_ROLLBACK=1 -- seguindo por decisao de quem rodou)" >&2
+    else
+      echo "   ok: todas aditivas -- o rollback sobe a imagem antiga sem quebrar."
+    fi
+  fi
+fi
+
 dizer "3/9 build da imagem (os testes rodam aqui dentro)"
 docker build --label "git=$COMMIT" -t "bora-api:$TAG" "$BACKEND"
 
