@@ -11,12 +11,11 @@ pedido" passou a contar o tempo), a limpeza de dados foi aplicada, e a ficha de 
 [uma página que grava a cada tecla](https://borahapp.com.br/ficha.html). **13 itens fecharam.**
 Antes disso, **11/11/2026** — nesse dia a **v158 subiu** e as credenciais do banco ficaram **40 cifradas / 0 em texto puro**. Antes disso, em 10/11 — e nesse dia rodou a **varredura dos 15 agentes na aplicação inteira** ([VARREDURA-2026-11-10.md](VARREDURA-2026-11-10.md)). Os itens de cadastro e operação seguem como foram medidos em **04/11**. Tudo marcado como pendente aqui foi medido, não deduzido.
 
-## 🔴 20/11/2026 — **tres cliques seus, e um deploy meu esperando a sua palavra**
+## 🔴 20/11/2026 — **os tres cliques que sobraram, e sao seus**
 
-O que subiu hoje esta no fim desta secao (v172, frontend, vigia, v173). Depois disso voce mandou
-fechar **os 6 itens que faltavam da secao 4**: eles estao **prontos e commitados, e NAO publicados**
-— e o item 4 abaixo. Os tres primeiros **nao da para eu fazer sem voce**, e estao na ordem do que
-mais protege dinheiro.
+Hoje subiu tudo: v172, o frontend, o vigia, a v173 e — depois que voce mandou fechar os 6 itens
+que faltavam da secao 4 — a **v174**. O que esta aqui embaixo **nao da para eu fazer sem voce**, e
+esta na ordem do que mais protege dinheiro.
 
 ### 1. 🔴 O alarme do vigia — 2 valores, e voce e avisado de madrugada
 
@@ -66,13 +65,26 @@ em conta de ninguem — **Pedidos → CD-144 → Cancelar**, no painel da loja 1
 Ao abrir, voce vai ver tambem dois pedidos presos que **nao sao meus**: o **110** em preparo desde
 **30/09** e o **108** pronto desde **19/09**. Eles ficam contando como pedido em aberto no painel.
 
-### 4. ✅ Os 6 itens da secao 4 — **consertados, e esperando o seu clique**
+### 4. ✅ Os 6 itens da secao 4 — **NO AR na v174**
 
-Voce mandou fazer os 6. **Estao prontos, commitados e NAO publicados**: backend `b999338`, frontend
-`409b339`. Para subir sao os dois caminhos de sempre (`./deploy-api.sh v174` e o do frontend), e sao
-**quatro migracoes novas** (V79 a V82).
+Voce mandou fazer os 6 e subir. **Esta no ar**, com as quatro migracoes novas (V79 a V82) aplicadas
+em producao em 199 ms. Backend `b999338`, frontend `409b339`.
 
-Cada um, com a decisao que eu tomei e o que voce vai sentir:
+**A prova, medida em producao depois do deploy** (nao e "o deploy disse que deu certo"):
+
+- `sha256` do jar dentro do container: **`3061fafc…`**, identico ao da imagem construida aqui; e
+  `latest` e `v174` sao a **mesma** imagem.
+- Flyway: *"Successfully applied 4 migrations … now at version v82"*.
+- As colunas novas existem (`configuracao_loja.tempo_preparo_min`, `pedido.entregador_id`) — e o
+  Hibernate esta em `validate`, entao ele teria **recusado subir** sem elas.
+- **As chaves estrangeiras: 31 tabelas com `loja_id`, 30 com FK, e a unica sem e a `evento_outbox`**
+  — exatamente o desenho. **22 de 22 validadas** (`convalidated = true`), e a da auditoria com
+  `ON DELETE SET NULL`. Medido no dump de DEPOIS do deploy, restaurado num Postgres descartavel
+  dentro do servidor.
+- Cardapio da loja 18 pela internet: **200**. Painel sem token: **401**. Os 100 arquivos do frontend
+  com o mesmo `sha256` aqui e no servidor, e quatro deles conferidos **byte a byte pela internet**.
+
+Cada item, com a decisao que eu tomei e o que voce vai sentir:
 
 | item | o que mudou | o que voce vai notar |
 |---|---|---|
@@ -116,6 +128,9 @@ um erro de digitacao na tela.
 - **Vigia** — o do servidor estava **24 dias atrasado** (nenhum dos dois scripts de deploy leva
   arquivo de deploy). Agora com batida de coracao: "esta tudo bem" passou a ter prova em arquivo em
   vez de silencio.
+- **v174** — os itens **2, 3, 4, 5, 6 e 8** da secao 4, com as migracoes V79 a V82. A prova esta
+  no item 4 acima. **Nenhum lojista foi deslogado por este deploy** (quem desloga e troca de senha,
+  e isso foi a v173).
 - **v173** — os itens **1** e **7** da secao 4. Trocar a senha passou a **derrubar token roubado**
   (foi este deploy que deslogou todo mundo, uma vez, com a sua aprovacao) e o teto de 15 usuarios do
   plano parou de furar pela rede.
