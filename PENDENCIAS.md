@@ -114,17 +114,81 @@ cd "C:/Users/user/OneDrive/Desktop/Bora/bora-landing/deploy" && ./deploy-api.sh 
 O frontend sobe por outro caminho (`scp` da pasta) — e esta rodada tem **9 arquivos de tela**
 mudados, então os dois precisam subir.
 
-### O que NÃO entrou nestes 14, e por quê
+### ✅ AS TRÊS RESSALVAS TAMBÉM FECHARAM (19/11/2026, noite)
 
-1. **testar o rollback com banco já migrado** — segue sendo o maior risco **não medido** da infra. Não
-   estava entre os 14 porque não é defeito do módulo principal: é um teste que falta. Barato, e eu faria
-   em seguida.
-2. **folha impressa genérica** — a folha hoje **recusa** a loja para a qual não foi desenhada, que é o
-   conserto. Fazer uma folha montada das categorias reais de cada loja é **recurso novo**, não conserto.
-3. **a seção 4 da varredura** — os achados que os agentes mediram e **eu não reconferi**. Continuam
-   desconhecidos, e eu não os conto como fechados nem como abertos.
-4. **os 42 GB de cache de build e os 132 volumes** desta máquina — limpar deixa o próximo build lento e
-   volume anônimo pode guardar algo. Os comandos estão no comentário do deploy; a decisão é sua.
+**1. O rollback contra banco já migrado — era o maior risco não medido da infra. Agora está medido.**
+
+Subi a `bora-api:v170` (que conhece até a V76) contra um Postgres migrado em **V77**:
+
+```
+Successfully validated 77 migrations
+WARN: Schema "public" has a version (77) that is newer than the latest available migration (76) !
+Schema "public" is up to date. No migration necessary.
+health CHEIO: HTTP 200      cardapio da loja 1: HTTP 200
+```
+
+O Flyway **tolera** schema mais novo que o código, com um aviso, e a aplicação antiga sobe e
+**funciona** — lê dado de verdade, não só responde o health. **O rollback está seguro para migração
+aditiva.** O que continua perigoso é migração que **apaga ou renomeia** o que o código antigo lê, e
+o deploy passou a conferir isso sozinho (pelo label `git` que ele mesmo grava na imagem).
+
+**2. A folha impressa genérica — toda loja tem a sua agora.**
+
+Ela monta das **categorias reais** da loja, na ordem do cardápio online dela, com a **cor da marca**
+dela. Produto esgotado fica fora, o QR vai só na última folha, e passando de uma o rodapé diz
+"Folha 1 de 3". Medido no navegador, com uma loja que **não** é a Zirá:
+
+| massa | resultado |
+|---|---|
+| 11 produtos / 3 categorias | 1 folha, **297 mm**, sem aviso |
+| 72 produtos / 6 categorias | 1 folha, **297 mm**, sem aviso |
+| 180 produtos / 10 categorias | **3 folhas**, 297 mm cada, nenhuma categoria cortada |
+
+E virou lista em vez de vitrine de fotos porque eu **medi**: com cartão de foto, 11 produtos davam
+**749 mm** contra os 297 do A4. O desenho à mão continua valendo para a loja que o tem.
+
+**3. A seção 4 da varredura — reconferida por mim, e os agentes estavam certos.**
+
+Era o que eu tinha deixado como "desconhecido". Reconferi com mutante onde dava:
+
+| o que o agente disse | eu medi | o que eu fiz |
+|---|---|---|
+| cupom e cashback do cardápio sem teste de abatimento | **certo**: com os dois abatimentos trocados por zero, **1.624 testes passavam** | 4 testes; o mutante mata 3 |
+| nada prova que o evento vive na mesma transação da venda | **certo**: tirar o `@Transactional` do `criar` e tirar o evento de dentro do `tx.execute` passavam **1.628 testes cada** | 2 arquivos (estrutural + contra o Postgres); cada mutante mata 2 |
+| a contagem de uso da promoção pode sumir | **certo**: removendo as duas chamadas, **1.633 testes passavam** | 2 testes; o mutante mata 1 |
+| falha entre a cortesia e a primeira fatura | **certo**: quem assina no dia 5 perdia o acesso no dia 8 com fatura no dia 12 | consertado + 8 testes (4 de controle) |
+| a margem do painel é maior que a real | **certo, e mais preciso**: o aviso olhava só alíquota e custo fixo — item sem custo passava calado | consertado + 4 testes |
+| 7 migrações com `lock_timeout` sem `LOCAL` | **certo**: as sete existem | as sete **não** foram editadas (checksum do Flyway derruba o deploy); teste impede a 8ê |
+
+**A prova somada: 1.649 testes de unidade + 258 de integração + 745 de tela = 2.652, zero falhas.**
+
+### 🔴 Ainda abertos da seção 4 — confirmados por mim, e cada um precisa de uma decisão sua
+
+Não fiz nenhum destes porque não são conserto de uma linha: cada um muda algo que você sente.
+
+1. **Trocar a senha não derruba token roubado** — confirmei: o token tem `email`, `papel`, `lojaId`
+   e validade, e **nenhuma versão de senha**. Token vazado vale até 24 h depois da troca. O conserto
+   é pôr uma versão no token e recusá-lo quando a senha muda — e **ao subir, derruba a sessão de
+   todo mundo**. É isso que precisa da sua palavra.
+2. **O cashback é protegido por telefone + primeiro nome** — confirmei. Telefone não é segredo. Mas
+   exigir mais trava o cliente legítimo que **não tem login** no cardápio, e o próprio código explica
+   a troca. Decisão de produto.
+3. **O `entregador` do pedido é TEXTO, não id** — confirmei. Renomear o motoboy no meio do período
+   divide o acerto dele em dois nomes. É dinheiro de motoboy, e o conserto é migração + back-fill.
+4. **O cadastro público não valida CNPJ** — confirmei. "Mesmo CNPJ = mesma empresa" permite anexar
+   a loja de um cliente real à empresa de quem se cadastrou primeiro.
+5. **O tempo de preparo está cravado no JavaScript** (`BORA_SLA` em `app.js`, com 30 min de reserva)
+   — confirmei. A pizzaria com preparo de 45 min vê **todo** pedido marcado "Atrasado". Precisa de
+   campo, migração e tela.
+6. **23 tabelas com `loja_id` sem chave estrangeira** — confirmei a ordem de grandeza: 136 menções a
+   `loja_id` nas migrações contra **8** FKs declaradas para `loja`.
+7. **`RedeService.vincular` não checa o limite de usuários** — confirmei: nenhuma chamada a limite
+   ali. O teto de 15 por loja fura pela rede.
+8. **A fila não tem retenção** — até 6 eventos por pedido, ~620 bytes cada. A decisão de retenção
+   deve vir **junto** com o consumidor, não depois.
+
+E três que eu **não consegui medir daqui**: os 1.430 POSTs em 24 h no webhook público (é log de
+produção), o valor sugerido no pagamento manual, e as quatro contradições do deck.
 
 ## ✅ 18/11/2026 (noite) — **v170 NO AR**: a fila já sabe de QUEM é a venda
 
