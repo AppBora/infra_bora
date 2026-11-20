@@ -11,10 +11,12 @@ pedido" passou a contar o tempo), a limpeza de dados foi aplicada, e a ficha de 
 [uma página que grava a cada tecla](https://borahapp.com.br/ficha.html). **13 itens fecharam.**
 Antes disso, **11/11/2026** — nesse dia a **v158 subiu** e as credenciais do banco ficaram **40 cifradas / 0 em texto puro**. Antes disso, em 10/11 — e nesse dia rodou a **varredura dos 15 agentes na aplicação inteira** ([VARREDURA-2026-11-10.md](VARREDURA-2026-11-10.md)). Os itens de cadastro e operação seguem como foram medidos em **04/11**. Tudo marcado como pendente aqui foi medido, não deduzido.
 
-## 🔴 20/11/2026 — **os 4 cliques que sobraram, e sao seus**
+## 🔴 20/11/2026 — **tres cliques seus, e um deploy meu esperando a sua palavra**
 
-Tudo o que era conserto meu fechou e esta no ar (ver a secao de 19/11 e, abaixo, o que subiu hoje).
-O que resta aqui **nao da para eu fazer sem voce**, e esta na ordem do que mais protege dinheiro.
+O que subiu hoje esta no fim desta secao (v172, frontend, vigia, v173). Depois disso voce mandou
+fechar **os 6 itens que faltavam da secao 4**: eles estao **prontos e commitados, e NAO publicados**
+— e o item 4 abaixo. Os tres primeiros **nao da para eu fazer sem voce**, e estao na ordem do que
+mais protege dinheiro.
 
 ### 1. 🔴 O alarme do vigia — 2 valores, e voce e avisado de madrugada
 
@@ -64,12 +66,44 @@ em conta de ninguem — **Pedidos → CD-144 → Cancelar**, no painel da loja 1
 Ao abrir, voce vai ver tambem dois pedidos presos que **nao sao meus**: o **110** em preparo desde
 **30/09** e o **108** pronto desde **19/09**. Eles ficam contando como pedido em aberto no painel.
 
-### 4. 🔴 Os 6 itens da secao 4 que seguem esperando decisao
+### 4. ✅ Os 6 itens da secao 4 — **consertados, e esperando o seu clique**
 
-Dos 8, **dois fecharam hoje** (ver abaixo). Os 6 que restam estao descritos na secao de 19/11, cada
-um com o que eu medi: cashback por telefone + primeiro nome, "mesmo CNPJ = mesma empresa", tempo de
-preparo cravado no `app.js`, as 23 tabelas com `loja_id` sem chave estrangeira, e a fila sem
-retencao. Nenhum é conserto de uma linha; cada um muda algo que voce sente.
+Voce mandou fazer os 6. **Estao prontos, commitados e NAO publicados**: backend `b999338`, frontend
+`409b339`. Para subir sao os dois caminhos de sempre (`./deploy-api.sh v174` e o do frontend), e sao
+**quatro migracoes novas** (V79 a V82).
+
+Cada um, com a decisao que eu tomei e o que voce vai sentir:
+
+| item | o que mudou | o que voce vai notar |
+|---|---|---|
+| **2. cashback** | o palpite do nome ganhou **freio** (5 erros em 15 min, por telefone) | nada — quem digita o proprio nome acerta de primeira e nem sabe que existe |
+| **3. motoboy** | o pedido passa a apontar para o **cadastro**, nao para o nome digitado | renomear o motoboy no meio do periodo **deixa de dividir a conta dele em duas** |
+| **4. CNPJ** | o cadastro **confere o digito verificador** (CPF e CNPJ, inclusive o alfanumerico novo) | CNPJ digitado errado para na hora, em vez de virar fatura que nao nasce |
+| **5. preparo** | o tempo de preparo virou **campo da loja** (cozinha + rua) | em Configuracoes; vazio = igual a hoje. A pizzaria para de ver TODO pedido "Atrasado" |
+| **6. FKs** | **22 chaves estrangeiras** de `loja_id` | nada na tela: o banco passa a recusar dado de um cliente gravado dentro de outro |
+| **8. fila** | a fila ganhou **retencao** (desligada) e o tamanho dela aparece na tela | o bloco "Fila de eventos do ERP" agora mostra quantos eventos existem |
+
+**Tres coisas que eu decidi e voce pode desfazer:**
+
+1. **No cashback eu NAO pedi codigo por WhatsApp.** Era a saida obvia, e ela **bloquearia todos os
+   clientes de hoje**: enviar depende da conta Meta da loja, e nenhuma loja tem. O freio nao pede
+   nada a ninguem.
+2. **A retencao da fila nasceu DESLIGADA, com duas caixas separadas** — "apagar o que ja foi
+   entregue" e "jogar fora o que ninguem leu" nao sao a mesma decisao, e hoje **nada consome a
+   fila**. Como esta, ela **nao apaga um unico evento**. Quem liga e voce, na tela, sem deploy.
+3. **O tempo de preparo vazio continua valendo o padrao de hoje.** Eu nao escolhi um tempo
+   "razoavel" para as 23 lojas: tempo de forno de cozinha que eu nao conheco nao e minha decisao.
+
+**O que eu medi em producao antes de escrever a migracao das FKs:** restaurei o dump das 12:15 de
+hoje num Postgres descartavel **dentro do servidor** (o dump nao saiu de la — ele tem telefone,
+endereco e CPF de todo cliente das lojas; so a contagem saiu) e conferi **as 31 tabelas uma por
+uma**: 4.441 linhas com `loja_id`, **zero orfas**. E por isso que as chaves entram ja validadas, sem
+risco de derrubar o deploy.
+
+**A prova:** 1.706 testes de unidade, **275 de integracao contra Postgres de verdade** (as quatro
+migracoes aplicam num banco limpo) e 757 de tela — **0 falhas**. **Oito mutantes aplicados, oito
+mortos**, entre eles os dois que pagariam o motoboy **em dobro** e o que apagaria a fila inteira por
+um erro de digitacao na tela.
 
 ### ✅ O que subiu hoje, 20/11
 
@@ -237,7 +271,12 @@ Era o que eu tinha deixado como "desconhecido". Reconferi com mutante onde dava:
 
 **A prova somada: 1.649 testes de unidade + 258 de integração + 745 de tela = 2.652, zero falhas.**
 
-### 🔴 Ainda abertos da seção 4 — confirmados por mim, e cada um precisa de uma decisão sua
+### ✅ FECHADOS — os 8 da seção 4 (1 e 7 no ar na v173; 2, 3, 4, 5, 6 e 8 consertados em 20/11)
+
+> O que está escrito abaixo é o diagnóstico de 19/11, mantido como registro. **Nenhum destes
+> itens está aberto.** O que cada um virou está na seção de 20/11, no topo deste arquivo.
+
+#### O diagnóstico de 19/11, como eu escrevi na época
 
 Não fiz nenhum destes porque não são conserto de uma linha: cada um muda algo que você sente.
 
