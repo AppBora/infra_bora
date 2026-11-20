@@ -11,6 +11,81 @@ pedido" passou a contar o tempo), a limpeza de dados foi aplicada, e a ficha de 
 [uma página que grava a cada tecla](https://borahapp.com.br/ficha.html). **13 itens fecharam.**
 Antes disso, **11/11/2026** — nesse dia a **v158 subiu** e as credenciais do banco ficaram **40 cifradas / 0 em texto puro**. Antes disso, em 10/11 — e nesse dia rodou a **varredura dos 15 agentes na aplicação inteira** ([VARREDURA-2026-11-10.md](VARREDURA-2026-11-10.md)). Os itens de cadastro e operação seguem como foram medidos em **04/11**. Tudo marcado como pendente aqui foi medido, não deduzido.
 
+## 🔴 20/11/2026 — **os 4 cliques que sobraram, e sao seus**
+
+Tudo o que era conserto meu fechou e esta no ar (ver a secao de 19/11 e, abaixo, o que subiu hoje).
+O que resta aqui **nao da para eu fazer sem voce**, e esta na ordem do que mais protege dinheiro.
+
+### 1. 🔴 O alarme do vigia — 2 valores, e voce e avisado de madrugada
+
+Hoje o vigia roda a cada 5 minutos, enxerga API, disco, certificado e Caddy, e **nao consegue
+avisar ninguem**: falta a URL. Voce escolheu **Telegram**. Sao tres passos:
+
+1. No Telegram, fale com **@BotFather** → `/newbot` → escolha um nome. Ele devolve um **token**.
+2. Mande qualquer mensagem para o seu bot novo (ele só pode falar com quem falou com ele primeiro).
+3. Abra `https://api.telegram.org/bot<SEU_TOKEN>/getUpdates` no navegador e copie o
+   `"chat":{"id":NUMERO}` — esse número é o **chat id**.
+
+Depois, **um comando** (troque os dois valores; ele nao aparece em `crontab -l` nem em `ps`):
+
+```bash
+ssh -i ~/.ssh/bora-lightsail.pem ubuntu@56.126.177.18 "printf 'BORA_ALARME_WEBHOOK=https://api.telegram.org/botSEU_TOKEN/sendMessage
+BORA_ALARME_CHAT=SEU_CHAT_ID
+' > /home/ubuntu/.bora-alarme && chmod 600 /home/ubuntu/.bora-alarme && /home/ubuntu/vigia-bora.sh && tail -3 /home/ubuntu/backups/vigia.log"
+```
+
+O `tail` no fim é a prova: se aparecer **`alarme enviado (HTTP 200)`**, chegou. O arquivo é **lido**
+com `grep`, nunca executado — testei isso com uma linha `$(touch ...)` dentro dele, que **nao rodou**.
+
+### 2. 🔴 O bucket do backup — o que depende de voce, e por que
+
+**A copia fora da AWS JA EXISTE**: 200 dumps em `C:ora-backups`, atualizados hoje, com ensaio de
+restauracao que passou. Corrigi aqui o que eu tinha te dito errado. Ela roda por tarefa agendada do
+Windows, as 10h, e depende do **seu PC estar ligado**.
+
+O que o bucket acrescenta é a copia que **nao depende de PC nenhum**: sai do proprio servidor. A
+chave da AWS guardada nesta maquina esta **invalida** (`InvalidClientTokenId`), então eu nao crio o
+bucket daqui — e **nenhuma chave nova precisa ser criada**, porque o `backup-bora.sh` usa o papel da
+instancia. No console da AWS:
+
+1. S3 → criar bucket, região **sa-east-1** (a mesma do servidor), bloqueio de acesso publico
+   **ligado**, versionamento **ligado**.
+2. No papel IAM da instancia, anexar permissao de escrita **so nesse bucket**:
+   `s3:PutObject` e `s3:ListBucket` em `arn:aws:s3:::SEU-BUCKET/*` e `arn:aws:s3:::SEU-BUCKET`.
+3. Me diga o nome do bucket: eu ponho `BORA_BACKUP_S3=s3://SEU-BUCKET/bora` no ambiente do backup e
+   rodo uma copia de teste, que o proprio script confere.
+
+### 3. 🟡 O pedido de teste CD-144 (loja 1) — e dois de setembro que nao sao meus
+
+O **CD-144** (loja 1, status RECEBIDO, criado em 19/11 23:42) é o pedido que eu criei para provar a
+fila de eventos com uma venda de verdade. Cancelar exige entrar numa conta da loja 1, e eu nao entro
+em conta de ninguem — **Pedidos → CD-144 → Cancelar**, no painel da loja 1.
+
+Ao abrir, voce vai ver tambem dois pedidos presos que **nao sao meus**: o **110** em preparo desde
+**30/09** e o **108** pronto desde **19/09**. Eles ficam contando como pedido em aberto no painel.
+
+### 4. 🔴 Os 6 itens da secao 4 que seguem esperando decisao
+
+Dos 8, **dois fecharam hoje** (ver abaixo). Os 6 que restam estao descritos na secao de 19/11, cada
+um com o que eu medi: cashback por telefone + primeiro nome, "mesmo CNPJ = mesma empresa", tempo de
+preparo cravado no `app.js`, as 23 tabelas com `loja_id` sem chave estrangeira, e a fila sem
+retencao. Nenhum é conserto de uma linha; cada um muda algo que voce sente.
+
+### ✅ O que subiu hoje, 20/11
+
+- **v172** — os 14 do modulo principal e as 3 ressalvas. Prova: `sha256` do jar no container
+  identico ao da imagem construida aqui, health 200, V77 aplicada. O cupom da loja 18, que
+  **respondia 500**, passou a responder 404 "cupom invalido ou vencido" — e o 404 esta **certo**: a
+  linha que a V77 mantem venceu em 19/11 e esta inativa. **Nao existe nenhuma promocao ativa no
+  sistema hoje**: sao 6 linhas, todas `ativa = false`.
+- **Frontend** — os 100 arquivos com o mesmo `sha256` aqui e no servidor.
+- **Vigia** — o do servidor estava **24 dias atrasado** (nenhum dos dois scripts de deploy leva
+  arquivo de deploy). Agora com batida de coracao: "esta tudo bem" passou a ter prova em arquivo em
+  vez de silencio.
+- **v173** — os itens **1** e **7** da secao 4. Trocar a senha passou a **derrubar token roubado**
+  (foi este deploy que deslogou todo mundo, uma vez, com a sua aprovacao) e o teto de 15 usuarios do
+  plano parou de furar pela rede.
+
 ## 🔴 18/11/2026 (noite) — **a varredura dos 15 agentes na aplicação inteira**
 
 **O relatório inteiro está em [VARREDURA-2026-11-18.md](VARREDURA-2026-11-18.md).** Cada achado está
