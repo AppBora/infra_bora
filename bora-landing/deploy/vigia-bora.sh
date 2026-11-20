@@ -44,6 +44,60 @@ saude() { curl -s -o /dev/null -w "%{http_code}" --max-time 20 https://borahapp.
 sistema() { curl -s -o /dev/null -w "%{http_code}" --max-time 20 https://borahapp.com.br/actuator/health; }
 
 # ==================================================================================================
+# O ALARME QUE SAI DAQUI (item 3.6 da varredura de 18/11/2026)
+#
+# O DEFEITO: este vigia nao tinha NENHUM caminho de aviso. Nem curl, nem e-mail, nem webhook --
+# tudo ia para `vigia.log`, um arquivo que alguem precisa abrir. A prova esta no proprio log, em
+# 08/11: "o vigia ficou 2940 minuto(s) SEM RODAR (o cron e de 5 em 5)... Nesse periodo ninguem
+# estava olhando o site." Sao 49 HORAS. Ele registrou o proprio silencio, e o registro tambem ficou
+# em silencio.
+#
+# COMO FUNCIONA: `avisar "texto"` manda para a URL em BORA_ALARME_WEBHOOK, que o dono define. Pode
+# ser ntfy.sh, Discord, Slack, um bot de WhatsApp -- a decisao e dele, e nenhuma credencial precisa
+# ficar neste arquivo.
+#
+# POR QUE WEBHOOK E NAO O WHATSAPP QUE O SISTEMA JA TEM: o WhatsAppSender mora DENTRO da API. O
+# alarme que mais importa e justamente o da API fora do ar -- pedir para a API avisar que a API caiu
+# nao funciona. O webhook e de fora e nao depende de nada nosso estar de pe.
+#
+# E SE NAO ESTIVER CONFIGURADO: o log diz isso, toda vez que um alarme deixa de sair. Mesmo padrao
+# do `backup-bora.sh` com o BORA_BACKUP_S3 -- a ausencia fica VISIVEL em vez de silenciosa. Um aviso
+# que nao sai e pior que nenhum, porque da a impressao de que alguem foi avisado.
+# ==================================================================================================
+avisar() {
+  local texto="$1"
+  echo "$(date -Is) ALARME: $texto" >> "$LOG"
+  if [ -z "${BORA_ALARME_WEBHOOK:-}" ]; then
+    echo "$(date -Is) ATENCAO: o alarme acima NAO foi enviado a ninguem (BORA_ALARME_WEBHOOK nao" \
+         "definido). Enquanto essa variavel nao existir, este log e o unico lugar onde a queda" \
+         "aparece -- e e um arquivo que alguem precisa abrir." >> "$LOG"
+    return 0
+  fi
+  # O texto e nosso, mas escapar e barato: aspa ou barra invertida solta quebraria o JSON e o aviso
+  # sumiria calado, que e exatamente o modo de falha que este bloco existe para impedir.
+  #
+  # E e expansao do proprio bash, nao `sed`: a primeira versao disto usava
+  # `sed -e 's/\/\\/g'` e chegou ao arquivo com uma barra invertida de menos. O sed recusava a
+  # expressao, `$seguro` saia VAZIO, e o webhook recebia `{"message":""}` -- um alarme que chega sem
+  # dizer o que aconteceu. Medido com um recebedor local em 19/11/2026. Aqui nao ha nivel de escape
+  # para errar.
+  local seguro="$texto"
+  seguro=${seguro//\\/\\\\}      # barra invertida -> duas
+  seguro=${seguro//\"/\\\"}      # aspa -> aspa escapada
+  seguro=${seguro//$'\n'/ }      # quebra de linha -> espaco
+  seguro=${seguro//$'\r'/ }
+  seguro=${seguro//$'\t'/ }
+  if curl -sS -o /dev/null --max-time 15 -X POST \
+       -H 'Content-Type: application/json' \
+       --data-binary "{\"title\":\"BoraHapp\",\"message\":\"$seguro\"}" \
+       "$BORA_ALARME_WEBHOOK" 2>>"$LOG"; then
+    echo "$(date -Is) alarme enviado" >> "$LOG"
+  else
+    echo "$(date -Is) O ENVIO DO ALARME FALHOU. O texto esta na linha de cima deste log." >> "$LOG"
+  fi
+}
+
+# ==================================================================================================
 # O QUE ELE NAO OLHAVA (achado pelo QA em 26/10/2026, medido em 27/10)
 #
 # O vigia perguntava uma coisa so: "o site responde?". Tres coisas que matam o sistema sem o site
@@ -86,6 +140,7 @@ if [ -f "$BATIDA" ]; then
   # O cron roda de 5 em 5. 15 minutos sao tres ciclos perdidos: nao e atraso, e ausencia.
   if [ "$MINUTOS" -ge 15 ]; then
     echo "$(date -Is) ATENCAO: o vigia ficou $MINUTOS minuto(s) SEM RODAR (o cron e de 5 em 5)."          "Ou a maquina reiniciou, ou o cron parou. Nesse periodo ninguem estava olhando o site."          "Confira com 'crontab -l' e 'uptime'." >> "$LOG"
+    avisar "O vigia ficou $MINUTOS minuto(s) SEM RODAR. Nesse periodo ninguem estava olhando o site. Ou a maquina reiniciou, ou o cron parou -- confira com 'crontab -l' e 'uptime'."
   fi
 fi
 echo "$AGORA" > "$BATIDA"
@@ -100,6 +155,7 @@ if [ "${USO:-0}" -ge "$DISCO_PCT_LIMITE" ] || [ "${LIVRE_MB:-999999}" -lt "$DISC
   # gritar a cada 5 minutos.
   if [ "$CICLOS_D" = "1" ] || [ "$(( CICLOS_D % 24 ))" = "0" ]; then
     echo "$(date -Is) ATENCAO: DISCO em ${USO}% usado, ${LIVRE_MB} MB livres."          "Disco cheio nao derruba o site na hora: primeiro o backup falha, depois o deploy."          "Os tres que mais crescem aqui:" >> "$LOG"
+    avisar "DISCO em ${USO}% usado, ${LIVRE_MB} MB livres. Disco cheio nao derruba o site na hora: primeiro o backup falha, depois o deploy. Os maiores ocupantes estao no vigia.log."
     echo "   imagens docker: $(docker images -q | wc -l) imagem(ns), $(docker system df --format '{{.Size}}' 2>/dev/null | head -1)" >> "$LOG"
     echo "   backups: $(du -sh /home/ubuntu/backups 2>/dev/null | cut -f1) em $(ls /home/ubuntu/backups/*.dump 2>/dev/null | wc -l) dump(s)" >> "$LOG"
     echo "   a pasta do ubuntu: $(du -sh /home/ubuntu 2>/dev/null | cut -f1)" >> "$LOG"
@@ -129,6 +185,7 @@ if [ "$(( AGORA - CERT_ONTEM ))" -ge 86400 ]; then
     DIAS=$(( ( $(date -d "$FIM" +%s) - AGORA ) / 86400 ))
     if [ "$DIAS" -le "$CERT_DIAS_LIMITE" ]; then
       echo "$(date -Is) ATENCAO: o certificado vence em $DIAS dia(s) ($FIM)."            "O Caddy renova sozinho aos 30 dias restantes; abaixo de $CERT_DIAS_LIMITE a renovacao ja"            "deveria ter acontecido. Olhe 'docker logs caddy | grep -i acme'. No dia em que vencer, o"            "site fica inacessivel para TODO mundo, com erro de seguranca no navegador." >> "$LOG"
+      avisar "O certificado do site vence em $DIAS dia(s) ($FIM) e a renovacao automatica do Caddy ja deveria ter acontecido. No dia em que vencer, o site fica inacessivel para TODO mundo, com erro de seguranca no navegador."
     fi
   fi
 fi
@@ -184,6 +241,44 @@ if [ "$DENTRO" = "200" ]; then
   echo "$(date -Is) a API responde DENTRO do container (HTTP $DENTRO) e nao responde de fora." \
        "O problema esta no Caddy, no DNS ou na rede -- NAO vou reiniciar a API, que esta sadia." >> "$LOG"
   docker ps --format "{{.Names}}  {{.Status}}" >> "$LOG" 2>&1 || true
+  # ITEM 3.7 DA VARREDURA (18/11/2026): ATE AQUI ELE PARAVA, E ISSO ERA O DEFEITO.
+  #
+  # Ele escrevia "o problema esta no Caddy, no DNS ou na rede" e dava `exit 0` -- SEM NUNCA OLHAR O
+  # CONTAINER `caddy`. O log tem 13 linhas desse caso. Com o Caddy travado, o site fica fora para
+  # todo mundo e o vigia so repetia a frase, de cinco em cinco minutos, para sempre.
+  #
+  # Nomear tres culpados possiveis e nao conferir nenhum nao e diagnostico: e desistir com
+  # vocabulario tecnico. Dois dos tres (Caddy e rede) este script PODE medir daqui.
+  ESTADO_CADDY=$(docker inspect caddy --format '{{.State.Status}}' 2>/dev/null || echo "NAO_EXISTE")
+  echo "$(date -Is) estado do container caddy: $ESTADO_CADDY" >> "$LOG"
+
+  if [ "$ESTADO_CADDY" = "NAO_EXISTE" ]; then
+    avisar "O site esta FORA. A API esta sadia por dentro, e NAO EXISTE container 'caddy' neste servidor. Isto precisa de mao humana."
+    exit 0
+  fi
+
+  if [ "$ESTADO_CADDY" != "running" ]; then
+    # Aqui a causa esta MEDIDA, nao suposta -- e reiniciar e o mesmo mandato que este vigia ja tem
+    # para o container `api`.
+    echo "$(date -Is) o caddy esta '$ESTADO_CADDY'. Reiniciando o CADDY (e nao a API)." >> "$LOG"
+    docker restart caddy >> "$LOG" 2>&1 || echo "$(date -Is) o restart do caddy FALHOU" >> "$LOG"
+    sleep 20
+    VOLTOU=$(saude)
+    if [ "$VOLTOU" = "200" ]; then
+      echo "$(date -Is) VOLTOU: o caddy estava '$ESTADO_CADDY' e o restart resolveu." >> "$LOG"
+      rm -f "$MARCA"
+      avisar "O site caiu porque o Caddy estava '$ESTADO_CADDY'. Eu reiniciei o Caddy e o site VOLTOU. A API nunca ficou doente."
+    else
+      avisar "O site esta FORA. A API esta sadia por dentro, o Caddy estava '$ESTADO_CADDY', eu reiniciei e o site AINDA nao voltou (HTTP $VOLTOU). Isto precisa de mao humana."
+    fi
+    exit 0
+  fi
+
+  # Caddy rodando e site fora: sobrou configuracao do Caddy, DNS ou rede. Essas tres este script nao
+  # resolve -- mas agora ele diz QUAL sobrou, em vez de listar as tres sem conferir nenhuma.
+  echo "$(date -Is) o caddy esta RODANDO e o site continua fora. Sobrou configuracao do Caddy, DNS ou rede." >> "$LOG"
+  docker logs --tail 20 caddy >> "$LOG" 2>&1 || true
+  avisar "O site esta FORA. A API esta sadia por dentro e o Caddy esta RODANDO -- entao o que sobrou e a configuracao do Caddy, o DNS ou a rede. As ultimas 20 linhas do log do Caddy estao no vigia.log. Isto precisa de mao humana."
   exit 0
 fi
 
@@ -196,6 +291,7 @@ if ! docker inspect api >/dev/null 2>&1; then
     docker start api >> "$LOG" 2>&1 || true
   else
     echo "$(date -Is) nao ha 'api-anterior' para devolver. ISTO PRECISA DE MAO HUMANA:" >> "$LOG"
+    avisar "O site esta FORA e nao existe container 'api' nem 'api-anterior' neste servidor. O deploy provavelmente falhou no meio. Isto precisa de mao humana AGORA."
     docker ps -a --format "{{.Names}}  {{.Status}}" >> "$LOG" 2>&1 || true
   fi
 else
@@ -222,4 +318,5 @@ if [ "$DEPOIS" = "200" ]; then
 elif [ "$TENTATIVAS" -ge 3 ]; then
   echo "$(date -Is) !!! $TENTATIVAS tentativas e o site continua fora (HTTP $DEPOIS). O vigia nao" \
        "consegue resolver sozinho -- precisa de mao humana." >> "$LOG"
+  avisar "O site esta FORA ha $TENTATIVAS tentativas de reinicio (HTTP $DEPOIS). O vigia nao consegue resolver sozinho. Isto precisa de mao humana."
 fi

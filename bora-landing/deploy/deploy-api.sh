@@ -267,6 +267,74 @@ if ssh -i "$KEY" "$SRV" 'for i in $(seq 1 40); do
   ssh -i "$KEY" "$SRV" 'docker rm -f api-anterior >/dev/null 2>&1 || true'
   echo "NO AR: $TAG (commit $COMMIT)"
   ssh -i "$KEY" "$SRV" 'docker ps --format "{{.Names}}  {{.Status}}"'
+
+  # ------------------------------------------------------------------------------------------------
+  # PODA (item 3.15 da varredura de 18/11/2026). Roda DEPOIS de o deploy dar certo, de proposito.
+  #
+  # O QUE FOI MEDIDO em 18/11: 70 imagens somando 11,46 GB, sendo 62 tags `bora-api:v110` a `v170`.
+  # Em uso: so a `latest` (o container) e a `anterior` (o rollback). Crescimento de 164 MB/dia --
+  # 49 imagens / 7,86 GB em 27/10 viraram 70 / 11,46 GB em 18/11. Mais 2 volumes orfaos de 148 MB.
+  # Nada podava nada; o vigia so avisava quando o disco passasse de 85%.
+  #
+  # POR QUE AQUI E NAO NUM CRON SEPARADO: quem cria a imagem e este script. Lixo se poda onde se
+  # produz, e assim o dono aprova uma vez em vez de aprovar um cron novo.
+  #
+  # POR QUE DEPOIS DO HEALTH E NAO ANTES: enquanto a versao nova nao esta sadia, a imagem antiga e o
+  # caminho de volta. Podar antes seria serrar o galho do rollback.
+  #
+  # O QUE ELA NUNCA REMOVE: a imagem que algum container USA (`docker image prune` e o filtro por
+  # tag respeitam isso), a `latest`, a `anterior`, e as PODA_MANTER tags mais novas. O `docker rmi`
+  # sem `-f` recusa imagem em uso -- e e de proposito que nao ha `-f` aqui.
+  PODA_MANTER=${PODA_MANTER:-6}
+  dizer "poda: mantendo as $PODA_MANTER versoes mais novas"
+  ssh -i "$KEY" "$SRV" "bash -s" <<PODA || echo "   (a poda falhou; nao e motivo para desfazer o deploy)" >&2
+set -u
+ANTES_IMG=\$(docker images bora-api --format '{{.Repository}}:{{.Tag}}' | wc -l)
+ANTES_GB=\$(docker system df --format '{{.Type}} {{.Size}}' | awk '/^Images/{print \$2}')
+
+# As tags vXXX, da mais nova para a mais velha, tirando latest e anterior. Ordem por numero, nao por
+# texto: por texto, v99 vem depois de v170.
+TAGS=\$(docker images bora-api --format '{{.Tag}}'         | grep -E '^v[0-9]+\$'         | sed 's/^v//' | sort -rn | sed 's/^/v/')
+MANTER=\$(echo "\$TAGS" | head -n $PODA_MANTER)
+APAGAR=\$(echo "\$TAGS" | tail -n +\$(( $PODA_MANTER + 1 )))
+
+if [ -n "\$APAGAR" ]; then
+  echo "   mantendo: \$(printf '%s ' \$MANTER)"
+  for TG in \$APAGAR; do
+    docker rmi "bora-api:\$TG" >/dev/null 2>&1       && echo "   removida bora-api:\$TG"       || echo "   bora-api:\$TG ficou (em uso ou referenciada)"
+  done
+else
+  echo "   nada a remover: ha \$(echo "\$TAGS" | grep -c . ) versao(oes) guardada(s)"
+fi
+
+# Camadas soltas e volumes sem dono. Os dois sao conservadores: `image prune` sem `-a` so remove
+# camada que nenhuma imagem com tag referencia, e `volume prune` so remove volume que nenhum
+# container usa. O dump do banco NAO mora em volume -- mora em /home/ubuntu/backups, no disco.
+docker image prune -f >/dev/null 2>&1 || true
+docker volume prune -f >/dev/null 2>&1 || true
+
+DEPOIS_IMG=\$(docker images bora-api --format '{{.Repository}}:{{.Tag}}' | wc -l)
+DEPOIS_GB=\$(docker system df --format '{{.Type}} {{.Size}}' | awk '/^Images/{print \$2}')
+echo "   imagens bora-api: \$ANTES_IMG -> \$DEPOIS_IMG   |   total de imagens: \$ANTES_GB -> \$DEPOIS_GB"
+df -h / | awk 'NR==2{print "   disco: "\$3" usados de "\$2" ("\$5"), "\$4" livres"}'
+PODA
+
+  # E A PODA DAQUI, DA MAQUINA QUE CONSTROI. Medido em 19/11/2026 nesta maquina: 143 imagens
+  # `bora-api`, 297 imagens no total somando 25,39 GB -- 21,64 GB (85%) recuperaveis. O servidor
+  # tinha 62 tags; aqui tinha mais que o dobro, porque cada deploy constroi aqui ANTES de enviar e
+  # nada nunca podou. Mesma regra, mesmo cuidado: nunca a `latest`, nunca imagem em uso, nunca as
+  # PODA_MANTER mais novas.
+  TAGS_L=$(docker images bora-api --format '{{.Tag}}' | grep -E '^v[0-9]+$' | sed 's/^v//' | sort -rn | sed 's/^/v/')
+  APAGAR_L=$(echo "$TAGS_L" | tail -n +$(( PODA_MANTER + 1 )))
+  if [ -n "$APAGAR_L" ]; then
+    QUANTAS=$(echo "$APAGAR_L" | grep -c .)
+    dizer "poda local: $QUANTAS imagem(ns) antiga(s) desta maquina"
+    for TG in $APAGAR_L; do docker rmi "bora-api:$TG" >/dev/null 2>&1 || true; done
+    echo "   imagens bora-api aqui: $(docker images bora-api --format '{{.Tag}}' | grep -cE '^v[0-9]+$') versao(oes)"
+  fi
+  # O cache de build e os volumes anonimos NAO sao podados automaticamente aqui, de proposito: podar
+  # o cache deixa o proximo build lento, e volume anonimo pode guardar algo que alguem quer. Quando
+  # apertar, os dois comandos sao `docker builder prune` e `docker volume prune` -- decisao do dono.
 else
   echo "A versao nova nao ficou sadia." >&2
   diagnostico_da_falha
