@@ -11,6 +11,47 @@ pedido" passou a contar o tempo), a limpeza de dados foi aplicada, e a ficha de 
 [uma página que grava a cada tecla](https://borahapp.com.br/ficha.html). **13 itens fecharam.**
 Antes disso, **11/11/2026** — nesse dia a **v158 subiu** e as credenciais do banco ficaram **40 cifradas / 0 em texto puro**. Antes disso, em 10/11 — e nesse dia rodou a **varredura dos 15 agentes na aplicação inteira** ([VARREDURA-2026-11-10.md](VARREDURA-2026-11-10.md)). Os itens de cadastro e operação seguem como foram medidos em **04/11**. Tudo marcado como pendente aqui foi medido, não deduzido.
 
+## 🟢 21/11/2026 — **a lista a limpo: de código, falta 1 caixa**
+
+Você pediu para passar a lista a limpo e fechar os defeitos pré-existentes. Feito. **Eram 41 caixas
+abertas; são 33** — e a conta que importa é outra:
+
+| de quem é | quantas | o que é |
+|---|---|---|
+| **minha, de código** | **1** | se o cadastro público também passa a exigir **abrir** os Termos antes de aceitar. Está marcado como *decisão sua* desde 15/11, e é a única caixa de código que sobrou |
+| sua, de cadastro e operação | 14 | bairro e taxa da loja 23, horário, PIX, iFood da 17 com token vencido, estoque das lojas novas, cardápio da Doce Jardim |
+| sua, de decisão ou ação | 14 | taxa de 2% do PIX, loja de QA em produção, modo offline, MFA na AWS, trocar a chave do Asaas, a chave da cifragem no gerenciador, a senha do `will@` |
+| externa (ERP) | 4 | consultor tributário, advogado trabalhista, calculadora do RTC, prazos do RJ |
+
+1 + 14 + 14 + 4 = **33**. Os **três cliques** da seção de 20/11 (Telegram, bucket, CD-144) estão
+fora dessa conta — eles não são caixa de lista, são o que eu te pedi ontem e ainda não aconteceu.
+
+**Dos 7 defeitos pré-existentes da varredura de 18/11: nenhum está aberto.** 5 consertados hoje
+(backend `4e8925a`, frontend `d86f8e8`) e **2 fecharam por medição** — um já estava consertado e a
+caixa nunca foi marcada, e o outro era uma conferência de infra que ninguém tinha feito. A tabela
+com a prova de cada um está na seção de 18/11.
+
+**Dois deles eram dinheiro ou segurança:**
+
+- **O SQL ia no corpo da resposta** numa rota **pública, sem autenticação** (o cadastro de loja).
+  Quem não tem conta aprendia tabela, colunas e valores repetindo uma requisição. Agora o banco
+  responde 409 com frase de gente, e o SQL fica no log.
+- **"Pagamento na entrega" sem escolha** fazia o acerto do motoboy contar **"recebeu dinheiro = R$
+  0,00"** em todo pedido do cardápio. A tela passou a exigir e o servidor a recusar.
+
+**O que eu medi e não era defeito:** o freio de login não é burlável por `X-Forwarded-For` — o
+container **não publica porta nenhuma** e 8080/8081 não respondem da internet; só dá para entrar
+pelo Caddy, que reescreve o cabeçalho. E o `deploy-frontend.sh` **sai 0**: ensaio com tudo
+commitado, código de saída 0, zero temporários novos.
+
+**A prova de hoje:** 1.722 testes de unidade, 280 de integração contra Postgres de verdade, 764 de
+tela — **0 falhas**. **Cinco mutantes aplicados, cinco mortos.** Os dois consertos de tela foram
+**medidos num navegador** antes e depois, com a estrutura real da página.
+
+🔴 **NÃO PUBLICADO.** Os dois commits de hoje estão esperando o deploy.
+
+---
+
 ## 🔴 20/11/2026 — **os tres cliques que sobraram, e sao seus**
 
 Hoje subiu tudo: v172, o frontend, o vigia, a v173 e — depois que voce mandou fechar os 6 itens
@@ -635,23 +676,44 @@ séria, e **dois deles acharam o mesmo defeito crítico de forma independente**:
   disso. Ao consertar apareceu o segundo, escondido atrás do primeiro: o canal Site procura
   `CARDAP` e **"CARDÁPIO" tem acento**, então nunca casou.
 
-### 🔴 O que a varredura achou e eu NÃO consertei
+### ✅ O que a varredura achou e eu NÃO consertei — **fechados em 21/11/2026**
+
+Eram 7 caixas. **Nenhuma está aberta**: 5 foram consertadas hoje (backend `4e8925a`, frontend
+`d86f8e8`, **não publicados ainda**) e 2 fecharam por **medição** — uma já estava consertada e a
+caixa nunca foi marcada, e a outra era uma conferência de infra que eu nunca tinha feito.
+
+| o que era | como fechou |
+|---|---|
+| 500 com o SQL no corpo (3 rotas, uma pública) | **consertado**: um tradutor de erros devolve 409 com frase que o lojista lê; o SQL só vai para o log |
+| freio de login burlável por `X-Forwarded-For` | **medido, não há defeito**: o container **não publica porta nenhuma** (`PortBindings: {}`) e 8080/8081 não respondem da internet — só dá para entrar pelo Caddy, que reescreve o cabeçalho |
+| token não revogado ao trocar a senha | **já estava no ar** desde a v173 (item 1 da seção 4, ontem). A caixa tinha ficado para trás |
+| webhook sem id externo cria pedido de R$ 0,00 | **consertado**: sem o id do canal o webhook é recusado com 400 — e com ele a idempotência volta a valer |
+| seletor de cor virou listra; botões do cartão estourando | **consertado, medido num navegador**: o seletor tinha **27px** de altura com 24px de padding (sobrava ~1px de cor) e virou 46px; a fileira de botões **estourava 65px** numa janela de 1120px, com o 🗑 **52px fora do cartão** |
+| "pagamento na entrega" não obriga escolher | **consertado nas duas pontas**: a tela exige e o servidor recusa. Sem a escolha o pedido ia como "Na entrega", e o acerto do motoboy contava **"recebeu dinheiro = R$ 0,00"** |
+| `deploy-frontend.sh` sempre sai com código 1 | **medido, já estava consertado**: ensaio com tudo commitado sai **0**, e não deixa temporário novo. Sobraram 172 arquivos `/tmp/tmp.*` da época do defeito — lixo, não defeito |
+
+**O que eu NÃO mexi, e por que:** o tradutor de erros não toca em `ResponseStatusException`. É com
+ela que os 166 endpoints recusam regra de negócio, e a mensagem dela é escrita para o lojista ler
+("O cupom não pode zerar o pedido"). Era esse o medo certo que deixou o item aberto; o tradutor
+mexe só no que vem do **banco**, e um teste derruba a suíte se alguém estender isso.
+
+<details><summary>O texto original de 18/11, como registro</summary>
 
 São defeitos **pré-existentes**, nenhum causado pela V74. Cada um merece passada própria:
 
-- [ ] **500 com o SQL no corpo** em corrida de chave única, em 3 rotas — uma delas **pública**
+- [x] **500 com o SQL no corpo** em corrida de chave única, em 3 rotas — uma delas **pública**
       (`/public/signup`). O conserto certo é um handler global, que muda o erro dos 166 endpoints.
-- [ ] **Freio de login burlável por `X-Forwarded-For`** se a porta da API for alcançável sem passar
+- [x] **Freio de login burlável por `X-Forwarded-For`** se a porta da API for alcançável sem passar
       pelo Caddy. **Conferir se a porta do container está exposta na internet** — é verificação de
       infra, não de código.
-- [ ] **Token não é revogado ao trocar a senha.** Funcionário demitido com sessão aberta continua
+- [x] **Token não é revogado ao trocar a senha.** Funcionário demitido com sessão aberta continua
       dentro por até 24h; só desativar a conta derruba. Contradiz o comentário do próprio código.
-- [ ] Webhook sem id externo cria **pedido vazio de R$ 0,00** a cada chamada.
-- [ ] Seletor de cor virou linha de 3px em Configurações; botões do cartão de pedido estourando a
+- [x] Webhook sem id externo cria **pedido vazio de R$ 0,00** a cada chamada.
+- [x] Seletor de cor virou linha de 3px em Configurações; botões do cartão de pedido estourando a
       coluna (o 🗑 some). Arrastam bump de versão do CSS em 34 telas.
-- [ ] "Pagamento na entrega" no cardápio não obriga escolher dinheiro/cartão — e aí a conta do
+- [x] "Pagamento na entrega" no cardápio não obriga escolher dinheiro/cartão — e aí a conta do
       **acerto do motoboy sai errada**.
-- [ ] `deploy-frontend.sh` **sempre sai com código 1**, mesmo dando certo (ver a seção própria).
+- [x] `deploy-frontend.sh` **sempre sai com código 1**, mesmo dando certo (ver a seção própria).
 
 ---
 
@@ -667,6 +729,8 @@ plataforma**. Lista todas as lojas **mais** as contas sem loja, com busca, filtr
 **incluir / ativar / desativar / excluir**. Inativo aparece na lista, de propósito.
 
 **No ar em 17/11:** API **v163** (commit `509c51b`), front commit `5301f09`. Sem migração de banco.
+
+</details>
 
 ### As três travas que ele respeita
 
@@ -720,7 +784,11 @@ em automação, vai ver **todo deploy como falha** — e um deploy que falha de 
 indistinguível de um que deu certo. **Segunda consequência:** os temporários nunca são apagados —
 havia **136** arquivos `/tmp/tmp.*` acumulados.
 
-- [ ] Conserto (não fiz, está fora do que foi pedido): fazer `novo_temp` gravar o nome num arquivo
+- [x] **FEITO, e medido em 21/11/2026.** O `novo_temp` grava num ARQUIVO em vez de array de
+      shell, e com isso o script sai **0**: ensaio com tudo commitado, código de saída 0 e **zero
+      temporários novos**. A caixa tinha ficado aberta depois do conserto. Sobraram 172 arquivos
+      `/tmp/tmp.*` da época do defeito — lixo nesta máquina, não defeito; apago quando você quiser.
+- [x] O conserto que estava descrito aqui: fazer `novo_temp` gravar o nome num arquivo
       de controle em vez de num array, ou trocar o corpo do `limpar` por algo que termine em
       verdadeiro. O `deploy-api.sh` **não** tem esse defeito — sai 0 corretamente.
 
